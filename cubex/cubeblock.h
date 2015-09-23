@@ -27,28 +27,35 @@ public:
 class BlockColor
 {
 public:
-	Color3b sides[3];
+	int colorIndices[3];
 };
 
 class CubeBlock : public Actor
 {
 public:
+	static Color3b colors[6];
+
 	float size;
 	UINT pickId;
 	int numSides;
-	bool swapSides;
 	BlockColor clr;
-
 	int coloredSides[3];
 
-	UINT GetSideId(int i) { return pickId | (1 << (i+5)); }
-
-	CubeBlock(float size, Color3b color = Color3b())
-		: size(size), numSides(0), swapSides(false)
+	CubeBlock(float size)
+		: size(size), pickId(0), numSides(0)
 	{
-		memset(coloredSides, 0, sizeof(int)*3);
+		memset(&clr, 0, sizeof(clr));
 	}
 	void Render();
+private:
+	Color3b *GetSideColor(int idx) {
+		for (int i = 0; i < numSides; i++) {
+			if (coloredSides[i] == idx)
+				return &colors[clr.colorIndices[i]];
+		}
+		return NULL;
+	}
+	UINT GetSideId(int i) { return pickId | (1 << (i+5)); }
 };
 
 #endif // _ACTOR_H_

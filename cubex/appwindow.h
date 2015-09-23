@@ -13,9 +13,6 @@ private:
 	Viewer3D viewer;
 	CubeBlock *blocks[3][3][3];
 
-	static Color3b colors[6];
-	static int colorMap[3][3][3][3];
-	static int orientation[3][3][3][4];
 	static int rot[2][3][3][2];
 
 	enum Axis {
@@ -39,7 +36,7 @@ private:
 	void InitBlocks();
 	void InitBlockSides(CubeBlock *cb, int x, int y, int z);
 	void TransformColors();
-	void OrientateColors(CubeBlock *cb, int x, int y);
+	void OrientateColors(CubeBlock *cb, int x, int y, int z);
 	void AnimationStep();
 	void RenderScene();
 
@@ -53,7 +50,7 @@ private:
 		if (keyCode >= 0x31 && keyCode <= 0x39) {
 			keyCode -= 0x31;
 			Axis axis = (Axis)((keyCode) / 3);
-			RotatePlane(axis, keyCode % 3, (bool)GetAsyncKeyState(VK_SHIFT));
+			RotatePlane(axis, keyCode % 3, GetAsyncKeyState(VK_SHIFT) ? true : false);
 		}
 	}
 	void OnDestroy();
