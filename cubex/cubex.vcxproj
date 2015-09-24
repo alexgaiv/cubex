@@ -64,22 +64,22 @@
   <ItemGroup>
     <ClCompile Include="cubeblock.cpp" />
     <ClCompile Include="appwindow.cpp" />
-    <ClCompile Include="glwindow.cpp" />
+    <ClCompile Include="lib\glwindow.cpp" />
+    <ClCompile Include="lib\quaternion.cpp" />
+    <ClCompile Include="lib\viewer3d.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="quaternion.cpp" />
-    <ClCompile Include="viewer3d.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h" />
     <ClInclude Include="appwindow.h" />
-    <ClInclude Include="common.h" />
-    <ClInclude Include="datatypes.h" />
-    <ClInclude Include="glwindow.h" />
-    <ClInclude Include="quaternion.h" />
-    <ClInclude Include="viewer3d.h" />
+    <ClInclude Include="lib\common.h" />
+    <ClInclude Include="lib\datatypes.h" />
+    <ClInclude Include="lib\glwindow.h" />
+    <ClInclude Include="lib\quaternion.h" />
+    <ClInclude Include="lib\viewer3d.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="datatypes.inl" />
+    <None Include="lib\datatypes.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

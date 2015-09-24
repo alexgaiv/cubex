@@ -1,5 +1,5 @@
 #include <Windows.h>
-#include "common.h"
+#include "lib/common.h"
 #include "appwindow.h"
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR lpCmdLine, int nCmdShow)

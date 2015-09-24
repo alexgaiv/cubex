@@ -1,8 +1,8 @@
 #ifndef _APP_WINDOW_H_
 #define _APP_WINDOW_H_
 
-#include "glwindow.h"
-#include "viewer3d.h"
+#include "lib/glwindow.h"
+#include "lib/viewer3d.h"
 #include "cubeblock.h"
 
 class AppWindow : public GLWindow

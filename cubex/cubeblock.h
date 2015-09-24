@@ -1,7 +1,7 @@
 #ifndef _ACTOR_H_
 #define _ACTOR_H_
 
-#include "quaternion.h"
+#include "lib/quaternion.h"
 
 class Actor
 {

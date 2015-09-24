@@ -13,53 +13,62 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="lib">
+      <UniqueIdentifier>{308dd8b1-cb86-4332-8dfa-528967d33e94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\include">
+      <UniqueIdentifier>{261f1495-5779-4829-b92d-12f603ced55f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\source">
+      <UniqueIdentifier>{ca2c1111-4dc5-4633-9231-71e852af81fc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="glwindow.cpp">
-      <Filter>Файлы исходного кода</Filter>
-    </ClCompile>
     <ClCompile Include="appwindow.cpp">
-      <Filter>Файлы исходного кода</Filter>
-    </ClCompile>
-    <ClCompile Include="viewer3d.cpp">
-      <Filter>Файлы исходного кода</Filter>
-    </ClCompile>
-    <ClCompile Include="quaternion.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
     <ClCompile Include="cubeblock.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
+    <ClCompile Include="lib\glwindow.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\quaternion.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\viewer3d.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="common.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="glwindow.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
     <ClInclude Include="appwindow.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="viewer3d.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="datatypes.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="quaternion.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
     <ClInclude Include="cubeblock.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="lib\common.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\datatypes.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\glwindow.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\quaternion.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\viewer3d.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="datatypes.inl">
-      <Filter>Заголовочные файлы</Filter>
+    <None Include="lib\datatypes.inl">
+      <Filter>lib\source</Filter>
     </None>
   </ItemGroup>
 </Project>

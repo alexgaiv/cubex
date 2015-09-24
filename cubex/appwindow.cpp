@@ -45,8 +45,8 @@ bool AppWindow::CheckIsSolved() const
 			{
 				const CubeBlock *b = blocks[x][y][z];
 				for (int i = 0; i < b->numSides; i++) {
-					//if (b->clr.sides[i] != colors[i])
-						//return false;
+					if (b->clr.colorIndices[i] != b->coloredSides[i])
+						return false;
 				}
 			}
 	return true;
@@ -152,13 +152,9 @@ void AppWindow::OrientateColors(CubeBlock *cb, int x, int y, int z)
 
 void AppWindow::AnimationStep()
 {
-	static float delta = 0;
-	delta += 30.0f;
-
-	curPlane.angle += curPlane.dir*(delta / 20.0f);
+	curPlane.angle += curPlane.dir*8.0f;
 	if (curPlane.angle > 90.0f || curPlane.angle < -90)
 	{
-		delta = 0;
 		curPlane.angle = 0.0f;
 		curPlane.anim = false;
 		curPlane.mRot.LoadIdentity();
