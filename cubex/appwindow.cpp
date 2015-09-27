@@ -16,7 +16,7 @@ int AppWindow::rot[2][3][3][2] =
 };
 
 AppWindow::AppWindow()
-	: mouseFlag(false), rotateScene(false),
+	: faceRot(false), sceneRot(false),
 	blockSize(30.0f), blockSpace(2.0f), rotateSpeed(12.0f)
 {
 	ZeroMemory(blocks, sizeof(blocks));
@@ -162,8 +162,6 @@ void AppWindow::AnimationStep()
 		curFace.anim = false;
 		curFace.mRot.LoadIdentity();
 		TransformColors();
-			
-		//RotateFace((Axis)(rand() % 3), rand()%3, (bool)(rand() % 2));
 	}
 	else {
 		Vector3f axis;
@@ -216,6 +214,163 @@ void AppWindow::RenderScene()
 	glPopMatrix();
 }
 
+void AppWindow::GetBlockById(int id, BlockDesc &b)
+{
+	int blockIndex = id & 0x1f;
+	b.pos = Point3<int>(
+		blockIndex / 9,
+		(blockIndex / 3) % 3,
+		blockIndex % 3
+	);
+
+	b.side = 0;
+	for (int i = 0 ; i < 6; i++)
+		if (id & (1 << (i+5))) {
+			b.side = i;
+			break;
+		}
+}
+
+bool AppWindow::GetBlockUnderMouse(int winX, int winY, BlockDesc &b)
+{
+	const int selBufferSize = 27*3*4;
+	static UINT selectBuffer[selBufferSize] = { };
+	int hitCount = 0, viewport[4] = { };
+
+	glSelectBuffer(selBufferSize, selectBuffer);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glRenderMode(GL_SELECT);
+
+	glLoadIdentity();
+	gluPickMatrix(winX, viewport[3] - winY, 2, 2, viewport);
+	SetPerspective(viewport[2], viewport[3]);
+
+	glDisable(GL_CULL_FACE);
+	RenderScene();
+	glEnable(GL_CULL_FACE);
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+
+	hitCount = glRenderMode(GL_RENDER);
+	if (hitCount <= 0) return false;
+
+	UINT minZ = UINT_MAX;
+	UINT id = 0;
+	for (int i = 0; i < hitCount; i++) {
+		UINT z = selectBuffer[i*4+1];
+		if (z <= minZ) {
+			id = selectBuffer[i*4+3];
+			minZ = z;
+		}
+	}
+
+	GetBlockById(id, b);
+	return true;
+}
+
+void AppWindow::GetNeighbors(const BlockDesc &b, Point3<int> &neighbor1, Point3<int> &neighbor2)
+{
+	int i1, i2, i3;
+	const int *p = b.pos.data;
+	int *n1 = neighbor1.data, *n2 = neighbor2.data;
+
+	if (b.side == 0 || b.side == 2) {
+		i1 = 1; i2 = 2; i3 = 0;
+	} else if (b.side == 1 || b.side == 3) {
+		i1 = 1; i2 = 0; i3 = 2;
+	} else {
+		i1 = 2; i2 = 0; i3 = 1;
+	}
+
+	n1[i3] = n2[i3] = p[i3];
+
+	n1[i1] = p[i1] == 2 ? 1 : p[i1] + 1;
+	n1[i2] = p[i2];
+	n2[i2] = p[i2] == 2 ? 1 : p[i2] + 1;
+	n2[i1] = p[i1];
+
+	drag.face[0] = (Axis)i1;
+	drag.index[0] = p[i1];
+	drag.face[1] = (Axis)i2;
+	drag.index[1] = p[i2];
+
+	if (p[i1] == 2) drag.neg[0] = true;
+	if (p[i2] == 2) drag.neg[1] = true;
+}
+
+Vector3d AppWindow::CalcBlockWinPos(const Point3<int> &b,
+	const Matrix44d &modelview, const Matrix44d &projection, int viewport[4])
+{
+	static const float d = (blockSize+blockSpace) * 0.5f;
+
+	Vector3d ret;
+	Vector3f l = blocks[b.x][b.y][b.z]->location;
+	l.x -= d;
+	gluProject(l.x, l.y, l.z, modelview.data, projection.data, viewport, &ret.x, &ret.y, &ret.z);
+	return ret;
+};
+
+void AppWindow::CalcRotDirections(const BlockDesc &b)
+{
+	Point3<int> n1, n2;
+	Vector3d target;
+
+	GetNeighbors(b, n1, n2);
+
+	Matrix44d modelview(viewer.Modelview());
+	double projection[16];
+	int viewport[4];
+	glGetDoublev(GL_PROJECTION_MATRIX, projection);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	target = CalcBlockWinPos(b.pos, modelview, projection, viewport);
+	target.y = viewport[3] - target.y;
+
+	for (int i = 0; i < 2; i++)
+	{
+		drag.dir[i] = CalcBlockWinPos(i ? n2 : n1, modelview, projection, viewport);
+		drag.dir[i].y = viewport[3] - drag.dir[i].y;
+		drag.dir[i] -= target;
+		drag.dir[i].Normalize();
+
+		if (drag.neg[i]) drag.dir[i] = -drag.dir[i];
+
+		if (b.side == 1 || b.side == 2 || b.side == 4) {
+			drag.dir[i] = -drag.dir[i];
+		}
+	}
+}
+
+void AppWindow::MouseRot(const Vector3d &mouseDir)
+{
+	double a1 = acos(Vector3d::Dot(mouseDir, drag.dir[0]));
+	double a2 = acos(Vector3d::Dot(mouseDir, drag.dir[1]));
+
+	double c[4] = {
+		a1, M_PI - a1,
+		a2, M_PI - a2,
+	};
+
+	int k = 0;
+	for (int i = 0; i < 4; i++) {
+		if (c[i] < c[k]) k = i;
+	}
+
+	if (k <= 1)
+		RotateFace(drag.face[1], drag.index[1], k == 1);
+	else RotateFace(drag.face[0], drag.index[0], k == 2);
+}
+
+void AppWindow::SetPerspective(int w, int h)
+{
+	viewer.SetPerspective(60.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -200.0f), w, h);
+}
+
 void AppWindow::OnCreate()
 {
 	glEnable(GL_DEPTH_TEST);
@@ -257,104 +412,10 @@ void AppWindow::OnSize(int w, int h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	viewer.SetPerspective(60.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -200.0f), w, h);
+	SetPerspective(w, h);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-}
-
-bool AppWindow::GetBlockUnderMouse(int winX, int winY, int &x, int &y, int &z, int &side)
-{
-	const int selBufferSize = 27*3*4;
-	static UINT selectBuffer[selBufferSize] = { };
-	int hitCount = 0, viewport[4] = { };
-
-	glSelectBuffer(selBufferSize, selectBuffer);
-	glGetIntegerv(GL_VIEWPORT, viewport);
-
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glRenderMode(GL_SELECT);
-
-	glLoadIdentity();
-	gluPickMatrix(winX, viewport[3] - winY, 2, 2, viewport);
-	viewer.SetPerspective(60.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -200.0f), viewport[2], viewport[3]);
-
-	glDisable(GL_CULL_FACE);
-	RenderScene();
-	glEnable(GL_CULL_FACE);
-
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-
-	hitCount = glRenderMode(GL_RENDER);
-	if (hitCount <= 0) return false;
-
-	UINT minZ = UINT_MAX, id = 0;
-	for (int i = 0; i < hitCount; i++) {
-		UINT z = selectBuffer[i*4+1];
-		if (z <= minZ) {
-			id = selectBuffer[i*4+3];
-			minZ = z;
-		}
-	}
-
-	int blockIndex = id & 0x1f;
-	x = blockIndex / 9;
-	y = (blockIndex / 3) % 3;
-	z = blockIndex % 3;
-
-	side = -1;
-	for (int i = 0 ; i < 6; i++)
-		if (id & (1 << (i+5))) {
-			side = i;
-			break;
-		}
-	return true;
-}
-
-void AppWindow::InitDrag(int x, int y, int z, int side, Point3<int> &a, Point3<int> &b)
-{
-	if (side == 0 || side == 2) {
-		a.x = b.x = x;
-
-		a.y = y == 2 ? 1 : y + 1;
-		a.z = z;
-		b.z = z == 2 ? 1 : z + 1;
-		b.y = y;
-
-		drag.face1 = AXIS_Z;
-		drag.index1 = z;
-		drag.face2 = AXIS_Y;
-		drag.index2 = y;
-	}
-	else if (side == 1 || side == 3) {
-		a.z = b.z = z;
-
-		a.y = y == 2 ? 1: y + 1;
-		a.x = x;
-		b.x = x == 2 ? 1 : x + 1;
-		b.y = y;
-
-		drag.face1 = AXIS_X;
-		drag.index1 = x;
-		drag.face2 = AXIS_Y;
-		drag.index2 = y;
-	}
-	else if (side == 4 || side == 5) {
-		a.y = b.y = y;
-
-		a.z = z == 2 ? 1: z + 1;
-		a.x = x;
-		b.x = x == 2 ? 1 : x + 1;
-		b.z = z;
-
-		drag.face1 = AXIS_X;
-		drag.index1 = x;
-		drag.face2 = AXIS_Z;
-		drag.index2 = z;
-	}
 }
 
 void AppWindow::OnMouseDown(MouseButton button, int winX, int winY)
@@ -364,108 +425,39 @@ void AppWindow::OnMouseDown(MouseButton button, int winX, int winY)
 	}
 	else if (button == MouseButton::LBUTTON)
 	{
-		int x, y, z, side;
-		if (!GetBlockUnderMouse(winX, winY, x, y, z, side)) {
+		BlockDesc block;
+		ZeroMemory(&drag, sizeof(drag));
+		if (!GetBlockUnderMouse(winX, winY, block)) {
 			viewer.BeginRotate(winX, winY);
-			rotateScene = true;
+			sceneRot = true;
 		}
 		else {
-			Point3<int> a,b;
-			Vector3d target;
-			Vector3f l;
-
-			InitDrag(x, y, z, side, a, b);
-
-			Matrix44d modelview(viewer.Modelview());
-			double proj[16];
-			int viewport[4];
-			glGetDoublev(GL_PROJECTION_MATRIX, proj);
-			glGetIntegerv(GL_VIEWPORT, viewport);
-
-			static const float d = (blockSize+blockSpace) * 0.5f;
-			l = blocks[x][y][z]->location;
-			l.x -= d;
-			gluProject(l.x, l.y, l.z, modelview.data, proj, viewport, &target.x, &target.y, &target.z);
-
-			l = blocks[a.x][a.y][a.z]->location;
-			l.x -= d;
-			gluProject(l.x, l.y, l.z, modelview.data, proj, viewport, &drag.dir1.x, &drag.dir1.y, &drag.dir1.z);
-
-			l = blocks[b.x][b.y][b.z]->location;
-			l.x -= d;
-			gluProject(l.x, l.y, l.z, modelview.data, proj, viewport, &drag.dir2.x, &drag.dir2.y, &drag.dir2.z);
-
-			target.y = viewport[3] - target.y;
-			drag.dir1.y = viewport[3] - drag.dir1.y;
-			drag.dir2.y = viewport[3] - drag.dir2.y;
-			drag.dir1 -= target;
-			drag.dir2 -= target;
-			drag.dir1.Normalize();
-			drag.dir2.Normalize();
-
-			if (side == 0 || side == 2) {
-				if (y == 2) drag.dir1 = -drag.dir1;
-				if (z == 2) drag.dir2 = -drag.dir2;
-			}
-			else if (side == 1 || side == 3) {
-				if (y == 2) drag.dir1 = -drag.dir1;
-				if (x == 2) drag.dir2 = -drag.dir2;
-			}
-			else if (side == 4 || side == 5) {
-				if (z == 2) drag.dir1 = -drag.dir1;
-				if (x == 2) drag.dir2 = -drag.dir2;
-			}
-
-			if (side == 2 || side == 1 || side == 4) {
-				drag.dir1 = -drag.dir1;
-				drag.dir2 = -drag.dir2;
-			}
-
+			CalcRotDirections(block);
 			mousePos = Point2i(winX, winY);
-			mouseFlag = true;
-
-			char s[100] = "";
-			sprintf_s(s, "(%d, %d)", winX, winY);
-			SetWindowTextA(m_hwnd, s);
+			faceRot = true;
 		}
 	}
 }
 
 void AppWindow::OnMouseUp(MouseButton button, int x, int y)
 {
-	rotateScene = false;
+	sceneRot = false;
 }
 
 void AppWindow::OnMouseMove(UINT keysPressed, int x, int y)
 {
-	if (keysPressed & KeyModifiers::KM_RBUTTON || rotateScene) {
+	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneRot) {
 		viewer.Rotate(x, y);
 		RedrawWindow();
 	}
-	else if (keysPressed & KeyModifiers::KM_LBUTTON && mouseFlag) {
+	else if (keysPressed & KeyModifiers::KM_LBUTTON && faceRot) {
 		
 		Vector3d v(x - mousePos.x, y - mousePos.y, 0);
 		if (v.Length() >= 10)
 		{
 			v.Normalize();
-			double a1 = acos(v.Dot(v, drag.dir1));
-			double a2 = acos(v.Dot(v, drag.dir2));
-
-			double c[4] = {
-				a1, M_PI - a1,
-				a2, M_PI - a2,
-			};
-
-			int k = 0;
-			for (int i = 0; i < 4; i++) {
-				if (c[i] < c[k]) k = i;
-			}
-
-			if (k <= 1)
-				RotateFace(drag.face1, drag.index1, k == 1);
-			else RotateFace(drag.face2, drag.index2, k == 2);
-
-			mouseFlag = false;
+			MouseRot(v);
+			faceRot = false;
 		}
 	}
 }
