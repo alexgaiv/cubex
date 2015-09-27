@@ -10,8 +10,14 @@ class AppWindow : public GLWindow
 public:
 	AppWindow();
 private:
+	const float blockSize;
+	const float blockSpace;
+	const float rotateSpeed;
+
 	Viewer3D viewer;
 	CubeBlock *blocks[3][3][3];
+	Point2i mousePos;
+	bool mouseFlag, rotateScene;
 
 	static int rot[2][3][3][2];
 
@@ -28,9 +34,15 @@ private:
 		int index;
 		int dir;
 		Matrix44f mRot;
-	} curPlane;
+	} curFace;
 
-	void RotatePlane(Axis planeNormal, int index, bool clockWise);
+	struct {
+		Axis face1, face2;
+		int index1, index2;
+		Vector3d dir1, dir2, mouseDelta;
+	} drag;
+
+	void RotateFace(Axis faceNormal, int index, bool clockWise);
 	bool CheckIsSolved() const;
 
 	void InitBlocks();
@@ -40,17 +52,21 @@ private:
 	void AnimationStep();
 	void RenderScene();
 
+	bool GetBlockUnderMouse(int winX, int winY, int &x, int &y, int &z, int &side);
+	void InitDrag(int x, int y, int z, int side, Point3<int> &a, Point3<int> &b);
+
 	void OnCreate();
 	void OnDisplay();
 	void OnTimer();
 	void OnSize(int w, int h);
 	void OnMouseDown(MouseButton button, int x, int y);
+	void OnMouseUp(MouseButton button, int x, int y);
 	void OnMouseMove(UINT keysPressed, int x, int y);
 	void OnKeyDown(UINT keyCode) {
 		if (keyCode >= 0x31 && keyCode <= 0x39) {
 			keyCode -= 0x31;
 			Axis axis = (Axis)((keyCode) / 3);
-			RotatePlane(axis, keyCode % 3, GetAsyncKeyState(VK_SHIFT) ? true : false);
+			RotateFace(axis, keyCode % 3, GetAsyncKeyState(VK_SHIFT) ? true : false);
 		}
 	}
 	void OnDestroy();
