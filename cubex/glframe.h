@@ -3,38 +3,72 @@
 
 #include "lib/glwindow.h"
 #include "lib/viewer3d.h"
-#include "cubeblock.h"
+#include "cube.h"
 
-class AppWindow : public GLWindow
+#define WM_ROTATEFACE (WM_USER+1)
+
+template<class T, int capacity>
+class CircularArray
 {
 public:
-	AppWindow();
-private:
-	const float blockSize;
-	const float blockSpace;
-	const float rotateSpeed;
+	CircularArray() : size(0), cur(0) { }
+	int GetSize() { return size; }
+	void Clear() { size = cur = 0; }
 
+	void Add(T val) {
+		if (cur == capacity) cur = 0;
+		if (size != capacity) size++;
+		data[cur++] = val;
+	}
+	T *Delete() {
+		if (size == 0) return NULL;
+		if (cur > 0) cur--;
+		else cur = capacity - 1;
+		size--;
+		return &data[cur];
+	}
+private:
+	T data[capacity];
+	int size, cur;
+};
+
+class GLFrame : public GLWindow
+{
+public:
+	GLFrame();
+
+	void ResetCube() {
+		cube->Reset();
+		history.Clear();
+		RedrawWindow();
+	}
+
+	void ShuffleCube() {
+		cube->Shuffle();
+		history.Clear();
+	}
+
+	void CancelMove() {
+		if (!cube->IsAnim()) {
+			MoveDesc *m = history.Delete();
+			if (m) cube->BeginRotateFace(m->normal, m->index, !m->clockWise);	
+		}
+	}
+	bool CanCancelMove() { return history.GetSize() != 0; }
+private:
+	Cube *cube;
 	Viewer3D viewer;
-	CubeBlock *blocks[3][3][3];
+
 	Point2i mousePos;
 	bool faceRot, sceneRot;
 
-	static int rot[2][3][3][2];
-
-	enum Axis {
-		AXIS_X = 0,
-		AXIS_Y = 1,
-		AXIS_Z = 2
-	};
-
-	struct {
-		bool anim;
-		float angle;
+	struct MoveDesc {
 		Axis normal;
 		int index;
-		int dir;
-		Matrix44f mRot;
-	} curFace;
+		bool clockWise;
+	};
+
+	CircularArray<MoveDesc, 100> history;
 
 	struct {
 		Axis face[2];
@@ -49,14 +83,6 @@ private:
 		int side;
 	};
 
-	void RotateFace(Axis faceNormal, int index, bool clockWise);
-	bool CheckIsSolved() const;
-
-	void InitBlocks();
-	void InitBlockSides(CubeBlock *cb, int x, int y, int z);
-	void TransformColors();
-	void OrientateColors(CubeBlock *cb, int x, int y, int z);
-	void AnimationStep();
 	void RenderScene();
 
 	void GetBlockById(int id, BlockDesc &block);
@@ -76,8 +102,8 @@ private:
 	void OnTimer();
 	void OnSize(int w, int h);
 	void OnMouseDown(MouseButton button, int x, int y);
-	void OnMouseUp(MouseButton button, int x, int y);
 	void OnMouseMove(UINT keysPressed, int x, int y);
+	void OnMouseUp(MouseButton button, int x, int y);
 	void OnDestroy();
 };
 

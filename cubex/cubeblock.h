@@ -47,6 +47,7 @@ public:
 		memset(&clr, 0, sizeof(clr));
 	}
 	void Render();
+	bool IsSideColored(int side);
 private:
 	Color3b *GetSideColor(int idx) {
 		for (int i = 0; i < numSides; i++) {

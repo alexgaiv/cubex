@@ -10,6 +10,15 @@ Color3b CubeBlock::colors[6] =
 	Color3b(255,255,0),
 };
 
+bool CubeBlock::IsSideColored(int side)
+{
+	bool ret = false;
+	for (int i = 0; i < numSides; i++)
+		if (coloredSides[i] == side)
+			return true;
+	return false;
+}
+
 void CubeBlock::Render()
 {
 	glPushMatrix();

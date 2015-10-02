@@ -1,0 +1,20 @@
+#include <Windows.h>
+#include "resources.h"
+
+IDI_APPICON ICON "images/app.ico"
+IDI_NEWGAME BITMAP "images/newgame.bmp"
+IDI_SHUFFLE BITMAP "images/shuffle.bmp"
+IDI_CANCEL BITMAP "images/cancel.bmp"
+IDI_CANCEL_GRAYED BITMAP "images/cancel_grayed.bmp"
+
+STRINGTABLE
+LANGUAGE LANG_RUSSIAN, SUBLANG_NEUTRAL
+BEGIN
+	IDS_TOOLBARNAMES "/Новая игра/Перемешать/Отменить ход//"
+END
+
+STRINGTABLE
+LANGUAGE LANG_ENGLISH, SUBLANG_NEUTRAL
+BEGIN
+	IDS_TOOLBARNAMES "/New game/Shuffle/Cancel move//"
+END
