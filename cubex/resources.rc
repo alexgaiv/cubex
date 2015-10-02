@@ -2,10 +2,10 @@
 #include "resources.h"
 
 IDI_APPICON ICON "images/app.ico"
-IDI_NEWGAME BITMAP "images/newgame.bmp"
-IDI_SHUFFLE BITMAP "images/shuffle.bmp"
-IDI_CANCEL BITMAP "images/cancel.bmp"
-IDI_CANCEL_GRAYED BITMAP "images/cancel_grayed.bmp"
+IDI_NEWGAME ICON "images/newgame.ico"
+IDI_SHUFFLE ICON "images/shuffle.ico"
+IDI_CANCEL ICON "images/cancel.ico"
+IDI_CANCEL_GRAYED ICON "images/cancel_grayed.ico"
 
 STRINGTABLE
 LANGUAGE LANG_RUSSIAN, SUBLANG_NEUTRAL

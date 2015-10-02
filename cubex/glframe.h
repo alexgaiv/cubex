@@ -3,6 +3,7 @@
 
 #include "lib/glwindow.h"
 #include "lib/viewer3d.h"
+#include "lib/qslerp.h"
 #include "cube.h"
 
 #define WM_ROTATEFACE (WM_USER+1)
@@ -37,27 +38,15 @@ class GLFrame : public GLWindow
 public:
 	GLFrame();
 
-	void ResetCube() {
-		cube->Reset();
-		history.Clear();
-		RedrawWindow();
-	}
-
-	void ShuffleCube() {
-		cube->Shuffle();
-		history.Clear();
-	}
-
-	void CancelMove() {
-		if (!cube->IsAnim()) {
-			MoveDesc *m = history.Delete();
-			if (m) cube->BeginRotateFace(m->normal, m->index, !m->clockWise);	
-		}
-	}
+	void ResetCube();
+	void ShuffleCube();
+	void CancelMove();
 	bool CanCancelMove() { return history.GetSize() != 0; }
 private:
 	Cube *cube;
+	static Quaternion qDefaultView;
 	Viewer3D viewer;
+	QSlerp rotAnim;
 
 	Point2i mousePos;
 	bool faceRot, sceneRot;

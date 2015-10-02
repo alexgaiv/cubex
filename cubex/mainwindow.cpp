@@ -14,21 +14,21 @@ MainWindow::~MainWindow()
 void MainWindow::InitToolbar()
 {
 	HINSTANCE hInst = GetModuleHandle(NULL);
-	hImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR24, 0, 3);
-	hGrayedImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR24, 0, 3);
+	hImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, 3, 0);
+	hGrayedImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, 3, 0);
 
 	const int numBtns = 3;
 	int ids[numBtns] = { IDI_NEWGAME, IDI_SHUFFLE, IDI_CANCEL };
-	for (int i = 0; i < numBtns; i++) {
-		HBITMAP b = LoadBitmap(hInst, MAKEINTRESOURCE(ids[i]));
-		ImageList_Add(hImgList, b, b);
+
+	for (int i = 0; i < 3; i++) {
+		HICON hIcon = (HICON)LoadImage(hInst, MAKEINTRESOURCE(ids[i]), IMAGE_ICON, 24, 24, 0);
+		ImageList_AddIcon(hImgList, hIcon);
+
 		if (ids[i] == IDI_CANCEL) {
-			HBITMAP cancel_grayed = LoadBitmap(hInst, MAKEINTRESOURCE(IDI_CANCEL_GRAYED));
-			ImageList_Add(hGrayedImgList, cancel_grayed, b);
-			DeleteObject(cancel_grayed);
+			HICON cancel_grayed = (HICON)LoadImage(hInst, MAKEINTRESOURCE(IDI_CANCEL_GRAYED), IMAGE_ICON, 24, 24, 0);
+			ImageList_AddIcon(hGrayedImgList, cancel_grayed);
 		}
-		else ImageList_Add(hGrayedImgList, b, b);
-		DeleteObject(b);
+		else ImageList_AddIcon(hGrayedImgList, hIcon);
 	}
 
 	hToolbar = CreateWindow(TOOLBARCLASSNAME, "",

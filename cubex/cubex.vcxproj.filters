@@ -86,6 +86,9 @@
     <ClInclude Include="cube.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="lib\qslerp.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lib\datatypes.inl">

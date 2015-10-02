@@ -2,12 +2,34 @@
 #include <string>
 #include <sstream>
 
+Quaternion GLFrame::qDefaultView =
+	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 25.0f) *
+	Quaternion(Vector3f(0.0f, 1.0f, 0.0f), 45.0f);
 
 GLFrame::GLFrame()
 	: faceRot(false), sceneRot(false)
 {
 	ZeroMemory(&drag, sizeof(drag));
 	cube = new Cube();
+}
+
+void GLFrame::ResetCube() {
+	cube->Reset();
+	history.Clear();
+	rotAnim.Setup(viewer.qRotation, qDefaultView, 0.1f);
+	RedrawWindow();
+}
+
+void GLFrame::ShuffleCube() {
+	cube->Shuffle();
+	history.Clear();
+}
+
+void GLFrame::CancelMove() {
+	if (!cube->IsAnim()) {
+		MoveDesc *m = history.Delete();
+		if (m) cube->BeginRotateFace(m->normal, m->index, !m->clockWise);	
+	}
 }
 
 void GLFrame::RenderScene()
@@ -188,7 +210,7 @@ void GLFrame::MouseRot(const Vector3d &mouseDir)
 
 void GLFrame::SetPerspective(int w, int h)
 {
-	viewer.SetPerspective(60.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -200.0f), w, h);
+	viewer.SetPerspective(45.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
 }
 
 void GLFrame::OnCreate()
@@ -210,9 +232,9 @@ void GLFrame::OnCreate()
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
+	viewer.SetConstRotationSpeed(0.61f);
+	viewer.qRotation = qDefaultView;
 	SetTimer(m_hwnd, 1, 25, NULL);
-	viewer.qRotation *= Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 30.0f);
-	viewer.qRotation *= Quaternion(Vector3f(0.0f, 1.0f, 0.0f), 45.0f);
 }
 
 void GLFrame::OnDisplay()
@@ -222,7 +244,10 @@ void GLFrame::OnDisplay()
 
 void GLFrame::OnTimer()
 {
-	if (cube->AnimationStep())
+	bool c = !rotAnim.IsComplete();
+	if (c) viewer.qRotation = rotAnim.Next();
+
+	if (cube->AnimationStep() || c)
 		RedrawWindow();
 }
 

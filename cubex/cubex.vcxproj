@@ -142,6 +142,7 @@
     <ClInclude Include="lib\common.h" />
     <ClInclude Include="lib\datatypes.h" />
     <ClInclude Include="lib\glwindow.h" />
+    <ClInclude Include="lib\qslerp.h" />
     <ClInclude Include="lib\quaternion.h" />
     <ClInclude Include="lib\viewer3d.h" />
     <ClInclude Include="mainwindow.h" />
