@@ -9,6 +9,12 @@ enum Axis {
 	AXIS_Z = 2
 };
 
+struct BlockDesc
+{
+	Point3<int> pos;
+	int side;
+};
+
 class Cube
 {
 public:
@@ -21,9 +27,10 @@ public:
 
 	CubeBlock *blocks[3][3][3];
 
+	void GetBlockById(int id, BlockDesc &block);
 	void Reset();
-	bool CheckIsSolved() const;
 	void Shuffle(int count = 15);
+	bool IsSolved() const;
 	void BeginRotateFace(Axis faceNormal, int index, bool clockWise);
 	bool AnimationStep();
 	bool IsAnim() const { return curFace.anim; }

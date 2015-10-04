@@ -2,25 +2,49 @@
 #include <string>
 #include <sstream>
 
-Quaternion GLFrame::qDefaultView =
+Quaternion GLFrame::qResetView =
 	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 25.0f) *
 	Quaternion(Vector3f(0.0f, 1.0f, 0.0f), 45.0f);
 
 GLFrame::GLFrame()
-	: faceRot(false), sceneRot(false)
 {
+	wasShuffled = false;
+	numMoves = 0;
+	fSolvedAnim = false;
+	rotAngle = 0.0f;
+	faceDrag = sceneDrag = false;
+	isFaceRotating = false;
 	ZeroMemory(&drag, sizeof(drag));
+
 	cube = new Cube();
 }
 
-void GLFrame::ResetCube() {
+void GLFrame::ResetCube()
+{
+	if (!resetAnim.IsComplete()) return;
+
+	if (fSolvedAnim)
+		viewer.qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), rotAngle);
+
+	fSolvedAnim = false;
+	wasShuffled = false;
+	numMoves = 0;
+
 	cube->Reset();
 	history.Clear();
-	rotAnim.Setup(viewer.qRotation, qDefaultView, 0.1f);
+	resetAnim.Setup(viewer.qRotation, qResetView, 0.1f);
 	RedrawWindow();
 }
 
-void GLFrame::ShuffleCube() {
+void GLFrame::ShuffleCube()
+{
+	if (fSolvedAnim && resetAnim.IsComplete())
+		viewer.qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), rotAngle);
+
+	fSolvedAnim = false;
+	wasShuffled = true;
+	numMoves = 0;
+
 	cube->Shuffle();
 	history.Clear();
 }
@@ -28,8 +52,15 @@ void GLFrame::ShuffleCube() {
 void GLFrame::CancelMove() {
 	if (!cube->IsAnim()) {
 		MoveDesc *m = history.Delete();
-		if (m) cube->BeginRotateFace(m->normal, m->index, !m->clockWise);	
+		if (m) {
+			cube->BeginRotateFace(m->normal, m->index, !m->clockWise);	
+			numMoves--;
+		}
 	}
+}
+
+void GLFrame::SetPerspective(int w, int h) {
+	viewer.SetPerspective(45.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
 }
 
 void GLFrame::RenderScene()
@@ -37,29 +68,144 @@ void GLFrame::RenderScene()
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
+
 	float lightPos[4] = { 0.0f, 10.0f, 10.0f, 0.0f};
 	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
 
 	viewer.ApplyTransform();
+	if (fSolvedAnim) {
+		glRotatef(rotAngle, 1.0f, 1.0f, 1.0f);
+	}
+
 	cube->Render();
 	glPopMatrix();
 }
 
-void GLFrame::GetBlockById(int id, BlockDesc &b)
+void GLFrame::OnCreate()
 {
-	int blockIndex = id & 0x1f;
-	b.pos = Point3<int>(
-		blockIndex / 9,
-		(blockIndex / 3) % 3,
-		blockIndex % 3
-	);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_COLOR_MATERIAL);
 
-	b.side = 0;
-	for (int i = 0 ; i < 6; i++)
-		if (id & (1 << (i+5))) {
-			b.side = i;
-			break;
+	glShadeModel(GL_FLAT);
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+
+	float ambient[4]  = { 0.4f, 0.4f, 0.4f, 1.0f };
+	float diffuse[4]  = { 0.8f, 0.8f, 0.8f, 1.0f };
+
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+
+	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
+
+	viewer.SetConstRotationSpeed(0.61f);
+	viewer.qRotation = qResetView;
+	SetTimer(m_hwnd, 1, 25, NULL);
+}
+
+void GLFrame::OnSize(int w, int h)
+{
+	glViewport(0, 0, w, h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	SetPerspective(w, h);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+
+void GLFrame::OnMouseDown(MouseButton button, int winX, int winY)
+{
+	if (fSolvedAnim) return;
+	if (button == MouseButton::RBUTTON) {
+		viewer.BeginRotate(winX, winY);
+	}
+	else if (button == MouseButton::LBUTTON)
+	{
+		BlockDesc block;
+		ZeroMemory(&drag, sizeof(drag));
+		if (!GetBlockUnderMouse(winX, winY, block)) {
+			viewer.BeginRotate(winX, winY);
+			sceneDrag = true;
 		}
+		else if (!cube->IsAnim()) {
+			CubeBlock *b = cube->blocks[block.pos.x][block.pos.y][block.pos.z];
+			if (b->IsSideColored(block.side)) {
+				CalcRotDirections(block);
+				mousePos = Point2i(winX, winY);
+				faceDrag = true;
+			}
+		}
+	}
+}
+
+void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
+{
+	if (fSolvedAnim) return;
+	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneDrag) {
+		viewer.Rotate(x, y);
+		RedrawWindow();
+	}
+	else if (keysPressed & KeyModifiers::KM_LBUTTON && faceDrag) {
+		
+		Vector3d v(x - mousePos.x, y - mousePos.y, 0);
+		if (v.Length() >= 10)
+		{
+			v.Normalize();
+			MouseRot(v);
+			faceDrag = false;
+		}
+	}
+}
+
+void GLFrame::OnMouseUp(MouseButton button, int x, int y)
+{
+	sceneDrag = false;
+}
+
+void GLFrame::OnTimer()
+{
+	if (fSolvedAnim) {
+		rotAngle += 3.0f;
+		if (rotAngle > 360.0f) rotAngle -= 360.0f;
+		RedrawWindow();
+		return;
+	}
+
+	bool fViewAnim = !resetAnim.IsComplete();
+	if (fViewAnim) viewer.qRotation = resetAnim.Next();
+
+	bool fCubeAnim = cube->AnimationStep();
+	if (isFaceRotating && !fCubeAnim) {
+		if (cube->IsSolved())
+		{
+			if (wasShuffled || numMoves >= 20) {
+				OnCubeSolved();
+			}
+			wasShuffled = false;
+			numMoves = 0;
+		}
+		isFaceRotating = false;
+	}
+
+	if (fCubeAnim || fViewAnim)
+		RedrawWindow();
+}
+
+void GLFrame::OnDestroy()
+{
+	KillTimer(m_hwnd, 1);
+	delete cube;
+}
+
+void GLFrame::OnCubeSolved()
+{
+	fSolvedAnim = true;
+	rotAngle = 0.0f;
+	SendMessage(GetParent(m_hwnd), WM_CUBESOLVED, 0, 0);
 }
 
 bool GLFrame::GetBlockUnderMouse(int winX, int winY, BlockDesc &b)
@@ -100,7 +246,7 @@ bool GLFrame::GetBlockUnderMouse(int winX, int winY, BlockDesc &b)
 		}
 	}
 
-	GetBlockById(id, b);
+	cube->GetBlockById(id, b);
 	return true;
 }
 
@@ -203,115 +349,10 @@ void GLFrame::MouseRot(const Vector3d &mouseDir)
 		m.index = drag.index[0];
 		m.clockWise = k == 2;
 	}
+
 	cube->BeginRotateFace(m.normal, m.index, m.clockWise);
 	history.Add(m);
+	isFaceRotating = true;
+	numMoves++;
 	SendMessage(GetParent(m_hwnd), WM_ROTATEFACE, 0, 0);
-}
-
-void GLFrame::SetPerspective(int w, int h)
-{
-	viewer.SetPerspective(45.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
-}
-
-void GLFrame::OnCreate()
-{
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_COLOR_MATERIAL);
-
-	glShadeModel(GL_FLAT);
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-	float ambient[4]  = { 0.4f, 0.4f, 0.4f, 1.0f };
-	float diffuse[4]  = { 0.8f, 0.8f, 0.8f, 1.0f };
-
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-	viewer.SetConstRotationSpeed(0.61f);
-	viewer.qRotation = qDefaultView;
-	SetTimer(m_hwnd, 1, 25, NULL);
-}
-
-void GLFrame::OnDisplay()
-{
-	RenderScene();
-}
-
-void GLFrame::OnTimer()
-{
-	bool c = !rotAnim.IsComplete();
-	if (c) viewer.qRotation = rotAnim.Next();
-
-	if (cube->AnimationStep() || c)
-		RedrawWindow();
-}
-
-void GLFrame::OnSize(int w, int h)
-{
-	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	SetPerspective(w, h);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-}
-
-void GLFrame::OnMouseDown(MouseButton button, int winX, int winY)
-{
-	if (button == MouseButton::RBUTTON) {
-		viewer.BeginRotate(winX, winY);
-	}
-	else if (button == MouseButton::LBUTTON)
-	{
-		BlockDesc block;
-		ZeroMemory(&drag, sizeof(drag));
-		if (!GetBlockUnderMouse(winX, winY, block)) {
-			viewer.BeginRotate(winX, winY);
-			sceneRot = true;
-		}
-		else if (!cube->IsAnim()) {
-			CubeBlock *b = cube->blocks[block.pos.x][block.pos.y][block.pos.z];
-			if (b->IsSideColored(block.side)) {
-				CalcRotDirections(block);
-				mousePos = Point2i(winX, winY);
-				faceRot = true;
-			}
-		}
-	}
-}
-
-void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
-{
-	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneRot) {
-		viewer.Rotate(x, y);
-		RedrawWindow();
-	}
-	else if (keysPressed & KeyModifiers::KM_LBUTTON && faceRot) {
-		
-		Vector3d v(x - mousePos.x, y - mousePos.y, 0);
-		if (v.Length() >= 10)
-		{
-			v.Normalize();
-			MouseRot(v);
-			faceRot = false;
-		}
-	}
-}
-
-void GLFrame::OnMouseUp(MouseButton button, int x, int y)
-{
-	sceneRot = false;
-}
-
-void GLFrame::OnDestroy()
-{
-	KillTimer(m_hwnd, 1);
-	delete cube;
 }

@@ -41,14 +41,17 @@ public:
 	BlockColor clr;
 	int coloredSides[3];
 
-	CubeBlock(float size)
-		: size(size), pickId(0), numSides(0)
+	CubeBlock(float size, UINT pickId)
+		: size(size), pickId(pickId), numSides(0)
 	{
 		memset(&clr, 0, sizeof(clr));
+		for (int i = 0; i < 6; i++)
+			sideId[i] = pickId | (1 << (i+5));
 	}
 	void Render();
 	bool IsSideColored(int side);
 private:
+	int sideId[6];
 	Color3b *GetSideColor(int idx) {
 		for (int i = 0; i < numSides; i++) {
 			if (coloredSides[i] == idx)
@@ -56,7 +59,6 @@ private:
 		}
 		return NULL;
 	}
-	UINT GetSideId(int i) { return pickId | (1 << (i+5)); }
 };
 
 #endif // _ACTOR_H_

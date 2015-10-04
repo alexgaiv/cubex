@@ -94,6 +94,7 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 	gl_frame = new GLFrame();
 	gl_frame->CreateParam("Cubex", 0, barRect.bottom - barRect.top, wndRect.right - wndRect.left,
 		wndRect.bottom - wndRect.top, WS_VISIBLE|WS_CHILD, 0, m_hwnd);
+	SetFocus(gl_frame->m_hwnd);
 
 	return 0;
 }
@@ -104,9 +105,11 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 		switch(LOWORD(wParam)) 
 		{
 		case IDC_NEWGAME:
+			{
 			gl_frame->ResetCube();
 			EnableCancelBtn(false);
 			break;
+			}
 		case IDC_SHUFFLE:
 			gl_frame->ShuffleCube();
 			EnableCancelBtn(false);
@@ -122,9 +125,13 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT MainWindow::OnFaceRotate(UINT msg, WPARAM wParam, LPARAM lParam)
-{
+LRESULT MainWindow::OnFaceRotate(UINT msg, WPARAM wParam, LPARAM lParam) {
 	EnableCancelBtn(true);
+	return 0;
+}
+
+LRESULT MainWindow::OnCubeSolved(UINT msg, WPARAM wParam, LPARAM lParam) {
+	EnableCancelBtn(false);
 	return 0;
 }
 

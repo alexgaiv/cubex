@@ -27,6 +27,7 @@ private:
 	LRESULT OnSize(UINT msg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCommand(UINT msg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnFaceRotate(UINT msg, WPARAM wParam, LPARAM lParam);
+	LRESULT OnCubeSolved(UINT msg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam);
 
 	BEGIN_MSG_MAP
@@ -34,6 +35,7 @@ private:
 		MSG_HANDLER(WM_SIZE, OnSize)
 		MSG_HANDLER(WM_COMMAND, OnCommand)
 		MSG_HANDLER(WM_ROTATEFACE, OnFaceRotate)
+		MSG_HANDLER(WM_CUBESOLVED, OnCubeSolved)
 		MSG_HANDLER(WM_DESTROY, OnDestroy)
 	END_MSG_MAP
 };

@@ -21,9 +21,9 @@ int Cube::rot[2][3][3][2] =
 
 Cube::Cube()
 	: reseting(false),
-	blockSize(30.0f), blockSpace(2.0f), rotateSpeed(12.0f)
+	blockSize(30.0f), blockSpace(0.0f), rotateSpeed(12.0f)
 {
-	srand(time(NULL));
+	srand((UINT)time(NULL));
 	ZeroMemory(blocks, sizeof(blocks));
 	ZeroMemory(&shuffle, sizeof(shuffle));
 	ZeroMemory(&curFace, sizeof(curFace));
@@ -33,9 +33,8 @@ Cube::Cube()
 	UINT pickId = 0;
 	FORALLBLOCKS(x, y, z) {
 		CubeBlock *&b = blocks[x][y][z];
-		b = new CubeBlock(blockSize);
+		b = new CubeBlock(blockSize, pickId++);
 		b->location = Vector3f((x-1)*d, (y-1)*d, (z-1)*d);
-		b->pickId = pickId++;
 				
 		InitBlockSides(b, x, y, z);
 	}
@@ -45,6 +44,33 @@ Cube::~Cube()
 {
 	FORALLBLOCKS(x, y, z)
 		delete blocks[x][y][z];
+}
+
+void Cube::GetBlockById(int id, BlockDesc &b)
+{
+	int blockIndex = id & 0x1f;
+	b.pos = Point3<int>(
+		blockIndex / 9,
+		(blockIndex / 3) % 3,
+		blockIndex % 3
+	);
+
+	b.side = -1;
+	if (id & 0x7e0) {
+		for (int i = 0 ; i < 6; i++)
+			if (id & (1 << (i+5))) {
+				b.side = i;
+				break;
+			}
+	}
+	else {
+		CubeBlock *cb = blocks[b.pos.x][b.pos.y][b.pos.z];
+		if (cb->numSides == 1)
+			b.side = cb->coloredSides[0];
+		else if (cb->numSides == 2) {
+			//b.side = cb->coloredSides[1];
+		}
+	}
 }
 
 void Cube::Reset()
@@ -65,24 +91,35 @@ void Cube::DoReset()
 	reseting = false;
 }
 
-bool Cube::CheckIsSolved() const
-{
-	FORALLBLOCKS(x, y, z) {
-		const CubeBlock *b = blocks[x][y][z];
-		for (int i = 0; i < b->numSides; i++) {
-			if (b->clr.colorIndices[i] != b->coloredSides[i])
-				return false;
-		}
-	}
-	return true;
-}
-
 void Cube::Shuffle(int count)
 {
 	if (!curFace.anim) {
 		shuffle.curCount = shuffle.maxCount = count;
 		ShuffleStep();
 	}
+}
+
+bool Cube::IsSolved() const
+{
+	int sideColors[6];
+	memset(sideColors, -1, sizeof(sideColors));
+
+	FORALLBLOCKS(x, y, z)
+	{
+		CubeBlock *b = blocks[x][y][z];
+		for (int i = 0; i < b->numSides; i++)
+		{
+			int s = b->coloredSides[i];
+			int c = b->clr.colorIndices[i];
+
+			if (sideColors[s] == -1) {
+				sideColors[s] = c;
+			}
+			else if (sideColors[s] != c)
+				return false;
+		}
+	}
+	return true;
 }
 
 void Cube::BeginRotateFace(Axis faceNormal, int index, bool clockWise)
@@ -160,12 +197,12 @@ void Cube::ShuffleStep()
 		index = rand() % 3;
 	} while (shuffle.curCount != shuffle.maxCount &&
 		normal == shuffle.prevNormal && index == shuffle.prevIndex);
-			
+
+	BeginRotateFace(normal, index, dir);		
+
 	shuffle.prevNormal = normal;
 	shuffle.prevIndex = index;
 	shuffle.curCount--;
-
-	BeginRotateFace(normal, index, dir);
 }
 
 void Cube::InitBlockSides(CubeBlock *cb, int x, int y, int z)
