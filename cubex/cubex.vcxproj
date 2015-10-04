@@ -152,13 +152,17 @@
     <None Include="lib\datatypes.inl" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="app.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="resources.rc">
       <SubType>
       </SubType>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="images\app.ico" />
+    <Image Include="images\cancel.ico" />
+    <Image Include="images\cancel_grayed.ico" />
+    <Image Include="images\newgame.ico" />
+    <Image Include="images\shuffle.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

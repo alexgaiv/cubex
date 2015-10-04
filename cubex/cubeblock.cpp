@@ -10,6 +10,17 @@ Color3b CubeBlock::colors[6] =
 	Color3b(255,255,0),
 };
 
+bool CubeBlock::fRenderPickMode = false;
+
+CubeBlock::CubeBlock(float size, UINT pickId)
+	: size(size), pickId(pickId), numSides(0), edgeSize(1.45f)
+{
+	memset(&clr, 0, sizeof(clr));
+	memset(coloredSides, 0, sizeof(coloredSides));
+	for (int i = 0; i < 6; i++)
+		sideId[i] = pickId | (1 << (i+5));
+}
+
 bool CubeBlock::IsSideColored(int side)
 {
 	bool ret = false;
@@ -24,14 +35,14 @@ void CubeBlock::Render()
 	glPushMatrix();
 	this->ApplyTransform();
 
-	float s = size / 2;
 	Color3b *c = NULL;
+	float s = size * 0.5f;
+	float s2 = s - (fRenderPickMode ? 0.0f : edgeSize);
 
-	float d = 1.4f;
-	float s2 = s - d;
+	if (!fRenderPickMode) DrawEdges(s, s2);
 
 	glInitNames();
-	glPushName(42);
+	glPushName(0);
 
 	glLoadName(sideId[0]);
 	if (c = GetSideColor(0))
@@ -105,12 +116,12 @@ void CubeBlock::Render()
 		glVertex3f(-s2, -s, s2);
 	glEnd();
 
+	glPopMatrix();
+}
 
+void CubeBlock::DrawEdges(float s, float s2)
+{
 	glColor3f(0.0f, 0.0f, 0.0f);
-	if (IsSideColored(0))
-		glLoadName(sideId[0]);
-	else glLoadName(pickId);
-
 	glBegin(GL_QUADS);
 		glVertex3f(-s2, -s2, s);
 		glVertex3f(-s2, s2, s);
@@ -131,11 +142,7 @@ void CubeBlock::Render()
 		glVertex3f(-s2, -s, s2);
 		glVertex3f(-s, -s2, s2);
 		glVertex3f(-s, -s2, -s2);
-	glEnd();
 
-	//glLoadName(sideId[1]);
-	glLoadName(pickId);
-	glBegin(GL_QUADS);
 		glVertex3f(-s2, s, -s2);
 		glVertex3f(s2, s, -s2);
 		glVertex3f(s2, s2, -s);
@@ -145,14 +152,7 @@ void CubeBlock::Render()
 		glVertex3f(s2, -s2, -s);
 		glVertex3f(s2, -s, -s2);
 		glVertex3f(-s2, -s, -s2);
-	glEnd();
 
-	//glLoadName(sideId[2]);
-	if (IsSideColored(2))
-		glLoadName(sideId[2]);
-	else glLoadName(pickId);
-
-	glBegin(GL_QUADS);
 		glVertex3f(s2, -s2, -s);
 		glVertex3f(s2, s2, -s);
 		glVertex3f(s, s2, -s2);
@@ -172,10 +172,7 @@ void CubeBlock::Render()
 		glVertex3f(s, -s2, s2);
 		glVertex3f(s2, -s, s2);
 		glVertex3f(s2, -s, -s2);
-	glEnd();
 
-	glLoadName(pickId);
-	glBegin(GL_QUADS);
 		glVertex3f(s2, s, s2);
 		glVertex3f(-s2, s, s2);
 		glVertex3f(-s2, s2, s);
@@ -220,6 +217,4 @@ void CubeBlock::Render()
 		glVertex3f(s2, -s2, s);
 		glVertex3f(s2, -s, s2);
 	glEnd();
-
-	glPopMatrix();
 }

@@ -34,6 +34,7 @@ class CubeBlock : public Actor
 {
 public:
 	static Color3b colors[6];
+	static bool fRenderPickMode;
 
 	float size;
 	UINT pickId;
@@ -41,17 +42,15 @@ public:
 	BlockColor clr;
 	int coloredSides[3];
 
-	CubeBlock(float size, UINT pickId)
-		: size(size), pickId(pickId), numSides(0)
-	{
-		memset(&clr, 0, sizeof(clr));
-		for (int i = 0; i < 6; i++)
-			sideId[i] = pickId | (1 << (i+5));
-	}
+	CubeBlock(float size, UINT pickId);
 	void Render();
 	bool IsSideColored(int side);
 private:
+	const float edgeSize;
 	int sideId[6];
+
+	void DrawEdges(float s, float s2);
+
 	Color3b *GetSideColor(int idx) {
 		for (int i = 0; i < numSides; i++) {
 			if (coloredSides[i] == idx)

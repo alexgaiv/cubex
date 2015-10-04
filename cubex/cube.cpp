@@ -56,21 +56,11 @@ void Cube::GetBlockById(int id, BlockDesc &b)
 	);
 
 	b.side = -1;
-	if (id & 0x7e0) {
-		for (int i = 0 ; i < 6; i++)
-			if (id & (1 << (i+5))) {
-				b.side = i;
-				break;
-			}
-	}
-	else {
-		CubeBlock *cb = blocks[b.pos.x][b.pos.y][b.pos.z];
-		if (cb->numSides == 1)
-			b.side = cb->coloredSides[0];
-		else if (cb->numSides == 2) {
-			//b.side = cb->coloredSides[1];
+	for (int i = 0; i < 6; i++)
+		if (id & (1 << (i+5))) {
+			b.side = i;
+			break;
 		}
-	}
 }
 
 void Cube::Reset()

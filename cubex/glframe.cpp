@@ -85,18 +85,10 @@ void GLFrame::OnCreate()
 {
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
 	glEnable(GL_COLOR_MATERIAL);
 
 	glShadeModel(GL_FLAT);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
-	float ambient[4]  = { 0.4f, 0.4f, 0.4f, 1.0f };
-	float diffuse[4]  = { 0.8f, 0.8f, 0.8f, 1.0f };
-
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
 
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
 
@@ -226,7 +218,9 @@ bool GLFrame::GetBlockUnderMouse(int winX, int winY, BlockDesc &b)
 	SetPerspective(viewport[2], viewport[3]);
 
 	glDisable(GL_CULL_FACE);
+	CubeBlock::fRenderPickMode = true;
 	RenderScene();
+	CubeBlock::fRenderPickMode = false;
 	glEnable(GL_CULL_FACE);
 
 	glMatrixMode(GL_PROJECTION);

@@ -96,13 +96,25 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="app.ico">
-      <Filter>Файлы ресурсов</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="resources.rc">
       <Filter>Файлы ресурсов</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="images\app.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="images\cancel.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="images\cancel_grayed.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="images\newgame.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="images\shuffle.ico">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
   </ItemGroup>
 </Project>
