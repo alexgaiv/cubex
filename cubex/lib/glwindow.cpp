@@ -54,10 +54,10 @@ PIXELFORMATDESCRIPTOR GLWindow::GetDCPixelFormat()
 	PIXELFORMATDESCRIPTOR pfd = { };
 	pfd.nSize = sizeof(pfd);
 	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL;
+	pfd.dwFlags = PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER;
 	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 24;
-	pfd.cDepthBits = 32;
+	pfd.cColorBits = 32;
+	pfd.cDepthBits = 24;
 	return pfd;
 }
 
@@ -207,8 +207,24 @@ void GLWindow::_InitRC()
 	int iPixelFormat = ChoosePixelFormat(m_hdc, &pfd);
 	SetPixelFormat(m_hdc, iPixelFormat, &pfd);
 
-	m_hrc = wglCreateContext(m_hdc);
-	wglMakeCurrent(m_hdc, m_hrc);
+	HGLRC hTempRC = wglCreateContext(m_hdc);
+	wglMakeCurrent(m_hdc, hTempRC);
+
+	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
+		(PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+
+	if (wglCreateContextAttribsARB != NULL)
+	{
+		int attribs[] = {
+			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
+		};
+		m_hrc = wglCreateContextAttribsARB(m_hdc, NULL, attribs);
+		wglMakeCurrent(m_hdc, m_hrc);
+		wglDeleteContext(hTempRC);
+	}
+	else {
+		m_hrc = hTempRC;
+	}
 }
 
 void GLWindow::_ChangeDisplaySettings()

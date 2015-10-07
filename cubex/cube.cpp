@@ -21,7 +21,7 @@ int Cube::rot[2][3][3][2] =
 
 Cube::Cube()
 	: reseting(false),
-	blockSize(30.0f), blockSpace(0.0f), rotateSpeed(12.0f)
+	blockSize(CubeBlock::size), blockSpace(0.0f), rotateSpeed(12.0f)
 {
 	srand((UINT)time(NULL));
 	ZeroMemory(blocks, sizeof(blocks));
@@ -33,7 +33,7 @@ Cube::Cube()
 	UINT pickId = 0;
 	FORALLBLOCKS(x, y, z) {
 		CubeBlock *&b = blocks[x][y][z];
-		b = new CubeBlock(blockSize, pickId++);
+		b = new CubeBlock(pickId++);
 		b->location = Vector3f((x-1)*d, (y-1)*d, (z-1)*d);
 				
 		InitBlockSides(b, x, y, z);

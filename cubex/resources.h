@@ -1,16 +1,16 @@
 #ifndef _RESOURCES_H_
 #define _RESOURCES_H_
 
-#define IDI_APPICON 1
-#define IDI_NEWGAME 2
-#define IDI_SHUFFLE 3
-#define IDI_CANCEL 4
-#define IDI_CANCEL_GRAYED 5
+#define IDI_APPICON 10
+#define IDI_NEWGAME 11
+#define IDI_SHUFFLE 12
+#define IDI_CANCEL 13
+#define IDI_CANCEL_GRAYED 14
 
-#define IDS_TOOLBARNAMES 6
+#define IDS_TOOLBARNAMES 15
 
-#define IDC_NEWGAME 7
-#define IDC_SHUFFLE 8
-#define IDC_CANCEL 9
+#define IDC_NEWGAME 16
+#define IDC_SHUFFLE 17
+#define IDC_CANCEL 18
 
 #endif // _RESOURCES_H_

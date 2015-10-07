@@ -1,6 +1,5 @@
 #include "glFrame.h"
 #include <string>
-#include <sstream>
 
 Quaternion GLFrame::qResetView =
 	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 25.0f) *
@@ -15,8 +14,6 @@ GLFrame::GLFrame()
 	faceDrag = sceneDrag = false;
 	isFaceRotating = false;
 	ZeroMemory(&drag, sizeof(drag));
-
-	cube = new Cube();
 }
 
 void GLFrame::ResetCube()
@@ -69,22 +66,46 @@ void GLFrame::RenderScene()
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 
-	float lightPos[4] = { 0.0f, 10.0f, 10.0f, 0.0f};
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
-
 	viewer.ApplyTransform();
 	if (fSolvedAnim) {
 		glRotatef(rotAngle, 1.0f, 1.0f, 1.0f);
 	}
 
 	cube->Render();
+
+	/*if (fSolvedAnim && !CubeBlock::fRenderPickMode)
+	{
+		RECT winRect = { };
+		GetClientRect(m_hwnd, &winRect);
+
+		glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		glOrtho(0.0, winRect.right - winRect.left, winRect.bottom - winRect.top, 0.0, -1.0f, 1.0f);
+
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+
+		glColor3f(1.0f, 0.0f, 0.0f);
+		glRasterPos2i(50, 50);
+		
+		glListBase(1);
+		//glCallLists(5, GL_UNSIGNED_BYTE, "Hello");
+
+		glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+	}*/
+
+	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 }
 
 void GLFrame::OnCreate()
 {
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	glEnable(GL_COLOR_MATERIAL);
 
 	glShadeModel(GL_FLAT);
@@ -95,6 +116,11 @@ void GLFrame::OnCreate()
 	viewer.SetConstRotationSpeed(0.61f);
 	viewer.qRotation = qResetView;
 	SetTimer(m_hwnd, 1, 25, NULL);
+
+	SelectObject(m_hdc, GetStockObject(SYSTEM_FONT));
+	wglUseFontBitmaps(m_hdc, 0, 255, 1);
+
+	cube = new Cube();
 }
 
 void GLFrame::OnSize(int w, int h)
@@ -202,44 +228,17 @@ void GLFrame::OnCubeSolved()
 
 bool GLFrame::GetBlockUnderMouse(int winX, int winY, BlockDesc &b)
 {
-	const int selBufferSize = 27*3*4;
-	static UINT selectBuffer[selBufferSize] = { };
-	int hitCount = 0, viewport[4] = { };
-
-	glSelectBuffer(selBufferSize, selectBuffer);
-	glGetIntegerv(GL_VIEWPORT, viewport);
-
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glRenderMode(GL_SELECT);
-
-	glLoadIdentity();
-	gluPickMatrix(winX, viewport[3] - winY, 2, 2, viewport);
-	SetPerspective(viewport[2], viewport[3]);
-
-	glDisable(GL_CULL_FACE);
 	CubeBlock::fRenderPickMode = true;
 	RenderScene();
 	CubeBlock::fRenderPickMode = false;
-	glEnable(GL_CULL_FACE);
 
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
+	int viewport[4] = { };
+	GLubyte clr[3] = { };
+	glGetIntegerv(GL_VIEWPORT, viewport);
+	glReadPixels(winX, viewport[3] - winY, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, clr);
 
-	hitCount = glRenderMode(GL_RENDER);
-	if (hitCount <= 0) return false;
-
-	UINT minZ = UINT_MAX;
-	UINT id = 0;
-	for (int i = 0; i < hitCount; i++) {
-		UINT z = selectBuffer[i*4+1];
-		if (z <= minZ) {
-			id = selectBuffer[i*4+3];
-			minZ = z;
-		}
-	}
-
+	if (clr[2] != 1) return false;
+	UINT id = clr[0] | (clr[1] << 8);
 	cube->GetBlockById(id, b);
 	return true;
 }

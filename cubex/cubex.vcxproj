@@ -65,7 +65,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(ProjectDir)\gl;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -107,6 +109,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Windows</SubSystem>
+      <ManifestFile>cubex.exe.manifest</ManifestFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -129,7 +132,9 @@
     <ClCompile Include="glframe.cpp" />
     <ClCompile Include="lib\basewindow.cpp" />
     <ClCompile Include="lib\glwindow.cpp" />
+    <ClCompile Include="lib\initext.cpp" />
     <ClCompile Include="lib\quaternion.cpp" />
+    <ClCompile Include="lib\vertexbuffer.cpp" />
     <ClCompile Include="lib\viewer3d.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
@@ -142,8 +147,10 @@
     <ClInclude Include="lib\common.h" />
     <ClInclude Include="lib\datatypes.h" />
     <ClInclude Include="lib\glwindow.h" />
+    <ClInclude Include="lib\initext.h" />
     <ClInclude Include="lib\qslerp.h" />
     <ClInclude Include="lib\quaternion.h" />
+    <ClInclude Include="lib\vertexbuffer.h" />
     <ClInclude Include="lib\viewer3d.h" />
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="resources.h" />
@@ -163,6 +170,9 @@
     <Image Include="images\cancel_grayed.ico" />
     <Image Include="images\newgame.ico" />
     <Image Include="images\shuffle.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="cubex.exe.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

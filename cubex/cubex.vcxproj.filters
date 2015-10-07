@@ -51,6 +51,12 @@
     <ClCompile Include="cube.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
+    <ClCompile Include="lib\vertexbuffer.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\initext.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h">
@@ -89,6 +95,12 @@
     <ClInclude Include="lib\qslerp.h">
       <Filter>lib\include</Filter>
     </ClInclude>
+    <ClInclude Include="lib\initext.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\vertexbuffer.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lib\datatypes.inl">
@@ -116,5 +128,8 @@
     <Image Include="images\shuffle.ico">
       <Filter>Файлы ресурсов</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="cubex.exe.manifest" />
   </ItemGroup>
 </Project>

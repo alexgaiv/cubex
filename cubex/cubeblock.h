@@ -2,6 +2,7 @@
 #define _ACTOR_H_
 
 #include "lib/quaternion.h"
+#include "lib/vertexbuffer.h"
 
 class Actor
 {
@@ -35,21 +36,23 @@ class CubeBlock : public Actor
 public:
 	static Color3b colors[6];
 	static bool fRenderPickMode;
+	static const float size;
 
-	float size;
 	UINT pickId;
 	int numSides;
 	BlockColor clr;
 	int coloredSides[3];
 
-	CubeBlock(float size, UINT pickId);
+	CubeBlock(UINT pickId);
+	~CubeBlock();
+
 	void Render();
 	bool IsSideColored(int side);
 private:
-	const float edgeSize;
+	static VertexBuffer *edges, *faces, *faces_pickMode;
 	int sideId[6];
 
-	void DrawEdges(float s, float s2);
+	static int InitVertices();
 
 	Color3b *GetSideColor(int idx) {
 		for (int i = 0; i < numSides; i++) {
