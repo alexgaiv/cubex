@@ -21,20 +21,19 @@ int Cube::rot[2][3][3][2] =
 
 Cube::Cube()
 	: reseting(false),
-	blockSize(CubeBlock::size), blockSpace(0.0f), rotateSpeed(12.0f)
+	blockSize(CubeBlock::size), rotateSpeed(13.0f)
 {
 	srand((UINT)time(NULL));
 	ZeroMemory(blocks, sizeof(blocks));
-	ZeroMemory(&shuffle, sizeof(shuffle));
+	ZeroMemory(&mixup, sizeof(mixup));
 	ZeroMemory(&curFace, sizeof(curFace));
 	curFace.mRot.LoadIdentity();
 
-	const float d = blockSize + blockSpace;
 	UINT pickId = 0;
 	FORALLBLOCKS(x, y, z) {
 		CubeBlock *&b = blocks[x][y][z];
 		b = new CubeBlock(pickId++);
-		b->location = Vector3f((x-1)*d, (y-1)*d, (z-1)*d);
+		b->location = Vector3f((x-1)*blockSize, (y-1)*blockSize, (z-1)*blockSize);
 				
 		InitBlockSides(b, x, y, z);
 	}
@@ -71,7 +70,7 @@ void Cube::Reset()
 
 void Cube::DoReset()
 {
-	ZeroMemory(&shuffle, sizeof(shuffle));
+	ZeroMemory(&mixup, sizeof(mixup));
 	FORALLBLOCKS(x, y, z) {
 		CubeBlock *b = blocks[x][y][z];
 		for (int i = 0; i < b->numSides; i++) {
@@ -81,11 +80,11 @@ void Cube::DoReset()
 	reseting = false;
 }
 
-void Cube::Shuffle(int count)
+void Cube::MixUp(int steps)
 {
 	if (!curFace.anim) {
-		shuffle.curCount = shuffle.maxCount = count;
-		ShuffleStep();
+		mixup.curSteps = mixup.maxSteps = steps;
+		MixupStep();
 	}
 }
 
@@ -137,7 +136,7 @@ bool Cube::AnimationStep()
 
 		if (!reseting) {
 			TransformColors();
-			if (shuffle.curCount) ShuffleStep();
+			if (mixup.curSteps) MixupStep();
 		}
 		else DoReset();
 	}
@@ -176,7 +175,7 @@ void Cube::Render() const
 	}
 }
 
-void Cube::ShuffleStep()
+void Cube::MixupStep()
 {
 	Axis normal;
 	int index;
@@ -185,14 +184,14 @@ void Cube::ShuffleStep()
 	do {
 		normal = (Axis)(rand() % 3);
 		index = rand() % 3;
-	} while (shuffle.curCount != shuffle.maxCount &&
-		normal == shuffle.prevNormal && index == shuffle.prevIndex);
+	} while (mixup.curSteps != mixup.maxSteps &&
+		normal == mixup.prevNormal && index == mixup.prevIndex);
 
 	BeginRotateFace(normal, index, dir);		
 
-	shuffle.prevNormal = normal;
-	shuffle.prevIndex = index;
-	shuffle.curCount--;
+	mixup.prevNormal = normal;
+	mixup.prevIndex = index;
+	mixup.curSteps--;
 }
 
 void Cube::InitBlockSides(CubeBlock *cb, int x, int y, int z)

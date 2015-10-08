@@ -1,6 +1,7 @@
 #ifndef _APP_WINDOW_H_
 #define _APP_WINDOW_H_
 
+#include <string>
 #include <time.h>
 #include "lib/glwindow.h"
 #include "lib/viewer3d.h"
@@ -11,19 +12,19 @@
 #define WM_CUBESOLVED (WM_USER+2)
 
 template<class T, int capacity>
-class CircularArray
+class CircularStack
 {
 public:
-	CircularArray() : size(0), cur(0) { }
+	CircularStack() : size(0), cur(0) { }
 	int GetSize() { return size; }
 	void Clear() { size = cur = 0; }
 
-	void Add(T val) {
+	void Push(T val) {
 		if (cur == capacity) cur = 0;
 		if (size != capacity) size++;
 		data[cur++] = val;
 	}
-	T *Delete() {
+	T *Pop() {
 		if (size == 0) return NULL;
 		if (cur > 0) cur--;
 		else cur = capacity - 1;
@@ -41,15 +42,15 @@ public:
 	GLFrame();
 
 	void ResetCube();
-	void ShuffleCube();
+	void MixUpCube();
 	void CancelMove();
 	bool CanCancelMove() { return history.GetSize() != 0; }
-	
 private:
 	Cube *cube;
 	Viewer3D viewer;
 
-	bool wasShuffled;
+	time_t solveTime;
+	bool wasMixed;
 	int numMoves;
 	bool fSolvedAnim;
 	float rotAngle;
@@ -57,7 +58,10 @@ private:
 	QSlerp resetAnim;
 	Point2i mousePos;
 	bool faceDrag, sceneDrag;
-	bool isFaceRotating;
+	bool isFaceRotating, isMixing;
+
+	std::string timeMsg;
+	std::string movesMsg;
 
 	struct {
 		Axis face[2];
@@ -72,7 +76,7 @@ private:
 		bool clockWise;
 	};
 
-	CircularArray<MoveDesc, 100> history;
+	CircularStack<MoveDesc, 100> history;
 
 	void SetPerspective(int w, int h);
 	void RenderScene();
@@ -86,6 +90,8 @@ private:
 	void OnTimer();
 	void OnDestroy();
 
+	void OnFaceRotated();
+	void OnMixed();
 	void OnCubeSolved();
 
 	bool GetBlockUnderMouse(int winX, int winY, BlockDesc &block);

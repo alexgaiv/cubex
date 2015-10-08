@@ -22,14 +22,13 @@ public:
 	~Cube();
 
 	const float blockSize;
-	const float blockSpace;
 	const float rotateSpeed;
 
 	CubeBlock *blocks[3][3][3];
 
 	void GetBlockById(int id, BlockDesc &block);
 	void Reset();
-	void Shuffle(int count = 15);
+	void MixUp(int steps = 15);
 	bool IsSolved() const;
 	void BeginRotateFace(Axis faceNormal, int index, bool clockWise);
 	bool AnimationStep();
@@ -40,11 +39,11 @@ private:
 	bool reseting;
 
 	struct {
-		int curCount;
-		int maxCount;
+		int curSteps;
+		int maxSteps;
 		Axis prevNormal;
 		int prevIndex;
-	} shuffle;
+	} mixup;
 
 	struct {
 		bool anim;
@@ -56,7 +55,7 @@ private:
 	} curFace;
 
 	void DoReset();
-	void ShuffleStep();
+	void MixupStep();
 	void InitBlockSides(CubeBlock *cb, int x, int y, int z);
 	void TransformColors();
 	void OrientateColors(CubeBlock *cb, int x, int y, int z);

@@ -108,11 +108,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="resources.rc">
-      <Filter>Файлы ресурсов</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="images\app.ico">
       <Filter>Файлы ресурсов</Filter>
     </Image>
@@ -125,11 +120,16 @@
     <Image Include="images\newgame.ico">
       <Filter>Файлы ресурсов</Filter>
     </Image>
-    <Image Include="images\shuffle.ico">
+    <Image Include="images\mixup.ico">
       <Filter>Файлы ресурсов</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="cubex.exe.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources.rc">
+      <Filter>Файлы ресурсов</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

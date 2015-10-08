@@ -23,6 +23,8 @@ private:
 	}
 	WindowInfoStruct GetWindowInfo();
 
+	static INT_PTR WINAPI AboutDialogProc(HWND hwndDlg, UINT msg, WPARAM wParam, LPARAM lParam);
+	
 	LRESULT OnCreate(UINT msg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnSize(UINT msg, WPARAM wParam, LPARAM lParam);
 	LRESULT OnCommand(UINT msg, WPARAM wParam, LPARAM lParam);

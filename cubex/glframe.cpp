@@ -1,5 +1,6 @@
-#include "glFrame.h"
+#include "glframe.h"
 #include <string>
+#include <strsafe.h>
 
 Quaternion GLFrame::qResetView =
 	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 25.0f) *
@@ -7,12 +8,13 @@ Quaternion GLFrame::qResetView =
 
 GLFrame::GLFrame()
 {
-	wasShuffled = false;
+	solveTime = 0;
+	wasMixed = false;
 	numMoves = 0;
 	fSolvedAnim = false;
 	rotAngle = 0.0f;
 	faceDrag = sceneDrag = false;
-	isFaceRotating = false;
+	isFaceRotating = isMixing = false;
 	ZeroMemory(&drag, sizeof(drag));
 }
 
@@ -23,9 +25,11 @@ void GLFrame::ResetCube()
 	if (fSolvedAnim)
 		viewer.qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), rotAngle);
 
+	isMixing = false;
 	fSolvedAnim = false;
-	wasShuffled = false;
+	wasMixed = false;
 	numMoves = 0;
+	solveTime = time(NULL);
 
 	cube->Reset();
 	history.Clear();
@@ -33,22 +37,23 @@ void GLFrame::ResetCube()
 	RedrawWindow();
 }
 
-void GLFrame::ShuffleCube()
+void GLFrame::MixUpCube()
 {
 	if (fSolvedAnim && resetAnim.IsComplete())
 		viewer.qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), rotAngle);
 
+	isMixing = true;
 	fSolvedAnim = false;
-	wasShuffled = true;
+	wasMixed = true;
 	numMoves = 0;
 
-	cube->Shuffle();
+	cube->MixUp();
 	history.Clear();
 }
 
 void GLFrame::CancelMove() {
 	if (!cube->IsAnim()) {
-		MoveDesc *m = history.Delete();
+		MoveDesc *m = history.Pop();
 		if (m) {
 			cube->BeginRotateFace(m->normal, m->index, !m->clockWise);	
 			numMoves--;
@@ -73,7 +78,7 @@ void GLFrame::RenderScene()
 
 	cube->Render();
 
-	/*if (fSolvedAnim && !CubeBlock::fRenderPickMode)
+	if (fSolvedAnim && !CubeBlock::fRenderPickMode)
 	{
 		RECT winRect = { };
 		GetClientRect(m_hwnd, &winRect);
@@ -87,16 +92,18 @@ void GLFrame::RenderScene()
 		glPushMatrix();
 		glLoadIdentity();
 
-		glColor3f(1.0f, 0.0f, 0.0f);
-		glRasterPos2i(50, 50);
-		
+		glColor3f(0.07f, 0.31f, 0.76f);
 		glListBase(1);
-		//glCallLists(5, GL_UNSIGNED_BYTE, "Hello");
+
+		glRasterPos2i(50, 50);
+		glCallLists(movesMsg.size(), GL_UNSIGNED_BYTE, movesMsg.c_str());
+		glRasterPos2i(50, 70);
+		glCallLists(timeMsg.size(), GL_UNSIGNED_BYTE, timeMsg.c_str());
 
 		glPopMatrix();
 		glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
-	}*/
+	}
 
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
@@ -105,7 +112,7 @@ void GLFrame::RenderScene()
 void GLFrame::OnCreate()
 {
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	glEnable(GL_COLOR_MATERIAL);
 
 	glShadeModel(GL_FLAT);
@@ -117,10 +124,20 @@ void GLFrame::OnCreate()
 	viewer.qRotation = qResetView;
 	SetTimer(m_hwnd, 1, 25, NULL);
 
-	SelectObject(m_hdc, GetStockObject(SYSTEM_FONT));
+	LOGFONT lf = { };
+	lf.lfHeight = 20;
+	lf.lfWeight = FW_BOLD;
+	lf.lfCharSet = DEFAULT_CHARSET;
+	StringCchCopy(lf.lfFaceName, LF_FACESIZE, "Arial");
+	HFONT hFont = CreateFontIndirect(&lf);
+
+	HFONT hPrevFont = (HFONT)SelectObject(m_hdc, hFont);
 	wglUseFontBitmaps(m_hdc, 0, 255, 1);
+	SelectObject(m_hdc, hPrevFont);
+	DeleteObject(hFont);
 
 	cube = new Cube();
+	solveTime = time(NULL);
 }
 
 void GLFrame::OnSize(int w, int h)
@@ -193,23 +210,21 @@ void GLFrame::OnTimer()
 		return;
 	}
 
-	bool fViewAnim = !resetAnim.IsComplete();
-	if (fViewAnim) viewer.qRotation = resetAnim.Next();
-
+	bool fResetAnim = !resetAnim.IsComplete();
 	bool fCubeAnim = cube->AnimationStep();
+
+	if (fResetAnim) viewer.qRotation = resetAnim.Next();
+
 	if (isFaceRotating && !fCubeAnim) {
-		if (cube->IsSolved())
-		{
-			if (wasShuffled || numMoves >= 20) {
-				OnCubeSolved();
-			}
-			wasShuffled = false;
-			numMoves = 0;
-		}
+		OnFaceRotated();
 		isFaceRotating = false;
 	}
+	if (isMixing && !fCubeAnim) {
+		OnMixed();
+		isMixing = false;
+	}
 
-	if (fCubeAnim || fViewAnim)
+	if (fCubeAnim || fResetAnim)
 		RedrawWindow();
 }
 
@@ -219,8 +234,33 @@ void GLFrame::OnDestroy()
 	delete cube;
 }
 
+void GLFrame::OnFaceRotated()
+{
+	if (cube->IsSolved()) {
+		if (wasMixed || numMoves >= 20)
+			OnCubeSolved();
+		wasMixed = false;
+	}
+}
+
+void GLFrame::OnMixed()
+{
+	solveTime = time(NULL);
+}
+
 void GLFrame::OnCubeSolved()
 {
+	char buf[100] = "";
+	StringCchPrintfA(buf, 100, "Moves: %d", numMoves);
+	movesMsg = buf;
+
+	solveTime = time(NULL) - solveTime;
+	int mins = (int)solveTime / 60;
+	int secs = (int)(mins ? solveTime % mins : solveTime);
+
+	StringCchPrintfA(buf, 100, "Time: %d min %d sec", mins, secs);
+	timeMsg = buf;
+
 	fSolvedAnim = true;
 	rotAngle = 0.0f;
 	SendMessage(GetParent(m_hwnd), WM_CUBESOLVED, 0, 0);
@@ -276,11 +316,9 @@ void GLFrame::GetNeighbors(const BlockDesc &b, Point3<int> &neighbor1, Point3<in
 Vector3d GLFrame::CalcBlockWinPos(const Point3<int> &b,
 	const Matrix44d &modelview, const Matrix44d &projection, int viewport[4])
 {
-	static const float d = (cube->blockSize + cube->blockSpace) * 0.5f;
-
 	Vector3d ret;
 	Vector3f l = cube->blocks[b.x][b.y][b.z]->location;
-	l.x -= d;
+	l.x -= cube->blockSize * 0.5f;
 	gluProject(l.x, l.y, l.z, modelview.data, projection.data, viewport, &ret.x, &ret.y, &ret.z);
 	return ret;
 };
@@ -344,7 +382,7 @@ void GLFrame::MouseRot(const Vector3d &mouseDir)
 	}
 
 	cube->BeginRotateFace(m.normal, m.index, m.clockWise);
-	history.Add(m);
+	history.Push(m);
 	isFaceRotating = true;
 	numMoves++;
 	SendMessage(GetParent(m_hwnd), WM_ROTATEFACE, 0, 0);

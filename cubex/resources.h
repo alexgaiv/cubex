@@ -2,15 +2,21 @@
 #define _RESOURCES_H_
 
 #define IDI_APPICON 10
-#define IDI_NEWGAME 11
-#define IDI_SHUFFLE 12
-#define IDI_CANCEL 13
-#define IDI_CANCEL_GRAYED 14
+#define IDI_NEWGAME 20
+#define IDI_MIXUP 30
+#define IDI_CANCEL 40
+#define IDI_CANCEL_GRAYED 50
+#define IDI_ABOUT 60
 
-#define IDS_TOOLBARNAMES 15
+#define IDS_TOOLBARNAMES 70
+#define IDS_MENU_ABOUT 71
+#define IDS_ABOUT 72
 
-#define IDC_NEWGAME 16
-#define IDC_SHUFFLE 17
-#define IDC_CANCEL 18
+#define IDD_ABOUT_DIALOG 73
+
+#define IDC_NEWGAME 80
+#define IDC_MIXUP 81
+#define IDC_CANCEL 82
+#define IDC_ABOUT 83
 
 #endif // _RESOURCES_H_
