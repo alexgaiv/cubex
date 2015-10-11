@@ -1,4 +1,5 @@
 #include "cubeblock.h"
+#include "resources.h"
 
 Color3b CubeBlock::colors[6] =
 {
@@ -13,9 +14,10 @@ Color3b CubeBlock::colors[6] =
 const float CubeBlock::size = 30.0f;
 bool CubeBlock::fRenderPickMode = false;
 
-VertexBuffer *CubeBlock::edges = NULL;
+float *CubeBlock::verts = NULL;
 VertexBuffer *CubeBlock::faces = NULL;
 VertexBuffer *CubeBlock::faces_pickMode = NULL;
+VertexBuffer *CubeBlock::edges = NULL;
 
 CubeBlock::CubeBlock(UINT pickId)
 	: pickId(pickId), numSides(0)
@@ -30,169 +32,88 @@ CubeBlock::CubeBlock(UINT pickId)
 
 CubeBlock::~CubeBlock()
 {
+	if (verts) {
+		delete verts; verts = NULL;
+	}
 	if (edges) {
-		delete edges;
-		edges = NULL;
+		delete edges; edges = NULL;
 	}
 	if (faces) {
-		delete faces;
-		faces = NULL;
+		delete faces; faces = NULL;
 	}
 	if (faces_pickMode) {
-		delete faces;
-		faces = NULL;
+		delete faces; faces = NULL;
 	}
+}
+
+float *CubeBlock::ReadVertexData(HINSTANCE hInst, DWORD resourceId)
+{
+	HRSRC hResInfo = FindResource(hInst, MAKEINTRESOURCE(resourceId), RT_RCDATA);
+	BYTE *inp = (BYTE *)LockResource(LoadResource(hInst, hResInfo));
+
+	int inpSize = SizeofResource(hInst, hResInfo);
+	int i = 0;
+	int vp = 0;
+
+	int size = 0;
+	while (isdigit(inp[i]))
+		size = inp[i++] - '0' + size*10;
+	i++;
+
+	float *vertexData = new float[size];
+
+	while (i < inpSize) 
+	{
+		int sign = 1;
+		int n = 0;
+		char frac[10] = "0.";
+		int j = 2;
+
+		if (inp[i] == '-') {
+			sign = -1; i++;
+		}
+		if (isdigit(inp[i])) {
+			do {
+				n = (inp[i++] - '0') + n*10;
+			} while (isdigit(inp[i]));
+		}
+		else {
+			i++; continue;
+		}
+
+		if (inp[i] == '.') {
+			i++;
+			while (isdigit(inp[i])) {
+				frac[j++] = inp[i++];
+			}
+		}
+		i++;
+		vertexData[vp++] = sign * (n + (float)atof(frac));
+	}
+	return vertexData;
 }
 
 int CubeBlock::InitVertices()
 {
-	float s = size / 2;
-	float s2 = s - 1.45f;
-	float edges_verts[][3] =
-	{
-		-s2, -s2, s,
-		-s2, s2, s,
-		-s, s2, s2,
-		-s, -s2, s2,
-		-s2, s2, -s,
-		-s2, -s2, -s,
-		-s, -s2, -s2,
-		-s, s2, -s2,
-		-s2, s, s2,
-		-s2, s, -s2,
-		-s, s2, -s2,
-		-s, s2, s2,
-		-s2, -s, -s2,
-		-s2, -s, s2,
-		-s, -s2, s2,
-		-s, -s2, -s2,
-		-s2, s, -s2,
-		s2, s, -s2,
-		s2, s2, -s,
-		-s2, s2, -s,
-		-s2, -s2, -s,
-		s2, -s2, -s,
-		s2, -s, -s2,
-		-s2, -s, -s2,
-		s2, -s2, -s,
-		s2, s2, -s,
-		s, s2, -s2,
-		s, -s2, -s2,
-		s2, s, -s2,
-		s2, s, s2,
-		s, s2, s2,
-		s, s2, -s2,
-		s2, s2, s,
-		s2, -s2, s,
-		s, -s2, s2,
-		s, s2, s2,
-		s, -s2, -s2,
-		s, -s2, s2,
-		s2, -s, s2,
-		s2, -s, -s2,
-		s2, s, s2,
-		-s2, s, s2,
-		-s2, s2, s,
-		s2, s2, s,
-		s2, -s2, s,
-		-s2, -s2, s,
-		-s2, -s, s2,
-		s2, -s, s2,
+	verts = ReadVertexData(GetModuleHandle(NULL), IDR_BLOCKDATA);
 
-		-s, -s2, s2,
-		-s2, -s, s2,
-		-s2, -s2, s,
-		-s, s2, s2,
-		-s2, s2, s,
-		-s2, s, s2,
-		-s, s2, -s2,
-		-s2, s, -s2,
-		-s2, s2, -s,
-		-s, -s2, -s2,
-		-s2, -s2, -s,
-		-s2, -s, -s2,
-		s, -s2, -s2,
-		s2, -s, -s2,
-		s2, -s2, -s,
-		s, s2, -s2,
-		s2, s2, -s,
-		s2, s, -s2,
-		s, s2, s2,
-		s2, s, s2,
-		s2, s2, s,
-		s, -s2, s2,
-		s2, -s2, s,
-		s2, -s, s2,
-	};
+	if (ExtSupported::VBO) {
+		faces = new VertexBuffer;
+		faces_pickMode = new VertexBuffer;
+		edges = new VertexBuffer;
 
-	float face_verts[][3] =
-	{
-		-s, -s2, s2,
-		-s, s2, s2,
-		-s, s2, -s2,
-		-s, -s2, -s2,
-		-s2, -s2, -s,
-		-s2, s2, -s,
-		s2, s2, -s,
-		s2, -s2, -s,
-		s, -s2, -s2,
-		s, s2, -s2,
-		s, s2, s2,
-		s, -s2, s2,
-		s2, -s2, s,
-		s2, s2, s,
-		-s2, s2, s,
-		-s2, -s2, s,
-		-s2, s, -s2,
-		-s2, s, s2,
-		s2, s, s2,
-		s2, s, -s2,
-		-s2, -s, -s2,
-		s2, -s, -s2,
-		s2, -s, s2,
-		-s2, -s, s2,
-	};
+		faces->Bind(GL_ARRAY_BUFFER);
+		faces->SetData(72*sizeof(float), verts, GL_STATIC_DRAW);
 
-	float face_pick_verts[][3] =
-	{
-		-s, -s, s,
-		-s, s, s,
-		-s, s, -s,
-		-s, -s, -s,
-		-s, -s, -s,
-		-s, s, -s,
-		s, s, -s,
-		s, -s, -s,
-		s, -s, -s,
-		s, s, -s,
-		s, s, s,
-		s, -s, s,
-		s, -s, s,
-		s, s, s,
-		-s, s, s,
-		-s, -s, s,
-		-s, s, -s,
-		-s, s, s,
-		s, s, s,
-		s, s, -s,
-		-s, -s, -s,
-		s, -s, -s,
-		s, -s, s,
-		-s, -s, s,
-	};
+		faces_pickMode->Bind(GL_ARRAY_BUFFER);
+		faces_pickMode->SetData(72*sizeof(float), verts+72, GL_STATIC_DRAW);
 
-	edges = new VertexBuffer;
-	faces = new VertexBuffer;
-	faces_pickMode = new VertexBuffer;
+		edges->Bind(GL_ARRAY_BUFFER);
+		edges->SetData(216*sizeof(float), verts+144, GL_STATIC_DRAW);
 
-	edges->Bind(GL_ARRAY_BUFFER);
-	edges->SetData(sizeof(edges_verts), edges_verts, GL_STATIC_DRAW);
-
-	faces->Bind(GL_ARRAY_BUFFER);
-	faces->SetData(sizeof(face_verts), face_verts, GL_STATIC_DRAW);
-
-	faces_pickMode->Bind(GL_ARRAY_BUFFER);
-	faces_pickMode->SetData(sizeof(face_pick_verts), face_pick_verts, GL_STATIC_DRAW);
+		delete [] verts;
+		verts = NULL;
+	}
 	return 0;
 }
 
@@ -211,8 +132,11 @@ void CubeBlock::Render()
 	this->ApplyTransform();
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	(fRenderPickMode ? faces_pickMode : faces)->Bind(GL_ARRAY_BUFFER);
-	glVertexPointer(3, GL_FLOAT, 0, 0);
+	if (ExtSupported::VBO) {
+		(fRenderPickMode ? faces_pickMode : faces)->Bind(GL_ARRAY_BUFFER);
+		glVertexPointer(3, GL_FLOAT, 0, 0);
+	}
+	else glVertexPointer(3, GL_FLOAT, 0, verts + (fRenderPickMode ? 72 : 0));
 	
 	for (int i = 0; i < 6; i++)
 	{
@@ -233,8 +157,13 @@ void CubeBlock::Render()
 
 	if (!fRenderPickMode) {
 		glColor3f(0.0f, 0.0f, 0.0f);
-		edges->Bind(GL_ARRAY_BUFFER);
-		glVertexPointer(3, GL_FLOAT, 0, 0);
+
+		if (ExtSupported::VBO) {
+			edges->Bind(GL_ARRAY_BUFFER);
+			glVertexPointer(3, GL_FLOAT, 0, 0);
+		}
+		else glVertexPointer(3, GL_FLOAT, 0, verts + 144);
+
 		glDrawArrays(GL_QUADS, 0, 48);
 		glDrawArrays(GL_TRIANGLES, 48, 24);
 	}

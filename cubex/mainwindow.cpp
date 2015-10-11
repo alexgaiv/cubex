@@ -63,14 +63,14 @@ void MainWindow::InitToolbar()
 	SendMessage(hToolbar2, TB_SETMAXTEXTROWS, 0, 0);
 
 	DWORD tbBtnSize = SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0);
-	hRebar = CreateWindowEx(0, REBARCLASSNAME, "",
-		WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|CCS_NODIVIDER|RBS_AUTOSIZE,
+	hRebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, "",
+		WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|CCS_NODIVIDER,
 		0, 0, 0, 0,
 		m_hwnd, NULL, hInst, NULL);
 
 	REBARBANDINFO rbBand[2] = { };
 	for (int i = 0; i < 2; i++) {
-		rbBand[i].cbSize = REBARBANDINFOA_V3_SIZE;
+		rbBand[i].cbSize = REBARBANDINFOA_V6_SIZE;
 		rbBand[i].fMask = RBBIM_STYLE|RBBIM_CHILD|RBBIM_CHILDSIZE;
 		rbBand[i].fStyle = RBBS_CHILDEDGE|RBBS_NOGRIPPER;
 		rbBand[i].hwndChild = i == 0 ? hToolbar : hToolbar2;
@@ -181,10 +181,15 @@ LRESULT MainWindow::OnSize(UINT msg, WPARAM wParam, LPARAM lParam)
 	int w = LOWORD(lParam);
 	int h = HIWORD(lParam);
 
-	SendMessage(hRebar, WM_SIZE, 0, 0);
-
 	RECT barRect = { };
 	GetClientRect(hRebar, &barRect);
+
+	SetWindowPos(hRebar, HWND_TOP, 0, 0, w, barRect.bottom,
+		SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOZORDER);
+	GetClientRect(hRebar, &barRect);
+
+	SendMessage(hRebar, RB_MAXIMIZEBAND, 0, 0);
+	SendMessage(hRebar, RB_SHOWBAND, 1, TRUE);
 
 	SetWindowPos(gl_frame->m_hwnd, HWND_TOP, 0, 0, w, h - barRect.bottom,
 		SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOZORDER);

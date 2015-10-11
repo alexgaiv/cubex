@@ -8,6 +8,8 @@
 #define IDI_CANCEL_GRAYED 50
 #define IDI_ABOUT 60
 
+#define IDR_BLOCKDATA 61
+
 #define IDS_TOOLBARNAMES 70
 #define IDS_MENU_ABOUT 71
 #define IDS_ABOUT 72

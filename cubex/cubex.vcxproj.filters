@@ -106,6 +106,9 @@
     <None Include="lib\datatypes.inl">
       <Filter>lib\source</Filter>
     </None>
+    <None Include="block.data">
+      <Filter>Файлы ресурсов</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="images\app.ico">

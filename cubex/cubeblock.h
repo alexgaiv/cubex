@@ -49,10 +49,12 @@ public:
 	void Render();
 	bool IsSideColored(int side);
 private:
-	static VertexBuffer *edges, *faces, *faces_pickMode;
+	static VertexBuffer *faces, *faces_pickMode, *edges;
 	int sideId[6];
 
+	static float *verts;
 	static int InitVertices();
+	static float *ReadVertexData(HINSTANCE hInst, DWORD resourceId);
 
 	Color3b *GetSideColor(int idx) {
 		for (int i = 0; i < numSides; i++) {

@@ -3,6 +3,10 @@
 
 #include "common.h"
 
+struct ExtSupported {
+	static bool VBO;
+};
+
 extern void (APIENTRYP glBindBuffer)(GLenum target, GLuint buffer);
 extern void (APIENTRYP glDeleteBuffers)(GLsizei n, const GLuint *buffers);
 extern void (APIENTRYP glGenBuffers)(GLsizei n, GLuint *buffers);
@@ -20,8 +24,8 @@ namespace initext
 	static class _Ext_init_helper
 	{
 	public:
-		_Ext_init_helper::_Ext_init_helper();
-		void _Ext_init_helper::InitVBO();
+		_Ext_init_helper();
+		void InitVBO();
 	} notused;
 }
 
