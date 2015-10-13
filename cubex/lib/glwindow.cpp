@@ -1,5 +1,6 @@
 #include "glwindow.h"
 #include <strsafe.h>
+#include "initext.h"
 
 HWND GLWindow::CreateParam(LPCTSTR lpCaption, int x, int y, int width, int height,
 	DWORD dwStyle, DWORD dwExStyle, HWND hParent)
@@ -59,6 +60,50 @@ PIXELFORMATDESCRIPTOR GLWindow::GetDCPixelFormat()
 	pfd.cColorBits = 32;
 	pfd.cDepthBits = 24;
 	return pfd;
+}
+
+void GLWindow::_InitRC()
+{
+	m_hdc = GetDC(m_hwnd);
+
+	PIXELFORMATDESCRIPTOR pfd = this->GetDCPixelFormat();
+	int iPixelFormat = ChoosePixelFormat(m_hdc, &pfd);
+	SetPixelFormat(m_hdc, iPixelFormat, &pfd);
+
+	HGLRC hTempRC = wglCreateContext(m_hdc);
+	wglMakeCurrent(m_hdc, hTempRC);
+
+	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
+		(PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
+
+	if (wglCreateContextAttribsARB != NULL)
+	{
+		int attribs[] = {
+			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
+		};
+		m_hrc = wglCreateContextAttribsARB(m_hdc, NULL, attribs);
+		wglMakeCurrent(m_hdc, m_hrc);
+		wglDeleteContext(hTempRC);
+	}
+	else {
+		m_hrc = hTempRC;
+	}
+
+	InitGlExtensios();
+}
+
+void GLWindow::_ChangeDisplaySettings()
+{
+	RECT screenRect = { };
+	GetClientRect(GetDesktopWindow(), &screenRect);
+
+	DEVMODE deviceMode = { };
+	deviceMode.dmSize = sizeof(DEVMODE);
+	deviceMode.dmPelsWidth = screenRect.right;
+	deviceMode.dmPelsHeight = screenRect.bottom;
+	deviceMode.dmBitsPerPel = 24;
+	deviceMode.dmFields = DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL;
+	ChangeDisplaySettings(&deviceMode, CDS_FULLSCREEN);
 }
 
 ATOM GLWindow::_RegisterWindow(GLWindow *pThis)
@@ -197,46 +242,4 @@ HRESULT GLWindow::_HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 
 	return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
-}
-
-void GLWindow::_InitRC()
-{
-	m_hdc = GetDC(m_hwnd);
-
-	PIXELFORMATDESCRIPTOR pfd = this->GetDCPixelFormat();
-	int iPixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-	SetPixelFormat(m_hdc, iPixelFormat, &pfd);
-
-	HGLRC hTempRC = wglCreateContext(m_hdc);
-	wglMakeCurrent(m_hdc, hTempRC);
-
-	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
-		(PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
-
-	if (wglCreateContextAttribsARB != NULL)
-	{
-		int attribs[] = {
-			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
-		};
-		m_hrc = wglCreateContextAttribsARB(m_hdc, NULL, attribs);
-		wglMakeCurrent(m_hdc, m_hrc);
-		wglDeleteContext(hTempRC);
-	}
-	else {
-		m_hrc = hTempRC;
-	}
-}
-
-void GLWindow::_ChangeDisplaySettings()
-{
-	RECT screenRect = { };
-	GetClientRect(GetDesktopWindow(), &screenRect);
-
-	DEVMODE deviceMode = { };
-	deviceMode.dmSize = sizeof(DEVMODE);
-	deviceMode.dmPelsWidth = screenRect.right;
-	deviceMode.dmPelsHeight = screenRect.bottom;
-	deviceMode.dmBitsPerPel = 24;
-	deviceMode.dmFields = DM_PELSWIDTH|DM_PELSHEIGHT|DM_BITSPERPEL;
-	ChangeDisplaySettings(&deviceMode, CDS_FULLSCREEN);
 }

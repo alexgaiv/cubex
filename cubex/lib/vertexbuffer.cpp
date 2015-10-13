@@ -3,8 +3,6 @@
 
 VertexBuffer::VertexBuffer() : target(0)
 {
-	const unsigned char *s = glGetString(GL_VERSION);
-
 	glGenBuffers(1, &id);
 	int a = glGetError();
 }

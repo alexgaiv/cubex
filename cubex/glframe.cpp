@@ -1,6 +1,9 @@
 #include "glframe.h"
 #include <string>
 #include <strsafe.h>
+#include <mmsystem.h>
+
+#pragma comment(lib, "Winmm.lib")
 
 Quaternion GLFrame::qResetView =
 	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 25.0f) *
@@ -15,6 +18,7 @@ GLFrame::GLFrame()
 	rotAngle = 0.0f;
 	faceDrag = sceneDrag = false;
 	isFaceRotating = isMixing = false;
+	needRedraw = false;
 	ZeroMemory(&drag, sizeof(drag));
 }
 
@@ -34,7 +38,6 @@ void GLFrame::ResetCube()
 	cube->Reset();
 	history.Clear();
 	resetAnim.Setup(viewer.qRotation, qResetView, 0.1f);
-	RedrawWindow();
 }
 
 void GLFrame::MixUpCube()
@@ -138,6 +141,13 @@ void GLFrame::OnCreate()
 
 	cube = new Cube();
 	solveTime = time(NULL);
+
+	/*TIMECAPS caps = { };
+	timeGetDevCaps(&caps, sizeof(caps));
+	timerRes = min(max(caps.wPeriodMin, 1), caps.wPeriodMax);
+	timeBeginPeriod(timerRes);
+	timerId = timeSetEvent(25, timerRes, TimerProc, (DWORD)this, TIME_PERIODIC);*/
+	//OnDestroy
 }
 
 void GLFrame::OnSize(int w, int h)
@@ -182,7 +192,9 @@ void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 	if (fSolvedAnim) return;
 	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneDrag) {
 		viewer.Rotate(x, y);
-		RedrawWindow();
+
+		if (!cube->IsAnim()) RedrawWindow();
+		else needRedraw = true;
 	}
 	else if (keysPressed & KeyModifiers::KM_LBUTTON && faceDrag) {
 		
@@ -199,6 +211,42 @@ void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 void GLFrame::OnMouseUp(MouseButton button, int x, int y)
 {
 	sceneDrag = false;
+}
+
+void CALLBACK GLFrame::TimerProc(UINT id, UINT, DWORD dwUser, DWORD, DWORD)
+{
+	GLFrame *glf = (GLFrame *)dwUser;
+	glf->OnMixed();
+
+	if (glf->fSolvedAnim) {
+		float &a = glf->rotAngle;
+		a += 3.0f;
+		if (a > 360.0f) a -= 360.0f;
+		glf->RedrawWindow();
+		return;
+	}
+
+	bool fResetAnim = !glf->resetAnim.IsComplete();
+	bool fCubeAnim = glf->cube->AnimationStep();
+
+	if (fResetAnim)
+		glf->viewer.qRotation = glf->resetAnim.Next();
+
+	if (glf->isFaceRotating && !fCubeAnim) {
+		glf->OnFaceRotated();
+		glf->isFaceRotating = false;
+	}
+	if (glf->isMixing && !fCubeAnim) {
+		glf->OnMixed();
+		glf->isMixing = false;
+	}
+
+	if (glf->needRedraw || fCubeAnim || fResetAnim) {
+		//UINT a;
+		//glGenBuffers(1, &a);
+		glf->RedrawWindow();
+		glf->needRedraw = false;
+	}
 }
 
 void GLFrame::OnTimer()
@@ -224,13 +272,17 @@ void GLFrame::OnTimer()
 		isMixing = false;
 	}
 
-	if (fCubeAnim || fResetAnim)
+	if (needRedraw || fCubeAnim || fResetAnim) {
 		RedrawWindow();
+		needRedraw = false;
+	}
 }
 
 void GLFrame::OnDestroy()
 {
 	KillTimer(m_hwnd, 1);
+	//timeKillEvent(timerId);
+	//timeEndPeriod(timerRes);
 	delete cube;
 }
 

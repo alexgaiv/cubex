@@ -14,66 +14,41 @@ GLboolean (APIENTRYP glUnmapBuffer)(GLenum target);
 void (APIENTRYP glGetBufferParameteriv)(GLenum target, GLenum pname, GLint *params);
 void (APIENTRYP glGetBufferPointerv)(GLenum target, GLenum pname, GLvoid **params);
 
-namespace initext
+void InitGlExtensios()
 {
-	_Ext_init_helper::_Ext_init_helper()
+	static bool init = false;
+	if (init) return;
+	init = true;
+
+	(PROC &)glBindBuffer = wglGetProcAddress("glBindBuffer");
+
+	if (glBindBuffer)
 	{
-		if (glBindBuffer) return;
-
-		PIXELFORMATDESCRIPTOR pfd = { };
-		pfd.nSize = sizeof(pfd);
-		pfd.nVersion = 1;
-		pfd.dwFlags = PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER;
-		pfd.iPixelType = PFD_TYPE_RGBA;
-		pfd.cColorBits = 32;
-		pfd.cDepthBits = 24;
-
-		HDC hdc = GetDC(NULL);
-		int iPixelFormat = ChoosePixelFormat(hdc, &pfd);
-		SetPixelFormat(hdc, iPixelFormat, &pfd);
-
-		HGLRC hrc = wglCreateContext(hdc);
-		wglMakeCurrent(hdc, hrc);
-
-		InitVBO();
-
-		wglMakeCurrent(hdc, NULL);
-		wglDeleteContext(hrc);
-		ReleaseDC(NULL, hdc);
+		(PROC &)glDeleteBuffers        = wglGetProcAddress("glDeleteBuffers");
+		(PROC &)glGenBuffers           = wglGetProcAddress("glGenBuffers");
+		(PROC &)glIsBuffer             = wglGetProcAddress("glIsBuffer");
+		(PROC &)glBufferData           = wglGetProcAddress("glBufferData");
+		(PROC &)glBufferSubData        = wglGetProcAddress("glBufferSubData");
+		(PROC &)glGetBufferSubData     = wglGetProcAddress("glGetBufferSubData");
+		(PROC &)glMapBuffer            = wglGetProcAddress("glMapBuffer");
+		(PROC &)glUnmapBuffer          = wglGetProcAddress("glUnmapBuffer");
+		(PROC &)glGetBufferParameteriv = wglGetProcAddress("glGetBufferParameteriv");
+		(PROC &)glGetBufferPointerv    = wglGetProcAddress("glGetBufferPointerv");
+	}
+	else
+	{
+		(PROC &)glBindBuffer           = wglGetProcAddress("glBindBufferARB");
+		(PROC &)glDeleteBuffers        = wglGetProcAddress("glDeleteBuffersARB");
+		(PROC &)glGenBuffers           = wglGetProcAddress("glGenBuffersARB");
+		(PROC &)glIsBuffer             = wglGetProcAddress("glIsBufferARB");
+		(PROC &)glBufferData           = wglGetProcAddress("glBufferDataARB");
+		(PROC &)glBufferSubData        = wglGetProcAddress("glBufferSubDataARB");
+		(PROC &)glGetBufferSubData     = wglGetProcAddress("glGetBufferSubDataARB");
+		(PROC &)glMapBuffer            = wglGetProcAddress("glMapBufferARB");
+		(PROC &)glUnmapBuffer          = wglGetProcAddress("glUnmapBufferARB");
+		(PROC &)glGetBufferParameteriv = wglGetProcAddress("glGetBufferParameterivARB");
+		(PROC &)glGetBufferPointerv    = wglGetProcAddress("glGetBufferPointervARB");
 	}
 
-	void _Ext_init_helper::InitVBO()
-	{
-		(PROC &)glBindBuffer = wglGetProcAddress("glBindBuffer");
-
-		if (glBindBuffer)
-		{
-			(PROC &)glDeleteBuffers        = wglGetProcAddress("glDeleteBuffers");
-			(PROC &)glGenBuffers           = wglGetProcAddress("glGenBuffers");
-			(PROC &)glIsBuffer             = wglGetProcAddress("glIsBuffer");
-			(PROC &)glBufferData           = wglGetProcAddress("glBufferData");
-			(PROC &)glBufferSubData        = wglGetProcAddress("glBufferSubData");
-			(PROC &)glGetBufferSubData     = wglGetProcAddress("glGetBufferSubData");
-			(PROC &)glMapBuffer            = wglGetProcAddress("glMapBuffer");
-			(PROC &)glUnmapBuffer          = wglGetProcAddress("glUnmapBuffer");
-			(PROC &)glGetBufferParameteriv = wglGetProcAddress("glGetBufferParameteriv");
-			(PROC &)glGetBufferPointerv    = wglGetProcAddress("glGetBufferPointerv");
-		}
-		else
-		{
-			(PROC &)glBindBuffer           = wglGetProcAddress("glBindBufferARB");
-			(PROC &)glDeleteBuffers        = wglGetProcAddress("glDeleteBuffersARB");
-			(PROC &)glGenBuffers           = wglGetProcAddress("glGenBuffersARB");
-			(PROC &)glIsBuffer             = wglGetProcAddress("glIsBufferARB");
-			(PROC &)glBufferData           = wglGetProcAddress("glBufferDataARB");
-			(PROC &)glBufferSubData        = wglGetProcAddress("glBufferSubDataARB");
-			(PROC &)glGetBufferSubData     = wglGetProcAddress("glGetBufferSubDataARB");
-			(PROC &)glMapBuffer            = wglGetProcAddress("glMapBufferARB");
-			(PROC &)glUnmapBuffer          = wglGetProcAddress("glUnmapBufferARB");
-			(PROC &)glGetBufferParameteriv = wglGetProcAddress("glGetBufferParameterivARB");
-			(PROC &)glGetBufferPointerv    = wglGetProcAddress("glGetBufferPointervARB");
-		}
-
-		ExtSupported::VBO = glBindBuffer ? true : false;
-	}
-}
+	ExtSupported::VBO = glBindBuffer ? true : false;
+};

@@ -59,6 +59,7 @@ private:
 	Point2i mousePos;
 	bool faceDrag, sceneDrag;
 	bool isFaceRotating, isMixing;
+	bool needRedraw;
 
 	std::string timeMsg;
 	std::string movesMsg;
@@ -77,6 +78,10 @@ private:
 	};
 
 	CircularStack<MoveDesc, 100> history;
+
+	MMRESULT timerId;
+	UINT timerRes;
+	static void CALLBACK TimerProc(UINT id, UINT, DWORD dwUser, DWORD, DWORD);
 
 	void SetPerspective(int w, int h);
 	void RenderScene();

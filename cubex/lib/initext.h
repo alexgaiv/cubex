@@ -7,6 +7,8 @@ struct ExtSupported {
 	static bool VBO;
 };
 
+void InitGlExtensios();
+
 extern void (APIENTRYP glBindBuffer)(GLenum target, GLuint buffer);
 extern void (APIENTRYP glDeleteBuffers)(GLsizei n, const GLuint *buffers);
 extern void (APIENTRYP glGenBuffers)(GLsizei n, GLuint *buffers);
@@ -18,15 +20,5 @@ extern void *(APIENTRYP glMapBuffer)(GLenum target, GLenum access);
 extern GLboolean (APIENTRYP glUnmapBuffer)(GLenum target);
 extern void (APIENTRYP glGetBufferParameteriv)(GLenum target, GLenum pname, GLint *params);
 extern void (APIENTRYP glGetBufferPointerv)(GLenum target, GLenum pname, GLvoid **params);
-
-namespace initext
-{
-	static class _Ext_init_helper
-	{
-	public:
-		_Ext_init_helper();
-		void InitVBO();
-	} notused;
-}
 
 #endif // _INITEXT_H
