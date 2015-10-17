@@ -1,5 +1,4 @@
 #include "vertexbuffer.h"
-#include "initext.h"
 
 VertexBuffer::VertexBuffer() : target(0)
 {

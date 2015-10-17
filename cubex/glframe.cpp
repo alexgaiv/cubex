@@ -141,13 +141,6 @@ void GLFrame::OnCreate()
 
 	cube = new Cube();
 	solveTime = time(NULL);
-
-	/*TIMECAPS caps = { };
-	timeGetDevCaps(&caps, sizeof(caps));
-	timerRes = min(max(caps.wPeriodMin, 1), caps.wPeriodMax);
-	timeBeginPeriod(timerRes);
-	timerId = timeSetEvent(25, timerRes, TimerProc, (DWORD)this, TIME_PERIODIC);*/
-	//OnDestroy
 }
 
 void GLFrame::OnSize(int w, int h)
@@ -213,42 +206,6 @@ void GLFrame::OnMouseUp(MouseButton button, int x, int y)
 	sceneDrag = false;
 }
 
-void CALLBACK GLFrame::TimerProc(UINT id, UINT, DWORD dwUser, DWORD, DWORD)
-{
-	GLFrame *glf = (GLFrame *)dwUser;
-	glf->OnMixed();
-
-	if (glf->fSolvedAnim) {
-		float &a = glf->rotAngle;
-		a += 3.0f;
-		if (a > 360.0f) a -= 360.0f;
-		glf->RedrawWindow();
-		return;
-	}
-
-	bool fResetAnim = !glf->resetAnim.IsComplete();
-	bool fCubeAnim = glf->cube->AnimationStep();
-
-	if (fResetAnim)
-		glf->viewer.qRotation = glf->resetAnim.Next();
-
-	if (glf->isFaceRotating && !fCubeAnim) {
-		glf->OnFaceRotated();
-		glf->isFaceRotating = false;
-	}
-	if (glf->isMixing && !fCubeAnim) {
-		glf->OnMixed();
-		glf->isMixing = false;
-	}
-
-	if (glf->needRedraw || fCubeAnim || fResetAnim) {
-		//UINT a;
-		//glGenBuffers(1, &a);
-		glf->RedrawWindow();
-		glf->needRedraw = false;
-	}
-}
-
 void GLFrame::OnTimer()
 {
 	if (fSolvedAnim) {
@@ -281,8 +238,6 @@ void GLFrame::OnTimer()
 void GLFrame::OnDestroy()
 {
 	KillTimer(m_hwnd, 1);
-	//timeKillEvent(timerId);
-	//timeEndPeriod(timerRes);
 	delete cube;
 }
 

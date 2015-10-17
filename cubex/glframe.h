@@ -79,10 +79,6 @@ private:
 
 	CircularStack<MoveDesc, 100> history;
 
-	MMRESULT timerId;
-	UINT timerRes;
-	static void CALLBACK TimerProc(UINT id, UINT, DWORD dwUser, DWORD, DWORD);
-
 	void SetPerspective(int w, int h);
 	void RenderScene();
 

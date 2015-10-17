@@ -55,15 +55,12 @@
       <Filter>lib\source</Filter>
     </ClCompile>
     <ClCompile Include="lib\initext.cpp">
-      <Filter>lib\source</Filter>
+      <Filter>Файлы исходного кода</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h">
       <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\common.h">
-      <Filter>lib\include</Filter>
     </ClInclude>
     <ClInclude Include="lib\datatypes.h">
       <Filter>lib\include</Filter>
@@ -95,11 +92,14 @@
     <ClInclude Include="lib\qslerp.h">
       <Filter>lib\include</Filter>
     </ClInclude>
-    <ClInclude Include="lib\initext.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
     <ClInclude Include="lib\vertexbuffer.h">
       <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\common.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\initext.h">
+      <Filter>Заголовочные файлы</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
