@@ -82,12 +82,16 @@ void GLWindow::_InitRC()
 			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
 		};
 		m_hrc = wglCreateContextAttribsARB(m_hdc, NULL, attribs);
-		wglMakeCurrent(m_hdc, m_hrc);
-		wglDeleteContext(hTempRC);
+		if (m_hrc) {
+			wglMakeCurrent(m_hdc, m_hrc);
+			wglDeleteContext(hTempRC);
+		} else m_hrc = hTempRC;
 	}
 	else {
 		m_hrc = hTempRC;
 	}
+
+	const char *s = (const char *)glGetString(GL_VERSION);
 
 	InitGlExtensios();
 }
