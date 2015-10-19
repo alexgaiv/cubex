@@ -92,6 +92,8 @@ void GLWindow::_InitRC()
 		m_hrc = hTempRC;
 	}
 
+	const char *s = (const char *)glGetString(GL_VERSION);
+
 	InitGlExtensios();
 }
 
