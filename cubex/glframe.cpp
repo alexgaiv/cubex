@@ -244,7 +244,7 @@ void GLFrame::OnDestroy()
 void GLFrame::OnFaceRotated()
 {
 	if (cube->IsSolved()) {
-		if (wasMixed || numMoves >= 20)
+		if (wasMixed || numMoves >= 2)
 			OnCubeSolved();
 		wasMixed = false;
 	}

@@ -79,11 +79,14 @@ void GLWindow::_InitRC()
 	if (wglCreateContextAttribsARB != NULL)
 	{
 		int attribs[] = {
-			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
+			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
+			0
 		};
 		m_hrc = wglCreateContextAttribsARB(m_hdc, NULL, attribs);
-		wglMakeCurrent(m_hdc, m_hrc);
-		wglDeleteContext(hTempRC);
+		if (m_hrc) {
+			wglMakeCurrent(m_hdc, m_hrc);
+			wglDeleteContext(hTempRC);
+		} else m_hrc = hTempRC;
 	}
 	else {
 		m_hrc = hTempRC;

@@ -55,7 +55,7 @@
       <Filter>lib\source</Filter>
     </ClCompile>
     <ClCompile Include="lib\initext.cpp">
-      <Filter>Файлы исходного кода</Filter>
+      <Filter>lib\source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -99,7 +99,7 @@
       <Filter>lib\include</Filter>
     </ClInclude>
     <ClInclude Include="lib\initext.h">
-      <Filter>Заголовочные файлы</Filter>
+      <Filter>lib\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

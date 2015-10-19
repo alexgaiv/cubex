@@ -3,7 +3,6 @@
 VertexBuffer::VertexBuffer() : target(0)
 {
 	glGenBuffers(1, &id);
-	int a = glGetError();
 }
 
 VertexBuffer::~VertexBuffer() {
