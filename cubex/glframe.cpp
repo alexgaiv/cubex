@@ -13,7 +13,7 @@ GLFrame::GLFrame()
 {
 	solveTime = 0;
 	wasMixed = false;
-	numMoves = 0;
+	numMoves = numActualMoves = 0;
 	fSolvedAnim = false;
 	rotAngle = 0.0f;
 	faceDrag = sceneDrag = false;
@@ -32,7 +32,7 @@ void GLFrame::ResetCube()
 	isMixing = false;
 	fSolvedAnim = false;
 	wasMixed = false;
-	numMoves = 0;
+	numMoves = numActualMoves = 0;
 	solveTime = time(NULL);
 
 	cube->Reset();
@@ -48,7 +48,7 @@ void GLFrame::MixUpCube()
 	isMixing = true;
 	fSolvedAnim = false;
 	wasMixed = true;
-	numMoves = 0;
+	numMoves = numActualMoves = 0;
 
 	cube->MixUp();
 	history.Clear();
@@ -58,8 +58,9 @@ void GLFrame::CancelMove() {
 	if (!cube->IsAnim()) {
 		MoveDesc *m = history.Pop();
 		if (m) {
-			cube->BeginRotateFace(m->normal, m->index, !m->clockWise);	
+			cube->BeginRotateFace(m->normal, m->index, !m->clockWise);
 			numMoves--;
+			if (numActualMoves > 0) numActualMoves--;
 		}
 	}
 }
@@ -139,7 +140,7 @@ void GLFrame::OnCreate()
 	SelectObject(m_hdc, hPrevFont);
 	DeleteObject(hFont);
 
-	cube = new Cube();
+	cube = new Cube(6);
 	solveTime = time(NULL);
 }
 
@@ -244,9 +245,10 @@ void GLFrame::OnDestroy()
 void GLFrame::OnFaceRotated()
 {
 	if (cube->IsSolved()) {
-		if (wasMixed || numMoves >= 2)
+		if (wasMixed || numActualMoves >= cube->GOD_NUMBER)
 			OnCubeSolved();
 		wasMixed = false;
+		numActualMoves = 0;
 	}
 }
 
@@ -306,9 +308,9 @@ void GLFrame::GetNeighbors(const BlockDesc &b, Point3<int> &neighbor1, Point3<in
 
 	n1[i3] = n2[i3] = p[i3];
 
-	n1[i1] = p[i1] == 2 ? 1 : p[i1] + 1;
+	n1[i1] = p[i1] == cube->size - 1 ? 0 : p[i1] + 1;
 	n1[i2] = p[i2];
-	n2[i2] = p[i2] == 2 ? 1 : p[i2] + 1;
+	n2[i2] = p[i2] == cube->size - 1 ? 0 : p[i2] + 1;
 	n2[i1] = p[i1];
 
 	drag.face[0] = (Axis)i1;
@@ -316,8 +318,8 @@ void GLFrame::GetNeighbors(const BlockDesc &b, Point3<int> &neighbor1, Point3<in
 	drag.face[1] = (Axis)i2;
 	drag.index[1] = p[i2];
 
-	if (p[i1] == 2) drag.neg[0] = true;
-	if (p[i2] == 2) drag.neg[1] = true;
+	if (p[i1] == cube->size - 1) drag.neg[0] = true;
+	if (p[i2] == cube->size - 1) drag.neg[1] = true;
 }
 
 Vector3d GLFrame::CalcBlockWinPos(const Point3<int> &b,
@@ -392,5 +394,6 @@ void GLFrame::MouseRot(const Vector3d &mouseDir)
 	history.Push(m);
 	isFaceRotating = true;
 	numMoves++;
+	numActualMoves++;
 	SendMessage(GetParent(m_hwnd), WM_ROTATEFACE, 0, 0);
 }

@@ -127,6 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="cube.h" />
     <ClCompile Include="cube.cpp" />
     <ClCompile Include="cubeblock.cpp" />
     <ClCompile Include="glframe.cpp" />
@@ -140,7 +141,6 @@
     <ClCompile Include="mainwindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="cube.h" />
     <ClInclude Include="cubeblock.h" />
     <ClInclude Include="glframe.h" />
     <ClInclude Include="lib\basewindow.h" />

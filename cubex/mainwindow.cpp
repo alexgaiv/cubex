@@ -5,19 +5,14 @@ MainWindow::MainWindow() : gl_frame(NULL)
 	this->Create("Cubex", CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, WS_OVERLAPPEDWINDOW, 0, NULL);
 }
 
-MainWindow::~MainWindow()
-{
-	if (gl_frame) delete gl_frame;
-}
-
 void MainWindow::InitToolbar()
 {
 	HINSTANCE hInst = GetModuleHandle(NULL);
-	hImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, 3, 0);
+	hImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, 5, 0);
 	hGrayedImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, 3, 0);
 
-	const int numBtns = 4;
-	int ids[numBtns] = { IDI_NEWGAME, IDI_MIXUP, IDI_CANCEL, IDI_ABOUT };
+	const int numBtns = 5;
+	int ids[numBtns] = { IDI_NEWGAME, IDI_MIXUP, IDI_CANCEL, IDI_SETTINGS, IDI_ABOUT };
 
 	for (int i = 0; i < numBtns; i++) {
 		HICON hIcon = (HICON)LoadImage(hInst, MAKEINTRESOURCE(ids[i]), IMAGE_ICON, 24, 24, 0);
@@ -50,6 +45,8 @@ void MainWindow::InitToolbar()
 		buttons[i].fsStyle = TBSTYLE_BUTTON;
 		buttons[i].iString = i < numBtns - 1 ? i : 0;
 	}
+
+	buttons[3].fsStyle |= BTNS_DROPDOWN;
 	
 	SendMessage(hToolbar, TB_BUTTONSTRUCTSIZE, sizeof(TBBUTTON), 0);
 	SendMessage(hToolbar, TB_SETIMAGELIST, 0, (LPARAM)hImgList);
@@ -124,6 +121,8 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	InitToolbar();
 	EnableCancelBtn(false);
+	hSettingsMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDM_SETTINGS));
+	hSettingsMenu = GetSubMenu(hSettingsMenu, 0);
 
 	RECT wndRect, barRect = { };
 	GetClientRect(m_hwnd, &wndRect);
@@ -163,7 +162,28 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 			break;
 		};
 	}
+	else if (HIWORD(wParam) == 0) {
+		
+	}
 	return 0;
+}
+
+LRESULT MainWindow::OnNotify(UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	NMHDR *hdr = (NMHDR *)lParam;
+	if (hdr->code == TBN_DROPDOWN)
+	{
+		NMTOOLBAR *t = (NMTOOLBAR *)lParam;
+		if (t->iItem == IDC_SETTINGS) {
+			RECT btnRect = { };
+			SendMessage(hdr->hwndFrom, TB_GETRECT, IDC_SETTINGS, (LPARAM)&btnRect);
+
+			MapWindowPoints(hdr->hwndFrom, HWND_DESKTOP, (LPPOINT)&btnRect, 2);
+			TrackPopupMenu(hSettingsMenu, TPM_LEFTALIGN|TPM_TOPALIGN|TPM_RIGHTBUTTON,
+				btnRect.left, btnRect.bottom, 0, m_hwnd, NULL);
+		}
+	}
+	return TBDDRET_DEFAULT;
 }
 
 LRESULT MainWindow::OnFaceRotate(UINT msg, WPARAM wParam, LPARAM lParam) {
@@ -198,8 +218,10 @@ LRESULT MainWindow::OnSize(UINT msg, WPARAM wParam, LPARAM lParam)
 
 LRESULT MainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	if (gl_frame) delete gl_frame;
 	ImageList_Destroy(hImgList);
 	ImageList_Destroy(hGrayedImgList);
+	DestroyMenu(hSettingsMenu);
 	PostQuitMessage(0);
 	return 0;
 }

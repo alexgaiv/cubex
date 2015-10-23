@@ -41,6 +41,11 @@ class GLFrame : public GLWindow
 public:
 	GLFrame();
 
+	void SetCubeSize(int size) {
+		if (cube->size != size) {
+			
+		}
+	}
 	void ResetCube();
 	void MixUpCube();
 	void CancelMove();
@@ -51,7 +56,7 @@ private:
 
 	time_t solveTime;
 	bool wasMixed;
-	int numMoves;
+	int numMoves, numActualMoves;
 	bool fSolvedAnim;
 	float rotAngle;
 	static Quaternion qResetView;
@@ -88,6 +93,12 @@ private:
 	void OnMouseDown(MouseButton button, int x, int y);
 	void OnMouseMove(UINT keysPressed, int x, int y);
 	void OnMouseUp(MouseButton button, int x, int y);
+	void OnMouseWheel(short delta, UINT keysPressed, int x, int y) {
+		if (delta < 0) viewer.ZoomIn(0.9f);
+		else viewer.ZoomOut(0.9f);
+		if (!cube->IsAnim()) RedrawWindow();
+		else needRedraw = true;
+	}
 	void OnTimer();
 	void OnDestroy();
 

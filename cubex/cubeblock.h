@@ -50,7 +50,6 @@ public:
 	bool IsSideColored(int side);
 private:
 	static VertexBuffer *faces, *faces_pickMode, *edges;
-	int sideId[6];
 
 	static float *verts;
 	static int InitVertices();

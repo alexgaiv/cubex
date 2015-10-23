@@ -1,62 +1,82 @@
+#ifndef _CUBE_IMP_H_
+#define _CUBE_IMP_H_
+
 #include "cube.h"
 #include <time.h>
 
 #define FORALLBLOCKS(x, y, z) \
-	for (int x = 0; x < 3; x++) \
-	for (int y = 0; y < 3; y++) \
-	for (int z = 0; z < 3; z++) 
+	for (int x = 0; x < size; x++) \
+	for (int y = 0; y < size; y++) \
+	for (int z = 0; z < size; z++) \
 
-int Cube::rot[2][3][3][2] =
-{
-	{
-		{{0,2}, {1,2}, {2,2}},
-		{{0,1}, {1,1}, {2,1}},
-		{{0,0}, {1,0}, {2,0}},
-	}, {
-		{{2,0}, {1,0}, {0,0}},
-		{{2,1}, {1,1}, {0,1}},
-		{{2,2}, {1,2}, {0,2}}
-	}
-};
+#define VISIBLEBLOCKS() \
+	if (x > 0 && x < size - 1 && \
+		y > 0 && y < size - 1 && \
+		z > 0 && z < size - 1) continue
 
-Cube::Cube()
-	: reseting(false),
+Cube::Cube(int size)
+	: size(size), reseting(false),
 	blockSize(CubeBlock::size), rotateSpeed(13.0f)
 {
 	srand((UINT)time(NULL));
-	ZeroMemory(blocks, sizeof(blocks));
+	blocks = NULL;
 	ZeroMemory(&mixup, sizeof(mixup));
 	ZeroMemory(&curFace, sizeof(curFace));
 	curFace.mRot.LoadIdentity();
 
+	tmp = new BlockColor*[size];
+	for (int i = 0; i < size; i++) {
+		tmp[i] = new BlockColor[size];
+	}
+
 	UINT pickId = 0;
-	FORALLBLOCKS(x, y, z) {
-		CubeBlock *&b = blocks[x][y][z];
-		b = new CubeBlock(pickId++);
-		b->location = Vector3f((x-1)*blockSize, (y-1)*blockSize, (z-1)*blockSize);
-				
-		InitBlockSides(b, x, y, z);
+	float s = (size - 1) * blockSize / 2;
+
+	blocks = new CubeBlock***[size];
+	for (int x = 0; x < size; x++) {
+		blocks[x] = new CubeBlock**[size];
+		for (int y = 0; y < size; y++) {
+			blocks[x][y] = new CubeBlock*[size];
+			for (int z = 0; z < size; z++)
+			{
+				CubeBlock *&b = blocks[x][y][z];
+				b = new CubeBlock(pickId++);
+				b->location = Vector3f(x*blockSize - s, y*blockSize - s, z*blockSize - s);
+				InitBlockSides(b, x, y, z);
+			}
+		}
 	}
 }
 
 Cube::~Cube()
-{
-	FORALLBLOCKS(x, y, z)
-		delete blocks[x][y][z];
+{	
+	for (int x = 0; x < size; x++) {
+		for (int y = 0; y < size; y++) {
+			for (int z = 0; z < size; z++)
+				delete blocks[x][y][z];
+			delete [] blocks[x][y];
+		}
+		delete [] blocks[x];
+	}
+	delete blocks;
+
+	for (int i = 0; i < size; i++)
+		delete [] tmp[i];
+	delete [] tmp;
 }
 
-void Cube::GetBlockById(int id, BlockDesc &b)
+void Cube::GetBlockById(int id, BlockDesc &b) const
 {
-	int blockIndex = id & 0x1f;
+	int blockIndex = id & 0x3ff;
 	b.pos = Point3<int>(
-		blockIndex / 9,
-		(blockIndex / 3) % 3,
-		blockIndex % 3
+		blockIndex / (size*size),
+		(blockIndex / size) % size,
+		blockIndex % size
 	);
 
 	b.side = -1;
 	for (int i = 0; i < 6; i++)
-		if (id & (1 << (i+5))) {
+		if (id & (1 << (i+10))) {
 			b.side = i;
 			break;
 		}
@@ -72,6 +92,7 @@ void Cube::DoReset()
 {
 	ZeroMemory(&mixup, sizeof(mixup));
 	FORALLBLOCKS(x, y, z) {
+		VISIBLEBLOCKS();
 		CubeBlock *b = blocks[x][y][z];
 		for (int i = 0; i < b->numSides; i++) {
 			b->clr.colorIndices[i] = b->coloredSides[i];
@@ -95,6 +116,7 @@ bool Cube::IsSolved() const
 
 	FORALLBLOCKS(x, y, z)
 	{
+		VISIBLEBLOCKS();
 		CubeBlock *b = blocks[x][y][z];
 		for (int i = 0; i < b->numSides; i++)
 		{
@@ -154,8 +176,8 @@ void Cube::Render() const
 	glPushMatrix();
 		glMultMatrixf(curFace.mRot.data);
 		int x, y, z;
-		for (int a = 0; a < 3; a++)
-			for (int b = 0; b < 3; b++)
+		for (int a = 0; a < size; a++)
+			for (int b = 0; b < size; b++)
 			{
 				switch (curFace.normal) {
 					case AXIS_X: x = curFace.index; y = a; z = b; break;
@@ -167,6 +189,7 @@ void Cube::Render() const
 	glPopMatrix();
 
 	FORALLBLOCKS(x, y, z) {
+		VISIBLEBLOCKS();
 		if (curFace.normal == AXIS_X && x == curFace.index ||
 			curFace.normal == AXIS_Y && y == curFace.index ||
 			curFace.normal == AXIS_Z && z == curFace.index)
@@ -183,11 +206,11 @@ void Cube::MixupStep()
 
 	do {
 		normal = (Axis)(rand() % 3);
-		index = rand() % 3;
+		index = rand() % size;
 	} while (mixup.curSteps != mixup.maxSteps &&
 		normal == mixup.prevNormal && index == mixup.prevIndex);
 
-	BeginRotateFace(normal, index, dir);		
+	BeginRotateFace(normal, index, dir);
 
 	mixup.prevNormal = normal;
 	mixup.prevIndex = index;
@@ -197,17 +220,20 @@ void Cube::MixupStep()
 void Cube::InitBlockSides(CubeBlock *cb, int x, int y, int z)
 {
 	int i = 0;
-	if (x != 1)
-		cb->coloredSides[i++] = x;
+
+	if (x == 0)
+		cb->coloredSides[i++] = 0;
+	else if (x == size - 1)
+		cb->coloredSides[i++] = 2;
 
 	if (y == 0)
 		cb->coloredSides[i++] = 5;
-	else if (y == 2)
+	else if (y == size - 1)
 		cb->coloredSides[i++] = 4;
 
 	if (z == 0)
 		cb->coloredSides[i++] = 1;
-	else if (z == 2)
+	else if (z == size - 1)
 		cb->coloredSides[i++] = 3;
 
 	cb->numSides = i;
@@ -218,25 +244,35 @@ void Cube::InitBlockSides(CubeBlock *cb, int x, int y, int z)
 
 void Cube::TransformColors()
 {
-	BlockColor tmp[3][3] = { };
-	memset(tmp, -1, sizeof(tmp));
+	for (int i = 0; i < size; i++)
+		memset(tmp[i], -1, size*sizeof(BlockColor));
 
 	int x, y, z;
-	for (int a = 0; a < 3; a++)
-		for (int b = 0; b < 3; b++)
+	for (int a = 0; a < size; a++)
+		for (int b = 0; b < size; b++)
 		{
-			int s = curFace.normal % 2 ? -1 : 1;
-			const int *r = (curFace.dir*s > 0 ? rot[0] : rot[1])[a][b];
-
 			switch (curFace.normal) {
 				case AXIS_X: x = curFace.index; y = a; z = b; break;
 				case AXIS_Y: x = a; y = curFace.index; z = b; break;
 				case AXIS_Z: x = a; y = b; z = curFace.index; break;
 			}
+			VISIBLEBLOCKS();
+
+			int r1, r2;
+			int s = curFace.normal % 2 ? -1 : 1;
+			if (curFace.dir*s > 0) {
+				r1 = b;
+				r2 = size - a - 1;
+			}
+			else {
+				r1 = size - b - 1;
+				r2 = a;
+			}
+
 			CubeBlock *cb = blocks[x][y][z];
 
 			tmp[a][b] = cb->clr;
-			BlockColor &tmpColor = tmp[r[0]][r[1]];
+			BlockColor &tmpColor = tmp[r1][r2];
 			
 			if (tmpColor.colorIndices[0] != -1)
 				cb->clr = tmpColor;
@@ -244,9 +280,9 @@ void Cube::TransformColors()
 			{
 				CubeBlock *block = NULL;
 				switch (curFace.normal) {
-					case AXIS_X: block = blocks[x][r[0]][r[1]]; break;
-					case AXIS_Y: block = blocks[r[0]][y][r[1]]; break;
-					case AXIS_Z: block = blocks[r[0]][r[1]][z]; break;
+					case AXIS_X: block = blocks[x][r1][r2]; break;
+					case AXIS_Y: block = blocks[r1][y][r2]; break;
+					case AXIS_Z: block = blocks[r1][r2][z]; break;
 				}
 				cb->clr = block->clr;
 			}
@@ -259,7 +295,7 @@ void Cube::OrientateColors(CubeBlock *cb, int x, int y, int z)
 {
 	BlockColor &c = cb->clr;
 	if (curFace.normal == AXIS_X) {
-		if (x == 1 && cb->numSides == 2)
+		if (x != 0 && x != size - 1 && cb->numSides == 2)
 			Swap(c.colorIndices[0], c.colorIndices[1]);
 		else if (cb->numSides == 3)
 			Swap(c.colorIndices[1], c.colorIndices[2]);
@@ -271,7 +307,11 @@ void Cube::OrientateColors(CubeBlock *cb, int x, int y, int z)
 			Swap(c.colorIndices[0], c.colorIndices[1]);
 	}
 	else {
-		if (cb->numSides == 3 || z == 1 && cb->numSides == 2)
+		if (cb->numSides == 3 || z != 0 && z != size - 1 && cb->numSides == 2)
 			Swap(c.colorIndices[0], c.colorIndices[1]);
 	}
 }
+
+#undef FORALLBLOCKS
+#undef VISIBLEBLOCKS
+#endif // _CUBE_IMP_H_

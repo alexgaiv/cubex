@@ -18,15 +18,17 @@ struct BlockDesc
 class Cube
 {
 public:
-	Cube();
+	Cube(int size);
 	~Cube();
 
+	const int size;
 	const float blockSize;
 	const float rotateSpeed;
+	static const int GOD_NUMBER = 20;
 
-	CubeBlock *blocks[3][3][3];
+	CubeBlock ****blocks;
 
-	void GetBlockById(int id, BlockDesc &block);
+	void GetBlockById(int id, BlockDesc &block) const;
 	void Reset();
 	void MixUp(int steps = 15);
 	bool IsSolved() const;
@@ -35,7 +37,7 @@ public:
 	bool IsAnim() const { return curFace.anim; }
 	void Render() const;
 private:
-	static int rot[2][3][3][2];
+	BlockColor **tmp;
 	bool reseting;
 
 	struct {
@@ -60,5 +62,6 @@ private:
 	void TransformColors();
 	void OrientateColors(CubeBlock *cb, int x, int y, int z);
 };
+
 
 #endif // _CUBE_H_

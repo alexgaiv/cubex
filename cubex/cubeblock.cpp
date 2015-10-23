@@ -24,9 +24,6 @@ CubeBlock::CubeBlock(UINT pickId)
 {
 	memset(&clr, 0, sizeof(clr));
 	memset(coloredSides, 0, sizeof(coloredSides));
-	for (int i = 0; i < 6; i++)
-		sideId[i] = pickId | (1 << (i+5));
-
 	static int init = InitVertices();
 }
 
@@ -147,8 +144,9 @@ void CubeBlock::Render()
 			} else glColor3f(0.0f, 0.0f, 0.0f);
 		}
 		else {
-			GLubyte r = sideId[i] & 0xff;
-			GLubyte g = sideId[i] >> 8;
+			int id = pickId | (1 << (i+10));
+			GLubyte r = id & 0xff;
+			GLubyte g = id >> 8;
 			glColor3ub(r, g, 1);
 		}
 
