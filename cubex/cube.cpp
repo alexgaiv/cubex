@@ -184,6 +184,7 @@ void Cube::Render() const
 					case AXIS_Y: x = a; y = curFace.index; z = b; break;
 					case AXIS_Z: x = a; y = b; z = curFace.index; break;
 				}
+				VISIBLEBLOCKS();
 				blocks[x][y][z]->Render();
 			}
 	glPopMatrix();

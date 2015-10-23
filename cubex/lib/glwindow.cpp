@@ -1,6 +1,5 @@
 #include "glwindow.h"
 #include <strsafe.h>
-#include "initext.h"
 
 HWND GLWindow::CreateParam(LPCTSTR lpCaption, int x, int y, int width, int height,
 	DWORD dwStyle, DWORD dwExStyle, HWND hParent)
@@ -91,8 +90,6 @@ void GLWindow::_InitRC()
 	else {
 		m_hrc = hTempRC;
 	}
-
-	InitGlExtensios();
 }
 
 void GLWindow::_ChangeDisplaySettings()

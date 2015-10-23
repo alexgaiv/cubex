@@ -2,6 +2,7 @@
 #include <string>
 #include <strsafe.h>
 #include <mmsystem.h>
+#include "lib/initext.h"
 
 #pragma comment(lib, "Winmm.lib")
 
@@ -20,6 +21,44 @@ GLFrame::GLFrame()
 	isFaceRotating = isMixing = false;
 	needRedraw = false;
 	ZeroMemory(&drag, sizeof(drag));
+
+	viewer.SetConstRotationSpeed(0.61f);
+	viewer.qRotation = qResetView;
+
+	cube = new Cube(3);
+}
+
+GLFrame::~GLFrame()
+{
+	delete cube;
+}
+
+bool GLFrame::ChangeCubeSize(int size)
+{
+	if (cube->size == size) return false;
+		
+	solveTime = time(NULL);
+	wasMixed = false;
+	numMoves = numActualMoves = 0;
+	fSolvedAnim = false;
+	rotAngle = 0.0f;
+	faceDrag = sceneDrag = false;
+	isFaceRotating = isMixing = false;
+	needRedraw = false;
+	ZeroMemory(&drag, sizeof(drag));
+
+	history.Clear();
+	resetAnim.Setup(viewer.qRotation, qResetView, 0.1f);
+
+	if (size >= 2 && size <= 7) {
+		float scale[6] = { 1.1f, 1.0f, 0.86f, 0.66f, 0.56f, 0.48f };
+		viewer.SetScale(scale[size - 2]);
+	}
+
+	delete cube;
+	cube = new Cube(size);
+	RedrawWindow();
+	return true;
 }
 
 void GLFrame::ResetCube()
@@ -50,7 +89,7 @@ void GLFrame::MixUpCube()
 	wasMixed = true;
 	numMoves = numActualMoves = 0;
 
-	cube->MixUp();
+	cube->MixUp(cube->size < 7 ? 15 : 20);
 	history.Clear();
 }
 
@@ -115,18 +154,15 @@ void GLFrame::RenderScene()
 
 void GLFrame::OnCreate()
 {
+	InitGlExtensios();
+	CubeBlock::InitStatic();
+
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_COLOR_MATERIAL);
-
 	glShadeModel(GL_FLAT);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
-
-	viewer.SetConstRotationSpeed(0.61f);
-	viewer.qRotation = qResetView;
-	SetTimer(m_hwnd, 1, 25, NULL);
 
 	LOGFONT lf = { };
 	lf.lfHeight = 20;
@@ -140,7 +176,7 @@ void GLFrame::OnCreate()
 	SelectObject(m_hdc, hPrevFont);
 	DeleteObject(hFont);
 
-	cube = new Cube(6);
+	SetTimer(m_hwnd, 1, 25, NULL);
 	solveTime = time(NULL);
 }
 
@@ -239,7 +275,7 @@ void GLFrame::OnTimer()
 void GLFrame::OnDestroy()
 {
 	KillTimer(m_hwnd, 1);
-	delete cube;
+	CubeBlock::FreeStatic();
 }
 
 void GLFrame::OnFaceRotated()

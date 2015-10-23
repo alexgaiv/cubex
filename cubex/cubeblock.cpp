@@ -24,22 +24,44 @@ CubeBlock::CubeBlock(UINT pickId)
 {
 	memset(&clr, 0, sizeof(clr));
 	memset(coloredSides, 0, sizeof(coloredSides));
-	static int init = InitVertices();
 }
 
-CubeBlock::~CubeBlock()
+void CubeBlock::InitStatic()
 {
-	if (verts) {
-		delete verts; verts = NULL;
+	verts = ReadVertexData(GetModuleHandle(NULL), IDR_BLOCKDATA);
+
+	if (ExtSupported::VBO) {
+		faces = new VertexBuffer;
+		faces_pickMode = new VertexBuffer;
+		edges = new VertexBuffer;
+
+		faces->Bind(GL_ARRAY_BUFFER);
+		faces->SetData(72*sizeof(float), verts, GL_STATIC_DRAW);
+
+		faces_pickMode->Bind(GL_ARRAY_BUFFER);
+		faces_pickMode->SetData(72*sizeof(float), verts+72, GL_STATIC_DRAW);
+
+		edges->Bind(GL_ARRAY_BUFFER);
+		edges->SetData(216*sizeof(float), verts+144, GL_STATIC_DRAW);
+
+		delete [] verts;
+		verts = NULL;
 	}
-	if (edges) {
-		delete edges; edges = NULL;
-	}
+}
+
+void CubeBlock::FreeStatic()
+{
 	if (faces) {
 		delete faces; faces = NULL;
 	}
 	if (faces_pickMode) {
 		delete faces; faces = NULL;
+	}
+	if (edges) {
+		delete edges; edges = NULL;
+	}
+	if (verts) {
+		delete verts; verts = NULL;
 	}
 }
 
@@ -88,30 +110,6 @@ float *CubeBlock::ReadVertexData(HINSTANCE hInst, DWORD resourceId)
 		vertexData[vp++] = sign * (n + (float)atof(frac));
 	}
 	return vertexData;
-}
-
-int CubeBlock::InitVertices()
-{
-	verts = ReadVertexData(GetModuleHandle(NULL), IDR_BLOCKDATA);
-
-	if (ExtSupported::VBO) {
-		faces = new VertexBuffer;
-		faces_pickMode = new VertexBuffer;
-		edges = new VertexBuffer;
-
-		faces->Bind(GL_ARRAY_BUFFER);
-		faces->SetData(72*sizeof(float), verts, GL_STATIC_DRAW);
-
-		faces_pickMode->Bind(GL_ARRAY_BUFFER);
-		faces_pickMode->SetData(72*sizeof(float), verts+72, GL_STATIC_DRAW);
-
-		edges->Bind(GL_ARRAY_BUFFER);
-		edges->SetData(216*sizeof(float), verts+144, GL_STATIC_DRAW);
-
-		delete [] verts;
-		verts = NULL;
-	}
-	return 0;
 }
 
 bool CubeBlock::IsSideColored(int side)

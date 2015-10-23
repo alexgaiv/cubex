@@ -44,15 +44,15 @@ public:
 	int coloredSides[3];
 
 	CubeBlock(UINT pickId);
-	~CubeBlock();
+
+	static void InitStatic();
+	static void FreeStatic(); 
 
 	void Render();
 	bool IsSideColored(int side);
 private:
 	static VertexBuffer *faces, *faces_pickMode, *edges;
-
 	static float *verts;
-	static int InitVertices();
 	static float *ReadVertexData(HINSTANCE hInst, DWORD resourceId);
 
 	Color3b *GetSideColor(int idx) {

@@ -23,11 +23,11 @@
 
 #define IDD_ABOUT_DIALOG 90
 #define IDM_SETTINGS 100
-#define IDC_2 110
-#define IDC_3 120
-#define IDC_4 130
-#define IDC_5 140
-#define IDC_6 150
-#define IDC_7 160
+#define IDM_2 111
+#define IDM_3 112
+#define IDM_4 113
+#define IDM_5 114
+#define IDM_6 115
+#define IDM_7 116
 
 #endif // _RESOURCES_H_

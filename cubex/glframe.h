@@ -40,12 +40,9 @@ class GLFrame : public GLWindow
 {
 public:
 	GLFrame();
+	~GLFrame();
 
-	void SetCubeSize(int size) {
-		if (cube->size != size) {
-			
-		}
-	}
+	bool ChangeCubeSize(int size);
 	void ResetCube();
 	void MixUpCube();
 	void CancelMove();
@@ -93,12 +90,6 @@ private:
 	void OnMouseDown(MouseButton button, int x, int y);
 	void OnMouseMove(UINT keysPressed, int x, int y);
 	void OnMouseUp(MouseButton button, int x, int y);
-	void OnMouseWheel(short delta, UINT keysPressed, int x, int y) {
-		if (delta < 0) viewer.ZoomIn(0.9f);
-		else viewer.ZoomOut(0.9f);
-		if (!cube->IsAnim()) RedrawWindow();
-		else needRedraw = true;
-	}
 	void OnTimer();
 	void OnDestroy();
 

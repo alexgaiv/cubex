@@ -2,7 +2,13 @@
 
 MainWindow::MainWindow() : gl_frame(NULL)
 {
+	gl_frame = new GLFrame();
 	this->Create("Cubex", CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, WS_OVERLAPPEDWINDOW, 0, NULL);
+}
+
+MainWindow::~MainWindow()
+{
+	delete gl_frame;
 }
 
 void MainWindow::InitToolbar()
@@ -120,25 +126,26 @@ INT_PTR WINAPI MainWindow::AboutDialogProc(HWND hwndDlg, UINT msg, WPARAM wParam
 LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	InitToolbar();
-	EnableCancelBtn(false);
 	hSettingsMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDM_SETTINGS));
 	hSettingsMenu = GetSubMenu(hSettingsMenu, 0);
+
+	EnableCancelBtn(false);
+	CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, IDM_3, MF_BYCOMMAND);
 
 	RECT wndRect, barRect = { };
 	GetClientRect(m_hwnd, &wndRect);
 	GetClientRect(hRebar, &barRect);
 
-	gl_frame = new GLFrame();
 	gl_frame->CreateParam("Cubex", 0, barRect.bottom, wndRect.right,
 		wndRect.bottom - barRect.bottom, WS_VISIBLE|WS_CHILD, 0, m_hwnd);
 	SetFocus(gl_frame->m_hwnd);
-
 	return 0;
 }
 
 LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	if (HIWORD(wParam) == BN_CLICKED) {
+		WORD id = LOWORD(wParam);
 		switch(LOWORD(wParam)) 
 		{
 		case IDC_NEWGAME:
@@ -160,10 +167,15 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 		case IDC_ABOUT:
 			DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT_DIALOG), m_hwnd, AboutDialogProc);
 			break;
+		default:
+			if (id >= IDM_2 && id <= IDM_7) {
+				if (gl_frame->ChangeCubeSize(id - IDM_2 + 2)) {
+					CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, id, MF_BYCOMMAND);
+					EnableCancelBtn(false);
+				}
+			}
+			break;
 		};
-	}
-	else if (HIWORD(wParam) == 0) {
-		
 	}
 	return 0;
 }
@@ -218,7 +230,7 @@ LRESULT MainWindow::OnSize(UINT msg, WPARAM wParam, LPARAM lParam)
 
 LRESULT MainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (gl_frame) delete gl_frame;
+	// deleting gl_frame at this point is very bad idea
 	ImageList_Destroy(hImgList);
 	ImageList_Destroy(hGrayedImgList);
 	DestroyMenu(hSettingsMenu);
