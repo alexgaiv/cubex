@@ -8,7 +8,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR lpCmdLine, int nCmdShow)
 {
 	INITCOMMONCONTROLSEX icc;
 	icc.dwSize = sizeof(icc);
-	icc.dwICC = ICC_WIN95_CLASSES|ICC_COOL_CLASSES;
+	icc.dwICC = ICC_COOL_CLASSES|ICC_BAR_CLASSES;
 	InitCommonControlsEx(&icc);
 
 	MainWindow wnd;

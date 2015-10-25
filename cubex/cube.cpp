@@ -1,6 +1,3 @@
-#ifndef _CUBE_IMP_H_
-#define _CUBE_IMP_H_
-
 #include "cube.h"
 #include <time.h>
 
@@ -315,4 +312,3 @@ void Cube::OrientateColors(CubeBlock *cb, int x, int y, int z)
 
 #undef FORALLBLOCKS
 #undef VISIBLEBLOCKS
-#endif // _CUBE_IMP_H_

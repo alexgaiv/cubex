@@ -14,10 +14,10 @@ MainWindow::~MainWindow()
 void MainWindow::InitToolbar()
 {
 	HINSTANCE hInst = GetModuleHandle(NULL);
-	hImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, 5, 0);
-	hGrayedImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, 3, 0);
-
 	const int numBtns = 5;
+	hImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, numBtns, 0);
+	hGrayedImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, numBtns, 0);
+	
 	int ids[numBtns] = { IDI_NEWGAME, IDI_MIXUP, IDI_CANCEL, IDI_SETTINGS, IDI_ABOUT };
 
 	for (int i = 0; i < numBtns; i++) {
@@ -32,11 +32,11 @@ void MainWindow::InitToolbar()
 	}
 
 	hToolbar = CreateWindow(TOOLBARCLASSNAME, "",
-		WS_CHILD|CCS_NOPARENTALIGN|CCS_NODIVIDER|TBSTYLE_FLAT|TBSTYLE_WRAPABLE|TBSTYLE_TOOLTIPS,
+		WS_CHILD|CCS_NOPARENTALIGN|CCS_NODIVIDER|TBSTYLE_FLAT|TBSTYLE_TOOLTIPS|CCS_NORESIZE,
 		0, 0, 0, 0, m_hwnd, NULL, hInst, NULL);
 
 	HWND hToolbar2 = CreateWindow(TOOLBARCLASSNAME, "",
-		WS_CHILD|CCS_NOPARENTALIGN|CCS_NODIVIDER|TBSTYLE_FLAT|TBSTYLE_WRAPABLE|TBSTYLE_TOOLTIPS,
+		WS_CHILD|CCS_NOPARENTALIGN|CCS_NODIVIDER|TBSTYLE_FLAT|TBSTYLE_TOOLTIPS|CCS_NORESIZE,
 		0, 0, 0, 0, m_hwnd, NULL, hInst, NULL);
 
 	SendMessage(hToolbar, TB_ADDSTRING, (WPARAM)hInst, IDS_TOOLBARNAMES);
@@ -66,21 +66,27 @@ void MainWindow::InitToolbar()
 	SendMessage(hToolbar2, TB_SETMAXTEXTROWS, 0, 0);
 
 	DWORD tbBtnSize = SendMessage(hToolbar, TB_GETBUTTONSIZE, 0, 0);
-	hRebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, "",
+	hRebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL,
 		WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|CCS_NODIVIDER,
 		0, 0, 0, 0,
 		m_hwnd, NULL, hInst, NULL);
 
-	REBARBANDINFO rbBand[2] = { };
-	for (int i = 0; i < 2; i++) {
-		rbBand[i].cbSize = REBARBANDINFOA_V6_SIZE;
-		rbBand[i].fMask = RBBIM_STYLE|RBBIM_CHILD|RBBIM_CHILDSIZE;
-		rbBand[i].fStyle = RBBS_CHILDEDGE|RBBS_NOGRIPPER;
-		rbBand[i].hwndChild = i == 0 ? hToolbar : hToolbar2;
-		rbBand[i].cxMinChild = LOWORD(tbBtnSize);
-		rbBand[i].cyMinChild = HIWORD(tbBtnSize);
-		SendMessage(hRebar, RB_INSERTBAND, i, (LPARAM)&rbBand[i]);
-	}
+	REBARBANDINFO rbBand = { };
+	rbBand.cbSize = REBARBANDINFOA_V6_SIZE;
+	rbBand.fMask = RBBIM_STYLE|RBBIM_CHILD|RBBIM_CHILDSIZE;
+	rbBand.fStyle = RBBS_CHILDEDGE|RBBS_NOGRIPPER;
+    rbBand.cyChild = LOWORD(tbBtnSize);
+    rbBand.cyMinChild = LOWORD(tbBtnSize);
+    rbBand.cx = 0;
+
+	rbBand.hwndChild = hToolbar;
+	rbBand.cxMinChild = numBtns * HIWORD(tbBtnSize);
+	SendMessage(hRebar, RB_INSERTBAND, -1, (LPARAM)&rbBand);
+
+	rbBand.cxMinChild = HIWORD(tbBtnSize);
+	rbBand.hwndChild = hToolbar2;
+	SendMessage(hRebar, RB_INSERTBAND, -1, (LPARAM)&rbBand);
+
 	SendMessage(hRebar, RB_MAXIMIZEBAND, 0, 0);
 }
 
@@ -218,11 +224,8 @@ LRESULT MainWindow::OnSize(UINT msg, WPARAM wParam, LPARAM lParam)
 
 	SetWindowPos(hRebar, HWND_TOP, 0, 0, w, barRect.bottom,
 		SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOZORDER);
+
 	GetClientRect(hRebar, &barRect);
-
-	SendMessage(hRebar, RB_MAXIMIZEBAND, 0, 0);
-	SendMessage(hRebar, RB_SHOWBAND, 1, TRUE);
-
 	SetWindowPos(gl_frame->m_hwnd, HWND_TOP, 0, 0, w, h - barRect.bottom,
 		SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOZORDER);
 	return 0;
