@@ -80,6 +80,7 @@ private:
 
 	HRESULT _HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	void _InitRC();
+	bool _CreateCompabilityContext();
 	void _ChangeDisplaySettings();
 };
 

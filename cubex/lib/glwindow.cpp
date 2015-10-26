@@ -61,17 +61,8 @@ PIXELFORMATDESCRIPTOR GLWindow::GetDCPixelFormat()
 	return pfd;
 }
 
-void GLWindow::_InitRC()
+bool GLWindow::_CreateCompabilityContext()
 {
-	m_hdc = GetDC(m_hwnd);
-
-	PIXELFORMATDESCRIPTOR pfd = this->GetDCPixelFormat();
-	int iPixelFormat = ChoosePixelFormat(m_hdc, &pfd);
-	SetPixelFormat(m_hdc, iPixelFormat, &pfd);
-
-	HGLRC hTempRC = wglCreateContext(m_hdc);
-	wglMakeCurrent(m_hdc, hTempRC);
-
 	PFNWGLCREATECONTEXTATTRIBSARBPROC wglCreateContextAttribsARB =
 		(PFNWGLCREATECONTEXTATTRIBSARBPROC)wglGetProcAddress("wglCreateContextAttribsARB");
 
@@ -82,14 +73,68 @@ void GLWindow::_InitRC()
 			0
 		};
 		m_hrc = wglCreateContextAttribsARB(m_hdc, NULL, attribs);
-		if (m_hrc) {
-			wglMakeCurrent(m_hdc, m_hrc);
-			wglDeleteContext(hTempRC);
-		} else m_hrc = hTempRC;
+		if (m_hrc) return true;
 	}
-	else {
-		m_hrc = hTempRC;
+	return false;
+}
+
+void GLWindow::_InitRC()
+{
+	m_hdc = GetDC(m_hwnd);
+	PIXELFORMATDESCRIPTOR pfd = this->GetDCPixelFormat();
+
+	HDC hTempDC = CreateCompatibleDC(NULL);
+	int iPixelFormat = ChoosePixelFormat(hTempDC, &pfd);
+	SetPixelFormat(hTempDC, iPixelFormat, &pfd);
+
+	HGLRC hTempRC = wglCreateContext(hTempDC);
+	wglMakeCurrent(hTempDC, hTempRC);
+
+	PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
+		(PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+
+	bool useMSAA = wglChoosePixelFormatARB != NULL;
+	if (useMSAA)
+	{
+		int attrs[] = {
+			WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+			WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+			WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
+			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
+			WGL_COLOR_BITS_ARB, 32,
+			WGL_DEPTH_BITS_ARB, 24,
+			WGL_STENCIL_BITS_ARB, 8,
+			WGL_SAMPLE_BUFFERS_ARB, 1,
+			WGL_SAMPLES_ARB, 4,
+			0
+		};
+
+		int iPixelFormatMSAA = 0;
+		UINT numFormats = 0;
+		BOOL valid = wglChoosePixelFormatARB(m_hdc, attrs, NULL, 1, &iPixelFormatMSAA, &numFormats);
+		if (valid && numFormats != 0)
+		{
+			SetPixelFormat(m_hdc, iPixelFormatMSAA, &pfd);
+			if (!_CreateCompabilityContext()) {
+				m_hrc = wglCreateContext(m_hdc);
+			}
+		}
+		else useMSAA = false;
 	}
+
+	if (!useMSAA)
+	{
+		int iPixelFormat = ChoosePixelFormat(m_hdc, &pfd);
+		SetPixelFormat(m_hdc, iPixelFormat, &pfd);
+
+		if (!_CreateCompabilityContext()) {
+			m_hrc = wglCreateContext(m_hdc);
+		}
+	}
+
+	wglMakeCurrent(m_hdc, m_hrc);
+	wglDeleteContext(hTempRC);
+	DeleteDC(hTempDC);
 }
 
 void GLWindow::_ChangeDisplaySettings()
