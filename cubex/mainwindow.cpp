@@ -6,11 +6,6 @@ MainWindow::MainWindow() : gl_frame(NULL)
 	this->Create("Cubex", CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, WS_OVERLAPPEDWINDOW, 0, NULL);
 }
 
-MainWindow::~MainWindow()
-{
-	delete gl_frame;
-}
-
 void MainWindow::InitToolbar()
 {
 	HINSTANCE hInst = GetModuleHandle(NULL);
@@ -233,7 +228,7 @@ LRESULT MainWindow::OnSize(UINT msg, WPARAM wParam, LPARAM lParam)
 
 LRESULT MainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	// deleting gl_frame at this point is very bad idea
+	delete gl_frame;
 	ImageList_Destroy(hImgList);
 	ImageList_Destroy(hGrayedImgList);
 	DestroyMenu(hSettingsMenu);
