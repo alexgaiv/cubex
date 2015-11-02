@@ -1,5 +1,13 @@
 #include "BaseWindow.h"
 
+BaseWindow::~BaseWindow()
+{
+	if (IsWindow(m_hwnd)) {
+		SetWindowLongPtr(m_hwnd, GWLP_USERDATA, 0);
+		DestroyWindow(m_hwnd);
+	}
+}
+
 BOOL BaseWindow::Create(LPCTSTR lpWindowName, int x, int y, int width, int height,
 	DWORD dwStyle, DWORD dwExStyle, HMENU hMenu, HWND hWndParent)
 {

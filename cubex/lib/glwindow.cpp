@@ -1,5 +1,14 @@
 #include "glwindow.h"
 #include <strsafe.h>
+#include "basewindow.h"
+
+GLWindow::~GLWindow()
+{
+	if (IsWindow(m_hwnd)) {
+		SetWindowLongPtr(m_hwnd, GWLP_USERDATA, 0);
+		DestroyWindow(m_hwnd);
+	}
+}
 
 HWND GLWindow::CreateParam(LPCTSTR lpCaption, int x, int y, int width, int height,
 	DWORD dwStyle, DWORD dwExStyle, HWND hParent)
@@ -83,7 +92,10 @@ void GLWindow::_InitRC()
 	m_hdc = GetDC(m_hwnd);
 	PIXELFORMATDESCRIPTOR pfd = this->GetDCPixelFormat();
 
-	HDC hTempDC = CreateCompatibleDC(NULL);
+	BaseWindow tmpWindow;
+	tmpWindow.Create("");
+
+	HDC hTempDC = GetDC(tmpWindow);
 	int iPixelFormat = ChoosePixelFormat(hTempDC, &pfd);
 	SetPixelFormat(hTempDC, iPixelFormat, &pfd);
 
@@ -134,7 +146,7 @@ void GLWindow::_InitRC()
 
 	wglMakeCurrent(m_hdc, m_hrc);
 	wglDeleteContext(hTempRC);
-	DeleteDC(hTempDC);
+	ReleaseDC(tmpWindow, hTempDC);
 }
 
 void GLWindow::_ChangeDisplaySettings()

@@ -11,7 +11,6 @@ class MainWindow : public BaseWindow
 {
 public:
 	MainWindow();
-	~MainWindow();
 private:
 	GLFrame *gl_frame;
 	HWND hToolbar, hRebar;
