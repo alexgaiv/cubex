@@ -158,7 +158,6 @@ void GLFrame::OnCreate()
 	CubeBlock::InitStatic();
 
 	glEnable(GL_MULTISAMPLE);
-
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_COLOR_MATERIAL);
@@ -316,8 +315,10 @@ void GLFrame::OnCubeSolved()
 bool GLFrame::GetBlockUnderMouse(int winX, int winY, BlockDesc &b)
 {
 	CubeBlock::fRenderPickMode = true;
+	glDisable(GL_MULTISAMPLE);
 	RenderScene();
 	CubeBlock::fRenderPickMode = false;
+	glEnable(GL_MULTISAMPLE);
 
 	int viewport[4] = { };
 	GLubyte clr[3] = { };
