@@ -1,6 +1,13 @@
 #include "glwindow.h"
 #include <strsafe.h>
-#include "basewindow.h"
+
+GLWindow::GLWindow()
+{
+	m_hwnd = NULL;
+	m_hdc = NULL;
+	m_hrc = NULL;
+	bFullScreen = bDummy = false;
+}
 
 GLWindow::~GLWindow()
 {
@@ -92,10 +99,11 @@ void GLWindow::_InitRC()
 	m_hdc = GetDC(m_hwnd);
 	PIXELFORMATDESCRIPTOR pfd = this->GetDCPixelFormat();
 
-	BaseWindow tmpWindow;
-	tmpWindow.Create("");
+	GLWindow tmpWindow;
+	tmpWindow.bDummy = true;
+	tmpWindow.CreateParam("");
 
-	HDC hTempDC = GetDC(tmpWindow);
+	HDC hTempDC = GetDC(tmpWindow.m_hwnd);
 	int iPixelFormat = ChoosePixelFormat(hTempDC, &pfd);
 	SetPixelFormat(hTempDC, iPixelFormat, &pfd);
 
@@ -146,7 +154,7 @@ void GLWindow::_InitRC()
 
 	wglMakeCurrent(m_hdc, m_hrc);
 	wglDeleteContext(hTempRC);
-	ReleaseDC(tmpWindow, hTempDC);
+	ReleaseDC(tmpWindow.m_hwnd, hTempDC);
 }
 
 void GLWindow::_ChangeDisplaySettings()
@@ -208,6 +216,9 @@ LRESULT CALLBACK GLWindow::_WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 HRESULT GLWindow::_HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	if (bDummy)
+		return DefWindowProc(m_hwnd, uMsg, wParam, lParam);
+
 	int ll = (short)LOWORD(lParam), hl = (short)HIWORD(lParam);
 	OnMessage(uMsg, wParam, lParam);
 
@@ -294,7 +305,6 @@ HRESULT GLWindow::_HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		wglMakeCurrent(m_hdc, NULL);
 		wglDeleteContext(m_hrc);
 		ReleaseDC(m_hwnd, m_hdc);
-		PostQuitMessage(0);
 		return 0;
 	}
 
