@@ -277,6 +277,7 @@ HRESULT GLWindow::_HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return 0;
 	case WM_KEYDOWN:
 		OnKeyDown(wParam);
+		return 0;
 	case WM_KEYUP:
 		OnKeyUp(wParam);
 		return 0;
