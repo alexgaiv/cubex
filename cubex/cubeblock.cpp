@@ -30,7 +30,7 @@ void CubeBlock::InitStatic()
 {
 	verts = ReadVertexData(GetModuleHandle(NULL), IDR_BLOCKDATA);
 
-	if (ExtSupported::VBO) {
+	if (GLEW_ARB_vertex_buffer_object) {
 		faces = new VertexBuffer;
 		faces_pickMode = new VertexBuffer;
 		edges = new VertexBuffer;
@@ -127,7 +127,7 @@ void CubeBlock::Render()
 	this->ApplyTransform();
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	if (ExtSupported::VBO) {
+	if (GLEW_ARB_vertex_buffer_object) {
 		(fRenderPickMode ? faces_pickMode : faces)->Bind(GL_ARRAY_BUFFER);
 		glVertexPointer(3, GL_FLOAT, 0, 0);
 	}
@@ -154,7 +154,7 @@ void CubeBlock::Render()
 	if (!fRenderPickMode) {
 		glColor3f(0.0f, 0.0f, 0.0f);
 
-		if (ExtSupported::VBO) {
+		if (GLEW_ARB_vertex_buffer_object) {
 			edges->Bind(GL_ARRAY_BUFFER);
 			glVertexPointer(3, GL_FLOAT, 0, 0);
 		}

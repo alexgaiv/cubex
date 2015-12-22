@@ -3,9 +3,9 @@
 
 #include <string>
 #include <time.h>
-#include "lib/glwindow.h"
-#include "lib/viewer3d.h"
-#include "lib/qslerp.h"
+#include "glwindow.h"
+#include "viewer3d.h"
+#include "qslerp.h"
 #include "cube.h"
 
 #define WM_ROTATEFACE (WM_USER+1)
@@ -98,11 +98,11 @@ private:
 	void OnCubeSolved();
 
 	bool GetBlockUnderMouse(int winX, int winY, BlockDesc &block);
-	void GetNeighbors(const BlockDesc &block, Point3<int> &neighbor1, Point3<int> &neighbor2);
+	void GetNeighbors(const BlockDesc &block, Point3i &neighbor1, Point3i &neighbor2);
 	void CalcRotDirections(const BlockDesc &block);
 	void MouseRot(const Vector3d &mouseDir);
 
-	Vector3d CalcBlockWinPos(const Point3<int> &block,
+	Vector3d CalcBlockWinPos(const Point3i &block,
 		const Matrix44d &modelview,
 		const Matrix44d &projection, int viewport[4]);
 };

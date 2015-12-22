@@ -68,6 +68,10 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>$(ProjectDir)\gl;$(IncludePath)</IncludePath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib\gl;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -132,33 +136,37 @@
     <ClCompile Include="cube.cpp" />
     <ClCompile Include="cubeblock.cpp" />
     <ClCompile Include="glframe.cpp" />
-    <ClCompile Include="lib\basewindow.cpp" />
-    <ClCompile Include="lib\glwindow.cpp" />
-    <ClCompile Include="lib\initext.cpp" />
-    <ClCompile Include="lib\quaternion.cpp" />
-    <ClCompile Include="lib\vertexbuffer.cpp" />
-    <ClCompile Include="lib\viewer3d.cpp" />
+    <ClCompile Include="lib\source\basewindow.cpp" />
+    <ClCompile Include="lib\source\global.cpp" />
+    <ClCompile Include="lib\source\glwindow.cpp" />
+    <ClCompile Include="lib\source\quaternion.cpp" />
+    <ClCompile Include="lib\source\shader.cpp" />
+    <ClCompile Include="lib\source\transform.cpp" />
+    <ClCompile Include="lib\source\vertexbuffer.cpp" />
+    <ClCompile Include="lib\source\viewer3d.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h" />
     <ClInclude Include="glframe.h" />
-    <ClInclude Include="lib\basewindow.h" />
-    <ClInclude Include="lib\common.h" />
-    <ClInclude Include="lib\datatypes.h" />
-    <ClInclude Include="lib\glwindow.h" />
-    <ClInclude Include="lib\initext.h" />
-    <ClInclude Include="lib\qslerp.h" />
-    <ClInclude Include="lib\quaternion.h" />
-    <ClInclude Include="lib\vertexbuffer.h" />
-    <ClInclude Include="lib\viewer3d.h" />
+    <ClInclude Include="lib\include\basewindow.h" />
+    <ClInclude Include="lib\include\common.h" />
+    <ClInclude Include="lib\include\datatypes.h" />
+    <ClInclude Include="lib\include\global.h" />
+    <ClInclude Include="lib\include\glwindow.h" />
+    <ClInclude Include="lib\include\qslerp.h" />
+    <ClInclude Include="lib\include\quaternion.h" />
+    <ClInclude Include="lib\include\shader.h" />
+    <ClInclude Include="lib\include\transform.h" />
+    <ClInclude Include="lib\include\vertexbuffer.h" />
+    <ClInclude Include="lib\include\viewer3d.h" />
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="resources.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="block.data" />
-    <None Include="lib\datatypes.inl" />
+    <None Include="lib\include\datatypes.inl" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="images\app.ico" />

@@ -11,7 +11,7 @@ enum Axis {
 
 struct BlockDesc
 {
-	Point3<int> pos;
+	Point3i pos;
 	int side;
 };
 

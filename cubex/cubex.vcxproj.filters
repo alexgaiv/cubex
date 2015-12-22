@@ -17,10 +17,10 @@
       <UniqueIdentifier>{308dd8b1-cb86-4332-8dfa-528967d33e94}</UniqueIdentifier>
     </Filter>
     <Filter Include="lib\include">
-      <UniqueIdentifier>{261f1495-5779-4829-b92d-12f603ced55f}</UniqueIdentifier>
+      <UniqueIdentifier>{c624e28e-52da-4b4f-b033-3b70b9c21c89}</UniqueIdentifier>
     </Filter>
     <Filter Include="lib\source">
-      <UniqueIdentifier>{ca2c1111-4dc5-4633-9231-71e852af81fc}</UniqueIdentifier>
+      <UniqueIdentifier>{40beb22b-2dd5-4130-89a2-2624764a1dd3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -30,49 +30,43 @@
     <ClCompile Include="cubeblock.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="lib\glwindow.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\quaternion.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\viewer3d.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
     <ClCompile Include="glframe.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
     <ClCompile Include="mainwindow.cpp">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="lib\basewindow.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\vertexbuffer.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\initext.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
     <ClCompile Include="cube.cpp">
       <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\basewindow.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\global.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\glwindow.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\quaternion.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\shader.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\transform.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\vertexbuffer.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\viewer3d.cpp">
+      <Filter>lib\source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h">
       <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\datatypes.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\glwindow.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\quaternion.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\viewer3d.h">
-      <Filter>lib\include</Filter>
     </ClInclude>
     <ClInclude Include="glframe.h">
       <Filter>Заголовочные файлы</Filter>
@@ -80,34 +74,52 @@
     <ClInclude Include="mainwindow.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="lib\basewindow.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
     <ClInclude Include="resources.h">
       <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\qslerp.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\vertexbuffer.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\common.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\initext.h">
-      <Filter>lib\include</Filter>
     </ClInclude>
     <ClInclude Include="cube.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="lib\include\basewindow.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\common.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\datatypes.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\global.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\glwindow.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\qslerp.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\quaternion.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\shader.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\transform.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\vertexbuffer.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\viewer3d.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="lib\datatypes.inl">
-      <Filter>lib\source</Filter>
-    </None>
     <None Include="block.data">
       <Filter>Файлы ресурсов</Filter>
+    </None>
+    <None Include="lib\include\datatypes.inl">
+      <Filter>lib\include</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

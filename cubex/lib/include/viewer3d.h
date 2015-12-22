@@ -1,5 +1,5 @@
-#ifndef _VIEWER3D_
-#define _VIEWER3D_
+#ifndef _VIEWER3D_H
+#define _VIEWER3D_H
 
 #include "datatypes.h"
 #include "quaternion.h"
@@ -11,16 +11,17 @@ public:
 	Quaternion qRotation;
 	Viewer3D();
 
-	Matrix44f Modelview();
+	Matrix44f GetViewMatrix();
 	void ApplyTransform();
+
 	void ResetView();
 	void BeginPan(int winX, int winY);
 	void BeginRotate(int winX, int winY);
 	void Pan(int winX, int winY);
 	void Rotate(int winX, int winY);
-	void ZoomIn(float scale);
-	void ZoomOut(float scale);
+	void Zoom(float scale);
 	void SetScale(float scale);
+	float GetScale() const { return scale; };
 
 	void SetPerspective(float fovy, float zNear, float zFar,
 		Point3f center, int winWidth, int winHeight);
@@ -46,4 +47,4 @@ private:
 	void calcMatr();
 };
 
-#endif // _VIEWER3D_
+#endif // _VIEWER3D_H

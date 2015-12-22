@@ -65,7 +65,7 @@ Cube::~Cube()
 void Cube::GetBlockById(int id, BlockDesc &b) const
 {
 	int blockIndex = id & 0x3ff;
-	b.pos = Point3<int>(
+	b.pos = Point3i(
 		blockIndex / (size*size),
 		(blockIndex / size) % size,
 		blockIndex % size

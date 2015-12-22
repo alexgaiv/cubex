@@ -1,26 +1,23 @@
 #include "viewer3d.h"
+#include "global.h"
+#include "transform.h"
 
 Viewer3D::Viewer3D()
 	: isConstSpeed(false), constSpeedValue(0.0f)
 {
 	view.fw = view.fw = view.s = 1.0f;
 	view.w = view.h = 0.0f;
-	rot.wt = 1.0f;
 	ResetView();
 }
 
-Matrix44f Viewer3D::Modelview() {
+Matrix44f Viewer3D::GetViewMatrix() {
 	qRotation.ToMatrix(rot);
-	rot.xAxis *= scale;
-	rot.yAxis *= scale;
-	rot.zAxis *= scale;
+	rot.Scale(scale);
 	return rot * trs;
 }
 
-void Viewer3D::ApplyTransform()
-{
-	glMatrixMode(GL_MODELVIEW);
-	glMultMatrixf(Modelview().data);
+void Viewer3D::ApplyTransform() {
+	Global::MultModelView(GetViewMatrix());
 }
 
 void Viewer3D::ResetView() {
@@ -67,13 +64,8 @@ void Viewer3D::Rotate(int winX, int winY)
 	changed = true;
 }
 
-void Viewer3D::ZoomIn(float scale) {
+void Viewer3D::Zoom(float scale) {
 	this->scale *= scale;
-	changed = true;
-}
-
-void Viewer3D::ZoomOut(float scale) {
-	this->scale /= scale;
 	changed = true;
 }
 
@@ -89,10 +81,9 @@ void Viewer3D::SetOrtho(float left, float right, float bottom, float top,
 	view.h = abs(bottom - top);
 	view.fw = view.w / winWidth;
 	view.fh = view.h / winHeight;
-	rot.translate = Vector3f();
+	rot.translate = Vector3f(0);
 
-	glMatrixMode(GL_PROJECTION);
-	glOrtho(left, right, bottom, top, zNear, zFar);
+	Global::SetProjection(Ortho(left, right, bottom, top, zNear, zFar));
 	changed = true;
 }
 
@@ -103,29 +94,26 @@ void Viewer3D::SetPerspective(float fovy, float zNear, float zFar,
 	view.h = tan(fovy * (float)M_PI / 360.0f) * zNear;
 	view.w = view.h * aspect;
 
-	glMatrixMode(GL_PROJECTION);
-	glFrustum(-view.w, view.w, -view.h, view.h, zNear, zFar);
+	Global::SetProjection(Frustum(-view.w, view.w, -view.h, view.h, zNear, zFar));
 
 	view.w *= 2.0f; view.h *= 2.0f;
 	view.fw = view.w / winWidth;
 	view.fh = view.h / winHeight;
-	rot.translate = Vector3f(center.x, center.y, center.z);
+	rot.translate = center;
 	changed = true;
 }
 
 Vector3f Viewer3D::pos(const Vector3f &p, int x, int y)
 {
-	float viewport[4] = { };
-	glGetFloatv(GL_VIEWPORT, viewport);
+	int viewport[4] = { };
+	glGetIntegerv(GL_VIEWPORT, viewport);
 	if (changed) calcMatr();
 
 	Vector4f v = Vector4f(p) * matr;
 	v.Cartesian();
-	float winZ = (1.0f + v.z) * 0.5f;
 
 	v.x = ((float)x - viewport[0]) / viewport[2]*2.0f - 1.0f;
 	v.y = ((viewport[3] - (float)y) - viewport[1]) / viewport[3]*2.0f - 1.0f;
-	v.z = 2.0f*winZ - 1.0f;
 	v.w = 1.0f;
 	v *= matr_inv;
 	v.Cartesian();
@@ -134,15 +122,9 @@ Vector3f Viewer3D::pos(const Vector3f &p, int x, int y)
 
 void Viewer3D::calcMatr()
 {
-	Matrix44f projection;
-	glGetFloatv(GL_PROJECTION_MATRIX, projection.data);
 	qRotation.ToMatrix(rot);
-
-	matr = projection * rot;
-	matr.xAxis *= scale;
-	matr.yAxis *= scale;
-	matr.zAxis *= scale;
-
-	matr.GetInverse(matr_inv);
+	rot.Scale(scale);
+	matr = Global::GetProjection() * rot;
+	matr_inv = matr.GetInverse();
 	changed = false;
 }

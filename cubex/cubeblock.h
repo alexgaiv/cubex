@@ -1,8 +1,8 @@
 #ifndef _ACTOR_H_
 #define _ACTOR_H_
 
-#include "lib/quaternion.h"
-#include "lib/vertexbuffer.h"
+#include "quaternion.h"
+#include "vertexbuffer.h"
 
 class Actor
 {

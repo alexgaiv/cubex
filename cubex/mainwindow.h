@@ -4,7 +4,7 @@
 #include <Windows.h>
 #include <CommCtrl.h>
 #include "resources.h"
-#include "lib\basewindow.h"
+#include "basewindow.h"
 #include "glframe.h"
 
 class MainWindow : public BaseWindow

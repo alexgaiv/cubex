@@ -2,7 +2,7 @@
 #include <string>
 #include <strsafe.h>
 #include <mmsystem.h>
-#include "lib/initext.h"
+#include "initext.h"
 
 #pragma comment(lib, "Winmm.lib")
 
@@ -154,7 +154,8 @@ void GLFrame::RenderScene()
 
 void GLFrame::OnCreate()
 {
-	InitGlExtensios();
+	//InitGlExtensios();
+	glewInit();
 	CubeBlock::InitStatic();
 
 	glEnable(GL_MULTISAMPLE);
@@ -331,7 +332,7 @@ bool GLFrame::GetBlockUnderMouse(int winX, int winY, BlockDesc &b)
 	return true;
 }
 
-void GLFrame::GetNeighbors(const BlockDesc &b, Point3<int> &neighbor1, Point3<int> &neighbor2)
+void GLFrame::GetNeighbors(const BlockDesc &b, Point3i &neighbor1, Point3i &neighbor2)
 {
 	int i1, i2, i3;
 	const int *p = b.pos.data;
@@ -361,7 +362,7 @@ void GLFrame::GetNeighbors(const BlockDesc &b, Point3<int> &neighbor1, Point3<in
 	if (p[i2] == cube->size - 1) drag.neg[1] = true;
 }
 
-Vector3d GLFrame::CalcBlockWinPos(const Point3<int> &b,
+Vector3d GLFrame::CalcBlockWinPos(const Point3i &b,
 	const Matrix44d &modelview, const Matrix44d &projection, int viewport[4])
 {
 	Vector3d ret;
@@ -373,12 +374,12 @@ Vector3d GLFrame::CalcBlockWinPos(const Point3<int> &b,
 
 void GLFrame::CalcRotDirections(const BlockDesc &b)
 {
-	Point3<int> n1, n2;
+	Point3i n1, n2;
 	Vector3d target;
 
 	GetNeighbors(b, n1, n2);
 
-	Matrix44d modelview(viewer.Modelview());
+	Matrix44d modelview(viewer.GetViewMatrix());
 	double projection[16];
 	int viewport[4];
 	glGetDoublev(GL_PROJECTION_MATRIX, projection);
@@ -404,8 +405,8 @@ void GLFrame::CalcRotDirections(const BlockDesc &b)
 
 void GLFrame::MouseRot(const Vector3d &mouseDir)
 {
-	double a1 = acos(Vector3d::Dot(mouseDir, drag.dir[0]));
-	double a2 = acos(Vector3d::Dot(mouseDir, drag.dir[1]));
+	double a1 = acos(Dot(mouseDir, drag.dir[0]));
+	double a2 = acos(Dot(mouseDir, drag.dir[1]));
 
 	double c[4] = {
 		a1, M_PI - a1,
