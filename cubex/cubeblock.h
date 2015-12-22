@@ -46,7 +46,7 @@ public:
 	CubeBlock(UINT pickId);
 
 	static void InitStatic();
-	static void FreeStatic(); 
+	static void FreeStatic();
 
 	void Render();
 	bool IsSideColored(int side);
