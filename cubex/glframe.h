@@ -4,6 +4,7 @@
 #include <string>
 #include <time.h>
 #include "glwindow.h"
+#include "shader.h"
 #include "viewer3d.h"
 #include "qslerp.h"
 #include "cube.h"
@@ -48,6 +49,7 @@ public:
 	void CancelMove();
 	bool CanCancelMove() { return history.GetSize() != 0; }
 private:
+	ProgramObject *program;
 	Cube *cube;
 	Viewer3D viewer;
 

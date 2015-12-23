@@ -1,6 +1,7 @@
 #ifndef _ACTOR_H_
 #define _ACTOR_H_
 
+#include "global.h"
 #include "quaternion.h"
 #include "vertexbuffer.h"
 
@@ -11,17 +12,12 @@ public:
 	Quaternion rotation;
 	Matrix44f transform;
 
-	Actor() {
-		rotation.LoadIdentity();
-		transform.LoadIdentity();
-	}
-
 	virtual void Render() = 0;
 
 	void ApplyTransform() {
 		rotation.ToMatrix(transform);
 		transform.translate = location;
-		glMultMatrixf(transform.data);
+		Global::MultModelView(transform.data);
 	}
 };
 

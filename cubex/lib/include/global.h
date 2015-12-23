@@ -3,6 +3,8 @@
 
 #include "datatypes.h"
 #include "shader.h"
+#include "mesh.h"
+#include "texture.h"
 #include <list>
 #include <stack>
 
@@ -41,6 +43,8 @@ public:
 	static void PopProjection()  { SetProjection(projStack.top()); projStack.pop(); }
 private:
 	friend class ProgramObject;
+	friend class Mesh;
+	friend class BaseTexture;
 
 	static GLuint curProgram;
 	static GLenum curTextureUnit;

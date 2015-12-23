@@ -6,17 +6,23 @@
 class VertexBuffer
 {
 public:
-	VertexBuffer();
+	VertexBuffer(GLenum target = GL_ARRAY_BUFFER);
 	~VertexBuffer();
 
-	GLuint GetId() { return id; }
+	GLuint GetId() const { return id; }
+	GLenum GetTarget() const { return target; }
+	void SetTarget(GLenum target) { this->target = target; }
 
-	void Bind(GLenum target);
-	void Unbind(GLenum target);
+	void AttribPointer(GLuint index, GLint size, GLenum type,
+		GLboolean normalized = GL_FALSE, GLsizei stride = 0, GLubyte offset = 0);
+
+	void Bind() { glBindBuffer(target, id); }
+	void Unbind() { glBindBuffer(target, 0); }
 
 	void SetData(GLsizeiptr size, const void *data, GLenum usage);
 	void SetSubData(GLintptr offset, GLsizeiptr size, const void *data);
 	void GetSubData(GLintptr offset, GLsizeiptr size, void *data);
+	int GetSize();
 
 	void *Map(GLenum access);
 	bool Unmap();

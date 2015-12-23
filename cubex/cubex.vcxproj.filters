@@ -63,6 +63,12 @@
     <ClCompile Include="lib\source\viewer3d.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
+    <ClCompile Include="lib\source\mesh.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\include\texture.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h">
@@ -89,9 +95,6 @@
     <ClInclude Include="lib\include\datatypes.h">
       <Filter>lib\include</Filter>
     </ClInclude>
-    <ClInclude Include="lib\include\global.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
     <ClInclude Include="lib\include\glwindow.h">
       <Filter>lib\include</Filter>
     </ClInclude>
@@ -111,6 +114,15 @@
       <Filter>lib\include</Filter>
     </ClInclude>
     <ClInclude Include="lib\include\viewer3d.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\global.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\mesh.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\texture.h">
       <Filter>lib\include</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,8 +1,7 @@
 #include "glframe.h"
+#include "transform.h"
 #include <string>
 #include <strsafe.h>
-#include <mmsystem.h>
-#include "initext.h"
 
 #pragma comment(lib, "Winmm.lib")
 
@@ -111,8 +110,7 @@ void GLFrame::SetPerspective(int w, int h) {
 void GLFrame::RenderScene()
 {
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
+	Global::PushModelView();
 
 	viewer.ApplyTransform();
 	if (fSolvedAnim) {
@@ -126,14 +124,11 @@ void GLFrame::RenderScene()
 		RECT winRect = { };
 		GetClientRect(m_hwnd, &winRect);
 
-		glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		glOrtho(0.0, winRect.right - winRect.left, winRect.bottom - winRect.top, 0.0, -1.0f, 1.0f);
+		Global::PushProjection();
+		Global::SetProjection(Ortho(0.0f, (float)winRect.right, (float)winRect.bottom, 0.0f, -1.0f, 1.0f));
 
-		glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-		glLoadIdentity();
+		Global::PushModelView();
+		Global::SetModelView(Matrix44f::Identity());
 
 		glColor3f(0.07f, 0.31f, 0.76f);
 		glListBase(1);
@@ -143,18 +138,15 @@ void GLFrame::RenderScene()
 		glRasterPos2i(50, 70);
 		glCallLists(timeMsg.size(), GL_UNSIGNED_BYTE, timeMsg.c_str());
 
-		glPopMatrix();
-		glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
+		Global::PopModelView();
+		Global::PopProjection();
 	}
 
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
+	Global::PopModelView();
 }
 
 void GLFrame::OnCreate()
 {
-	//InitGlExtensios();
 	glewInit();
 	CubeBlock::InitStatic();
 
@@ -162,9 +154,12 @@ void GLFrame::OnCreate()
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_COLOR_MATERIAL);
-	glShadeModel(GL_FLAT);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
+
+	program = new ProgramObject("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
+	glUseProgram(0);
+	//program->Use();
 
 	LOGFONT lf = { };
 	lf.lfHeight = 20;
@@ -185,13 +180,7 @@ void GLFrame::OnCreate()
 void GLFrame::OnSize(int w, int h)
 {
 	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
 	SetPerspective(w, h);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
 }
 
 void GLFrame::OnMouseDown(MouseButton button, int winX, int winY)
@@ -278,6 +267,7 @@ void GLFrame::OnDestroy()
 {
 	KillTimer(m_hwnd, 1);
 	CubeBlock::FreeStatic();
+	delete program;
 }
 
 void GLFrame::OnFaceRotated()

@@ -136,9 +136,11 @@
     <ClCompile Include="cube.cpp" />
     <ClCompile Include="cubeblock.cpp" />
     <ClCompile Include="glframe.cpp" />
+    <ClCompile Include="lib\include\texture.cpp" />
     <ClCompile Include="lib\source\basewindow.cpp" />
     <ClCompile Include="lib\source\global.cpp" />
     <ClCompile Include="lib\source\glwindow.cpp" />
+    <ClCompile Include="lib\source\mesh.cpp" />
     <ClCompile Include="lib\source\quaternion.cpp" />
     <ClCompile Include="lib\source\shader.cpp" />
     <ClCompile Include="lib\source\transform.cpp" />
@@ -155,9 +157,11 @@
     <ClInclude Include="lib\include\datatypes.h" />
     <ClInclude Include="lib\include\global.h" />
     <ClInclude Include="lib\include\glwindow.h" />
+    <ClInclude Include="lib\include\mesh.h" />
     <ClInclude Include="lib\include\qslerp.h" />
     <ClInclude Include="lib\include\quaternion.h" />
     <ClInclude Include="lib\include\shader.h" />
+    <ClInclude Include="lib\include\texture.h" />
     <ClInclude Include="lib\include\transform.h" />
     <ClInclude Include="lib\include\vertexbuffer.h" />
     <ClInclude Include="lib\include\viewer3d.h" />

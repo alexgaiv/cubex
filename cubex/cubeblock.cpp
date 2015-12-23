@@ -35,13 +35,13 @@ void CubeBlock::InitStatic()
 		faces_pickMode = new VertexBuffer;
 		edges = new VertexBuffer;
 
-		faces->Bind(GL_ARRAY_BUFFER);
+		faces->Bind();
 		faces->SetData(72*sizeof(float), verts, GL_STATIC_DRAW);
 
-		faces_pickMode->Bind(GL_ARRAY_BUFFER);
+		faces_pickMode->Bind();
 		faces_pickMode->SetData(72*sizeof(float), verts+72, GL_STATIC_DRAW);
 
-		edges->Bind(GL_ARRAY_BUFFER);
+		edges->Bind();
 		edges->SetData(216*sizeof(float), verts+144, GL_STATIC_DRAW);
 
 		delete [] verts;
@@ -128,7 +128,7 @@ void CubeBlock::Render()
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	if (GLEW_ARB_vertex_buffer_object) {
-		(fRenderPickMode ? faces_pickMode : faces)->Bind(GL_ARRAY_BUFFER);
+		(fRenderPickMode ? faces_pickMode : faces)->Bind();
 		glVertexPointer(3, GL_FLOAT, 0, 0);
 	}
 	else glVertexPointer(3, GL_FLOAT, 0, verts + (fRenderPickMode ? 72 : 0));
@@ -155,7 +155,7 @@ void CubeBlock::Render()
 		glColor3f(0.0f, 0.0f, 0.0f);
 
 		if (GLEW_ARB_vertex_buffer_object) {
-			edges->Bind(GL_ARRAY_BUFFER);
+			edges->Bind();
 			glVertexPointer(3, GL_FLOAT, 0, 0);
 		}
 		else glVertexPointer(3, GL_FLOAT, 0, verts + 144);
