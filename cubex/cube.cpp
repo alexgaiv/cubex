@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "transform.h"
 #include <time.h>
 
 #define FORALLBLOCKS(x, y, z) \
@@ -170,8 +171,8 @@ bool Cube::AnimationStep()
 
 void Cube::Render() const
 {
-	glPushMatrix();
-		glMultMatrixf(curFace.mRot.data);
+	Global::PushModelView();
+		Global::MultModelView(curFace.mRot.data);
 		int x, y, z;
 		for (int a = 0; a < size; a++)
 			for (int b = 0; b < size; b++)
@@ -184,7 +185,7 @@ void Cube::Render() const
 				VISIBLEBLOCKS();
 				blocks[x][y][z]->Render();
 			}
-	glPopMatrix();
+	Global::PopModelView();
 
 	FORALLBLOCKS(x, y, z) {
 		VISIBLEBLOCKS();

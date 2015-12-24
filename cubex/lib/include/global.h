@@ -23,6 +23,8 @@ const struct {
 class Global
 {
 public:
+	static ProgramObject *GetCurProgram();
+
 	static void AttachProgram(ProgramObject *prog) {
 		shaders.push_back(prog);
 	}

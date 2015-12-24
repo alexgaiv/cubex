@@ -117,7 +117,10 @@ void GLFrame::RenderScene()
 		glRotatef(rotAngle, 1.0f, 1.0f, 1.0f);
 	}
 
-	cube->Render();
+	Global::PushModelView();
+		Global::MultModelView(Scale(2,2,2));
+		cube->Render();
+	Global::PopModelView();
 
 	if (fSolvedAnim && !CubeBlock::fRenderPickMode)
 	{
@@ -152,14 +155,23 @@ void GLFrame::OnCreate()
 
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_COLOR_MATERIAL);
-	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+	//glEnable(GL_CULL_FACE);
+	//glEnable(GL_COLOR_MATERIAL);
+	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
 
 	program = new ProgramObject("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
-	glUseProgram(0);
-	//program->Use();
+	if (program->IsLinked()) {
+		float diffuse[4] = { 0.45f, 0.45f, 0.45f, 1.0f };
+		float specular[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
+
+		program->Uniform("ColorMap", 0);
+		program->Uniform("NormalMap", 1);
+		program->Uniform("FrontMaterial.diffuse", 1, diffuse);
+		program->Uniform("FrontMaterial.specular", 1, specular);
+		program->Uniform("FrontMaterial.shininess", 300);
+		program->Use();
+	}
 
 	LOGFONT lf = { };
 	lf.lfHeight = 20;

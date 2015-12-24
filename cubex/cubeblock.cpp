@@ -1,23 +1,25 @@
 #include "cubeblock.h"
 #include "resources.h"
+#include "global.h"
 
-Color3b CubeBlock::colors[6] =
+Color3f CubeBlock::colors[7] =
 {
-	Color3b(0,255,0),
-	Color3b(255,150,0),
-	Color3b(0,0,255),
-	Color3b(255,0,0),
-	Color3b(255,255,255),
-	Color3b(255,255,0),
+	Color3f(0,1.0f,0),
+	Color3f(1,0.3f,0),
+	Color3f(0,0,1),
+	Color3f(1,0,0),
+	Color3f(1,1,1),
+	Color3f(1,1,0),
+	Color3f(0)
 };
 
-const float CubeBlock::size = 30.0f;
+const float CubeBlock::size = 15.0f;
 bool CubeBlock::fRenderPickMode = false;
 
-float *CubeBlock::verts = NULL;
-VertexBuffer *CubeBlock::faces = NULL;
-VertexBuffer *CubeBlock::faces_pickMode = NULL;
-VertexBuffer *CubeBlock::edges = NULL;
+Mesh *CubeBlock::face = NULL;
+Mesh *CubeBlock::edges = NULL;
+Mesh *CubeBlock::face_pickMode = NULL;
+Matrix44f CubeBlock::face_transform[6];
 
 CubeBlock::CubeBlock(UINT pickId)
 	: pickId(pickId), numSides(0)
@@ -28,88 +30,44 @@ CubeBlock::CubeBlock(UINT pickId)
 
 void CubeBlock::InitStatic()
 {
-	verts = ReadVertexData(GetModuleHandle(NULL), IDR_BLOCKDATA);
+	Quaternion qs[6] =
+	{
+		Quaternion(Vector3f(0,1,0), -90),
+		Quaternion(Vector3f(0,1,0), 180),
+		Quaternion(Vector3f(0,1,0), 90),
+		Quaternion::Identity(),
+		Quaternion(Vector3f(1,0,0), -90),
+		Quaternion(Vector3f(1,0,0), 90),
+	};
 
-	if (GLEW_ARB_vertex_buffer_object) {
-		faces = new VertexBuffer;
-		faces_pickMode = new VertexBuffer;
-		edges = new VertexBuffer;
+	for (int i = 0; i < 6; i++)
+		qs[i].ToMatrix(face_transform[i]);
 
-		faces->Bind();
-		faces->SetData(72*sizeof(float), verts, GL_STATIC_DRAW);
+	face = new Mesh;
+	edges = new Mesh;
+	face_pickMode = new Mesh;
 
-		faces_pickMode->Bind();
-		faces_pickMode->SetData(72*sizeof(float), verts+72, GL_STATIC_DRAW);
+	face->LoadObj("models/face.obj");
+	edges->LoadObj("models/edges.obj");
+	face_pickMode->LoadObj("models/face_pick.obj");
 
-		edges->Bind();
-		edges->SetData(216*sizeof(float), verts+144, GL_STATIC_DRAW);
+	Texture2D bake_edges("textures/bake_edges.tga", GL_TEXTURE1);
+	Texture2D bake_face("textures/bake_face.tga", GL_TEXTURE1);
+	Texture2D tex_face("textures/face.tga", GL_TEXTURE0);
+	bake_edges.SetFilters(GL_LINEAR);
+	bake_face.SetFilters(GL_LINEAR);
+	tex_face.SetFilters(GL_LINEAR);
 
-		delete [] verts;
-		verts = NULL;
-	}
-}
+	edges->BindNormalMap(bake_edges);
+	face->BindNormalMap(bake_face);
+	face->BindTexture(tex_face);
+}	
 
 void CubeBlock::FreeStatic()
 {
-	if (faces) {
-		delete faces; faces = NULL;
-	}
-	if (faces_pickMode) {
-		delete faces; faces = NULL;
-	}
-	if (edges) {
-		delete edges; edges = NULL;
-	}
-	if (verts) {
-		delete verts; verts = NULL;
-	}
-}
-
-float *CubeBlock::ReadVertexData(HINSTANCE hInst, DWORD resourceId)
-{
-	HRSRC hResInfo = FindResource(hInst, MAKEINTRESOURCE(resourceId), RT_RCDATA);
-	BYTE *inp = (BYTE *)LockResource(LoadResource(hInst, hResInfo));
-
-	int inpSize = SizeofResource(hInst, hResInfo);
-	int i = 0;
-	int vp = 0;
-
-	int size = 0;
-	while (isdigit(inp[i]))
-		size = inp[i++] - '0' + size*10;
-	i++;
-
-	float *vertexData = new float[size];
-
-	while (i < inpSize) 
-	{
-		int sign = 1;
-		int n = 0;
-		char frac[10] = "0.";
-		int j = 2;
-
-		if (inp[i] == '-') {
-			sign = -1; i++;
-		}
-		if (isdigit(inp[i])) {
-			do {
-				n = (inp[i++] - '0') + n*10;
-			} while (isdigit(inp[i]));
-		}
-		else {
-			i++; continue;
-		}
-
-		if (inp[i] == '.') {
-			i++;
-			while (isdigit(inp[i])) {
-				frac[j++] = inp[i++];
-			}
-		}
-		i++;
-		vertexData[vp++] = sign * (n + (float)atof(frac));
-	}
-	return vertexData;
+	delete face;
+	delete edges;
+	delete face_pickMode;
 }
 
 bool CubeBlock::IsSideColored(int side)
@@ -123,15 +81,17 @@ bool CubeBlock::IsSideColored(int side)
 
 void CubeBlock::Render()
 {
-	glPushMatrix();
+	Global::PushModelView();
 	this->ApplyTransform();
 
-	glEnableClientState(GL_VERTEX_ARRAY);
+	static ProgramObject *program = Global::GetCurProgram();
+
+	/*glEnableClientState(GL_VERTEX_ARRAY);
 	if (GLEW_ARB_vertex_buffer_object) {
-		(fRenderPickMode ? faces_pickMode : faces)->Bind();
+		//(fRenderPickMode ? faces_pickMode : faces)->Bind();
 		glVertexPointer(3, GL_FLOAT, 0, 0);
 	}
-	else glVertexPointer(3, GL_FLOAT, 0, verts + (fRenderPickMode ? 72 : 0));
+	//else glVertexPointer(3, GL_FLOAT, 0, verts + (fRenderPickMode ? 72 : 0));
 	
 	for (int i = 0; i < 6; i++)
 	{
@@ -149,21 +109,63 @@ void CubeBlock::Render()
 		}
 
 		glDrawArrays(GL_QUADS, i*4, 4);
+
+		for (int i = 0; i < 6; i++)
+		{
+			if (!fRenderPickMode) {
+				program->Uniform("Color", 1, GetSideColor(i)->data);
+			}
+			else {
+				//int id = pickId | (1 << (i+10));
+				//GLubyte r = id & 0xff;
+				//GLubyte g = id >> 8;
+				//glColor3ub(r, g, 1);
+			}
+
+		}
+	}*/
+
+	for (int i = 0; i < 6; i++)
+	{
+		if (!fRenderPickMode) {
+			Color3f *c = GetSideColor(i);
+			if (c == &colors[6]) program->Uniform("UseNormalMap", 0);
+
+			program->Uniform("Color", 1, c->data);
+			program->Uniform("UseTexture", 1);
+			program->Uniform("lightMode", 1);
+			program->Uniform("FrontMaterial.specular", 1, Color4f(0.7).data);
+			program->Uniform("FrontMaterial.shininess", 70);
+
+			Global::PushModelView();
+				Global::MultModelView(face_transform[i]);
+				face->Draw();
+			Global::PopModelView();
+			program->Uniform("UseNormalMap", 1);
+		}
+		else {
+			int id = pickId | (1 << (i+10));
+			GLubyte r = id & 0xff;
+			GLubyte g = id >> 8;
+			program->Uniform("Color", r/255.0f, g/255.0f, 1/255.0f);
+
+			program->Uniform("NoLighting", 1);
+			Global::PushModelView();
+				Global::MultModelView(face_transform[i]);
+				face_pickMode->Draw();
+			Global::PopModelView();
+			program->Uniform("NoLighting", 0);
+		}
 	}
 
 	if (!fRenderPickMode) {
-		glColor3f(0.0f, 0.0f, 0.0f);
-
-		if (GLEW_ARB_vertex_buffer_object) {
-			edges->Bind();
-			glVertexPointer(3, GL_FLOAT, 0, 0);
-		}
-		else glVertexPointer(3, GL_FLOAT, 0, verts + 144);
-
-		glDrawArrays(GL_QUADS, 0, 48);
-		glDrawArrays(GL_TRIANGLES, 48, 24);
+		program->Uniform("Color", 0.0f, 0.0f, 0.0f);
+		program->Uniform("UseTexture", 0);
+		program->Uniform("lightMode", 0);
+		program->Uniform("FrontMaterial.specular", 1.0f, 1.0f, 1.0f, 1.0f);
+		program->Uniform("FrontMaterial.shininess", 300);
+		edges->Draw();
 	}
 
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glPopMatrix();
+	Global::PopModelView();
 }

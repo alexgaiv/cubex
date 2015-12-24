@@ -44,6 +44,18 @@ void Global::set_proj(const Matrix44f &mat)
 	}
 }
 
+ProgramObject *Global::GetCurProgram()
+{
+	list<ProgramObject *>::iterator p;
+	for (p = shaders.begin(); p != shaders.end(); p++)
+	{
+		ProgramObject *po = *p;
+		if (po->Handle() == curProgram)
+			return po;
+	}
+	return NULL;
+}
+
 void Global::SetModelView(const Matrix44f &mat)
 {
 	modelview = mat;

@@ -30,7 +30,7 @@ public:
 class CubeBlock : public Actor
 {
 public:
-	static Color3b colors[6];
+	static Color3f colors[7];
 	static bool fRenderPickMode;
 	static const float size;
 
@@ -47,16 +47,15 @@ public:
 	void Render();
 	bool IsSideColored(int side);
 private:
-	static VertexBuffer *faces, *faces_pickMode, *edges;
-	static float *verts;
-	static float *ReadVertexData(HINSTANCE hInst, DWORD resourceId);
+	static Mesh *face, *edges, *face_pickMode;
+	static Matrix44f face_transform[6];
 
-	Color3b *GetSideColor(int idx) {
+	Color3f *GetSideColor(int idx) {
 		for (int i = 0; i < numSides; i++) {
 			if (coloredSides[i] == idx)
 				return &colors[clr.colorIndices[i]];
 		}
-		return NULL;
+		return &colors[6];
 	}
 };
 
