@@ -4,13 +4,13 @@
 
 Color3f CubeBlock::colors[7] =
 {
-	Color3f(0,1.0f,0),
-	Color3f(1,0.3f,0),
-	Color3f(0,0,1),
-	Color3f(1,0,0),
-	Color3f(1,1,1),
-	Color3f(1,1,0),
-	Color3f(0)
+	Color3f(22,125,68)/255, // green
+	Color3f(208,95,3)/255, // orange
+	Color3f(11,90,200)/255, // blue
+	Color3f(168,30,15)/255, // red
+	Color3f(209,205,201)/255, // white
+	Color3f(194,181,25)/255, // yellow
+	Color3f(0.09f)
 };
 
 const float CubeBlock::size = 15.0f;
@@ -129,12 +129,15 @@ void CubeBlock::Render()
 	{
 		if (!fRenderPickMode) {
 			Color3f *c = GetSideColor(i);
-			if (c == &colors[6]) program->Uniform("UseNormalMap", 0);
+			if (c == &colors[6])
+				program->Uniform("UseNormalMap", 0);
+			program->Uniform("NoSpecular", 1);
 
 			program->Uniform("Color", 1, c->data);
 			program->Uniform("UseTexture", 1);
 			program->Uniform("lightMode", 1);
-			program->Uniform("FrontMaterial.specular", 1, Color4f(0.7).data);
+			program->Uniform("FrontMaterial.ambient", 1, Color4f(1).data);
+			program->Uniform("FrontMaterial.specular", 1, Color4f(0.5f).data);
 			program->Uniform("FrontMaterial.shininess", 70);
 
 			Global::PushModelView();
@@ -142,6 +145,7 @@ void CubeBlock::Render()
 				face->Draw();
 			Global::PopModelView();
 			program->Uniform("UseNormalMap", 1);
+			program->Uniform("NoSpecular", 0);
 		}
 		else {
 			int id = pickId | (1 << (i+10));
@@ -159,11 +163,12 @@ void CubeBlock::Render()
 	}
 
 	if (!fRenderPickMode) {
-		program->Uniform("Color", 0.0f, 0.0f, 0.0f);
+		program->Uniform("Color", 1, Color3f(0.35f).data);
 		program->Uniform("UseTexture", 0);
 		program->Uniform("lightMode", 0);
-		program->Uniform("FrontMaterial.specular", 1.0f, 1.0f, 1.0f, 1.0f);
-		program->Uniform("FrontMaterial.shininess", 300);
+		program->Uniform("FrontMaterial.ambient", 1, Color4f(0.0f).data);
+		program->Uniform("FrontMaterial.specular", 1, Color4f(0.8f).data);
+		program->Uniform("FrontMaterial.shininess", 200);
 		edges->Draw();
 	}
 

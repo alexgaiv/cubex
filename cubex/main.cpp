@@ -6,6 +6,7 @@
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR lpCmdLine, int nCmdShow)
 {
+	SetCurrentDirectory("../cubex");
 	INITCOMMONCONTROLSEX icc;
 	icc.dwSize = sizeof(icc);
 	icc.dwICC = ICC_COOL_CLASSES|ICC_BAR_CLASSES;

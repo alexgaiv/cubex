@@ -258,6 +258,9 @@ union Color3
 
 	bool operator==(const Color3<T> &c) const;
 	bool operator!=(const Color3<T> &c) const;
+
+	Color3<T> operator*(T scale) const;
+	Color3<T> operator/(T scale) const;
 };
 
 template<class T>
@@ -283,6 +286,9 @@ union Color4
 
 	bool operator==(const Color4<T> &c) const;
 	bool operator!=(const Color4<T> &c) const;
+
+	Color4<T> operator*(T scale) const;
+	Color4<T> operator/(T scale) const;
 };
 
 typedef Vector2<int>     Vector2i,  Point2i;

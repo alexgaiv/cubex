@@ -6,6 +6,7 @@ varying vec3 fBinormal;
 
 uniform bool UseNormalMap;
 uniform bool NoLighting;
+uniform bool NoSpecular;
 uniform int lightMode;
 uniform bool UseTexture;
 uniform sampler2D ColorMap;
@@ -15,6 +16,7 @@ uniform vec3 Color;
 uniform struct {
 	vec4 diffuse;
 	vec4 specular;
+	vec4 ambient;
 	int shininess;
 } FrontMaterial;
 
@@ -31,8 +33,8 @@ struct Light
 
 Light lightSources[4] = {
 	Light(
-		vec4(0.0, 1.0, 0.5, 0.0),
-		vec4(0.8, 0.8, 0.8, 1.0),
+		vec4(1.0, 1.0, 1.0, 0.0),
+		vec4(0.4),
 		vec4(1),
 		vec4(0.8, 0.8, 0.8, 1.0)),
 	Light(
@@ -78,12 +80,12 @@ vec4 PhongLight(Light l)
 	vec3 color;
 	if (UseTexture) {
 		vec3 texel = texture(ColorMap, fTexCoord);
-		if (texel == vec3(0)) color = vec3(0);
+		if (texel == vec3(0)) color = vec3(0.08);
 		else color = Color;
 	}
 	else color = Color;
-	return (l.ambient + GetDiffuse(lightDir, l.diffuse)) * vec4(color*0.6, 1)
-		+ GetSpecular(lightDir, l.specular) * FrontMaterial.specular;
+	return (FrontMaterial.ambient + GetDiffuse(lightDir, l.diffuse)) * vec4(color, 1)
+		+ (NoSpecular ? vec4(0) : GetSpecular(lightDir, l.specular) * FrontMaterial.specular);
 		//+ GetSpecular(lightDir, l.specular);
 }
 
