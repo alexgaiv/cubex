@@ -66,7 +66,7 @@
     <ClCompile Include="lib\source\mesh.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
-    <ClCompile Include="lib\include\texture.cpp">
+    <ClCompile Include="lib\source\texture.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
   </ItemGroup>

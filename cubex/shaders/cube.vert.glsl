@@ -1,6 +1,6 @@
 attribute vec3 Vertex;
-attribute vec3 Normal;
 attribute vec2 TexCoord;
+attribute vec3 Normal;
 attribute vec3 Tangent;
 attribute vec3 Binormal;
 

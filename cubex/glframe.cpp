@@ -104,7 +104,7 @@ void GLFrame::CancelMove() {
 }
 
 void GLFrame::SetPerspective(int w, int h) {
-	viewer.SetPerspective(45.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
+	viewer.SetPerspective(40.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
 }
 
 void GLFrame::RenderScene()
@@ -114,11 +114,11 @@ void GLFrame::RenderScene()
 
 	viewer.ApplyTransform();
 	if (fSolvedAnim) {
-		glRotatef(rotAngle, 1.0f, 1.0f, 1.0f);
+		Global::MultModelView(Rotate(rotAngle, 1, 1, 1));
 	}
 
 	Global::PushModelView();
-		Global::MultModelView(Scale(2,2,2));
+		Global::MultModelView(Scale(1.8f,1.8f,1.8f));
 		cube->Render();
 	Global::PopModelView();
 
@@ -155,7 +155,7 @@ void GLFrame::OnCreate()
 
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	//glEnable(GL_COLOR_MATERIAL);
 	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
@@ -167,6 +167,8 @@ void GLFrame::OnCreate()
 
 		program->Uniform("ColorMap", 0);
 		program->Uniform("NormalMap", 1);
+		program->Uniform("SpecularMap", 2);
+		program->Uniform("DecalMap", 3);
 		program->Uniform("FrontMaterial.diffuse", 1, diffuse);
 		program->Uniform("FrontMaterial.specular", 1, specular);
 		program->Uniform("FrontMaterial.shininess", 300);

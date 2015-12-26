@@ -51,16 +51,23 @@ void CubeBlock::InitStatic()
 	edges->LoadObj("models/edges.obj");
 	face_pickMode->LoadObj("models/face_pick.obj");
 
-	Texture2D bake_edges("textures/bake_edges.tga", GL_TEXTURE1);
-	Texture2D bake_face("textures/bake_face.tga", GL_TEXTURE1);
-	Texture2D tex_face("textures/face.tga", GL_TEXTURE0);
-	bake_edges.SetFilters(GL_LINEAR);
-	bake_face.SetFilters(GL_LINEAR);
-	tex_face.SetFilters(GL_LINEAR);
+	Texture2D face_mask("textures/face_mask.tga", GL_TEXTURE0);
+	Texture2D edge_normal("textures/edge_normal.tga", GL_TEXTURE1);
+	Texture2D face_normal("textures/face_normal.tga", GL_TEXTURE1);
+	Texture2D edge_specular("textures/edge_specular.tga", GL_TEXTURE2);
+	Texture2D decal("textures/decal.tga", GL_TEXTURE3);
 
-	edges->BindNormalMap(bake_edges);
-	face->BindNormalMap(bake_face);
-	face->BindTexture(tex_face);
+	face_mask.SetFilters(GL_LINEAR);
+	edge_normal.SetFilters(GL_LINEAR);
+	face_normal.SetFilters(GL_LINEAR);
+	edge_specular.SetFilters(GL_LINEAR);
+	decal.SetFilters(GL_LINEAR);
+	decal.Bind();
+
+	edges->BindNormalMap(edge_normal);
+	edges->BindSpecularMap(edge_specular);
+	face->BindNormalMap(face_normal);
+	face->BindTexture(face_mask);
 }	
 
 void CubeBlock::FreeStatic()
@@ -131,43 +138,39 @@ void CubeBlock::Render()
 			Color3f *c = GetSideColor(i);
 			if (c == &colors[6])
 				program->Uniform("UseNormalMap", 0);
-			program->Uniform("NoSpecular", 1);
 
-			program->Uniform("Color", 1, c->data);
-			program->Uniform("UseTexture", 1);
-			program->Uniform("lightMode", 1);
-			program->Uniform("FrontMaterial.ambient", 1, Color4f(1).data);
-			program->Uniform("FrontMaterial.specular", 1, Color4f(0.5f).data);
-			program->Uniform("FrontMaterial.shininess", 70);
+			program->Uniform("Mode", 0);
+			program->Uniform("FrontMaterial.ambient", 1, Color3f(1).data);
+			program->Uniform("FrontMaterial.diffuse", 1, c->data);
+			program->Uniform("FrontMaterial.shininess",	50);
 
 			Global::PushModelView();
 				Global::MultModelView(face_transform[i]);
 				face->Draw();
 			Global::PopModelView();
-			program->Uniform("UseNormalMap", 1);
-			program->Uniform("NoSpecular", 0);
+
+			if (c == &colors[6])
+				program->Uniform("UseNormalMap", 1);
 		}
 		else {
 			int id = pickId | (1 << (i+10));
 			GLubyte r = id & 0xff;
 			GLubyte g = id >> 8;
-			program->Uniform("Color", r/255.0f, g/255.0f, 1/255.0f);
 
-			program->Uniform("NoLighting", 1);
+			program->Uniform("Mode", 3);
+			program->Uniform("FrontMaterial.diffuse", r/255.0f, g/255.0f, 1/255.0f);
+			
 			Global::PushModelView();
 				Global::MultModelView(face_transform[i]);
 				face_pickMode->Draw();
 			Global::PopModelView();
-			program->Uniform("NoLighting", 0);
 		}
 	}
 
 	if (!fRenderPickMode) {
-		program->Uniform("Color", 1, Color3f(0.35f).data);
-		program->Uniform("UseTexture", 0);
-		program->Uniform("lightMode", 0);
-		program->Uniform("FrontMaterial.ambient", 1, Color4f(0.0f).data);
-		program->Uniform("FrontMaterial.specular", 1, Color4f(0.8f).data);
+		program->Uniform("Mode", 1);
+		program->Uniform("FrontMaterial.ambient", 1, Color3f(0.0f).data);
+		program->Uniform("FrontMaterial.diffuse", 1, Color3f(0.35f).data);
 		program->Uniform("FrontMaterial.shininess", 200);
 		edges->Draw();
 	}

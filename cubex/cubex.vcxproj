@@ -66,7 +66,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)\gl;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib;C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib\gl;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <IncludePath>C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib\include;$(IncludePath)</IncludePath>
@@ -136,7 +137,7 @@
     <ClCompile Include="cube.cpp" />
     <ClCompile Include="cubeblock.cpp" />
     <ClCompile Include="glframe.cpp" />
-    <ClCompile Include="lib\include\texture.cpp" />
+    <ClCompile Include="lib\source\texture.cpp" />
     <ClCompile Include="lib\source\basewindow.cpp" />
     <ClCompile Include="lib\source\global.cpp" />
     <ClCompile Include="lib\source\glwindow.cpp" />
