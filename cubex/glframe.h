@@ -46,6 +46,7 @@ public:
 	bool ChangeCubeSize(int size);
 	void ResetCube();
 	void MixUpCube();
+	void SetCubeStyle(bool whiteBorders);
 	void CancelMove();
 	bool CanCancelMove() { return history.GetSize() != 0; }
 private:

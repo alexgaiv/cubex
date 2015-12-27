@@ -5,7 +5,8 @@ varying vec3 fTangent;
 varying vec3 fBinormal;
 
 uniform int Mode;
-uniform bool UseNormalMap;
+uniform bool RenderBackSide;
+uniform bool UseSpecularMap;
 
 uniform sampler2D ColorMap;
 uniform sampler2D NormalMap;
@@ -13,22 +14,24 @@ uniform sampler2D SpecularMap;
 uniform sampler2D DecalMap;
 
 struct Material {
-	vec3 diffuse;
 	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
 	int shininess;
 };
 
 struct Light
 {
-	vec3 position;
+	vec3 direction;
 	vec3 diffuse;
 	vec3 specular;
 };
 
 uniform Material FrontMaterial;
+uniform Material BorderMaterial;
 
 const Light lightSource = Light(
-	vec3(1.0, 1.0, 1.0),
+	normalize(vec3(1.0, 1.0, 1.0)),
 	vec3(0.4),
 	vec3(0.8)
 );
@@ -41,39 +44,43 @@ vec3 GetDiffuse(vec3 lightDir, vec3 lightDiffuse) {
 	return diffuseCoeff * lightDiffuse;
 }
 
-vec3 GetSpecular(vec3 lightDir, vec3 lightSpecular, int shininess)
+vec3 GetSpecular(vec3 lightDir, vec3 lightSpecular)
 {
 	vec3 viewDir = normalize(-fPosition);
 	vec3 halfDir = normalize(lightDir + viewDir);
 	float specAngle = max(0.0, dot(fragNormal, halfDir));
-	float specCoeff = pow(specAngle, 0.3*shininess);
+	float specCoeff = pow(specAngle, 0.3*FrontMaterial.shininess);
 	return specCoeff * lightSpecular;
 }
 
 vec4 PhongLight(Light l)
 {
-	vec3 lightDir = normalize(l.position);
 	vec3 matDiffuse;
 
-	bool corner = false;
-	if (Mode == 0) {
-		vec3 texel = texture(ColorMap, fTexCoord);
-		if (texel == vec3(0)) {
-			matDiffuse = vec3(0.35);
-			corner = true;
+	bool border = false;
+	if (RenderBackSide) {
+		border = true;
+		matDiffuse = FrontMaterial.diffuse;
+	}
+	else if (Mode == 0) {
+		vec4 texel = texture(ColorMap, fTexCoord);
+		if (texel.a == 0) {
+			matDiffuse = BorderMaterial.diffuse;
+			//matDiffuse = vec3(0.85);
+			border = true;
 		}
 		else matDiffuse = FrontMaterial.diffuse;
 		//else matDiffuse = mix(FrontMaterial.diffuse*1.3, FrontMaterial.diffuse * vec3(texture(DecalMap, fTexCoord)), 0.5);
 	}
 	else matDiffuse = FrontMaterial.diffuse;
-	
-	vec3 c = ((corner ? vec3(0) : FrontMaterial.ambient) + GetDiffuse(lightDir, l.diffuse)) * matDiffuse;
-	if (Mode == 1) {
-		c += GetSpecular(lightDir, l.specular, FrontMaterial.shininess) * vec3(texture(SpecularMap, fTexCoord));
+
+	vec3 ambient = (border ? BorderMaterial : FrontMaterial).ambient;
+	vec3 c = (ambient + GetDiffuse(l.direction, l.diffuse)) * matDiffuse;
+	if (Mode == 1 || border) {
+		vec3 specular = UseSpecularMap ? vec3(texture(SpecularMap, fTexCoord)) : FrontMaterial.specular;
+		c += GetSpecular(l.direction, l.specular) * specular;
 	}
-	else if (corner) {
-		c += GetSpecular(lightDir, l.specular, 200) * vec3(texture(SpecularMap, fTexCoord));
-	}
+
 	return vec4(c, 1);
 }
 
@@ -83,14 +90,14 @@ void main()
 		gl_FragColor = vec4(FrontMaterial.diffuse, 1);
 	}
 	else {
-		if (UseNormalMap) {
+		if (RenderBackSide) {
+			fragNormal = normalize(fNormal);
+		}
+		else {
 			vec3 t = texture(NormalMap, fTexCoord);
 			fragNormal = t * 2 - vec3(1);
 			tbn = mat3(fTangent, fBinormal, fNormal);
 			fragNormal = normalize(tbn * fragNormal);
-		}
-		else {
-			fragNormal = normalize(fNormal);
 		}
 
 		gl_FragColor = PhongLight(lightSource);

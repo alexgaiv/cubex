@@ -132,6 +132,7 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 
 	EnableCancelBtn(false);
 	CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, IDM_3, MF_BYCOMMAND);
+	CheckMenuRadioItem(hSettingsMenu, IDM_BLACK, IDM_WHITE, IDM_BLACK, MF_BYCOMMAND);
 
 	RECT wndRect, barRect = { };
 	GetClientRect(m_hwnd, &wndRect);
@@ -140,6 +141,10 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 	gl_frame->CreateParam("Cubex", 0, barRect.bottom, wndRect.right,
 		wndRect.bottom - barRect.bottom, WS_VISIBLE|WS_CHILD, 0, m_hwnd);
 	SetFocus(gl_frame->m_hwnd);
+
+	if (!GLEW_ARB_shader_objects) {
+		DeleteMenu(hSettingsMenu, 0, MF_BYPOSITION);
+	}
 	return 0;
 }
 
@@ -147,7 +152,7 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	if (HIWORD(wParam) == BN_CLICKED) {
 		WORD id = LOWORD(wParam);
-		switch(LOWORD(wParam)) 
+		switch(id) 
 		{
 		case IDC_NEWGAME:
 			{
@@ -167,6 +172,11 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDC_ABOUT:
 			DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT_DIALOG), m_hwnd, AboutDialogProc);
+			break;
+		case IDM_BLACK:
+		case IDM_WHITE:
+			gl_frame->SetCubeStyle(id == IDM_WHITE);
+			CheckMenuRadioItem(hSettingsMenu, IDM_BLACK, IDM_WHITE, id, MF_BYCOMMAND);
 			break;
 		default:
 			if (id >= IDM_2 && id <= IDM_7) {

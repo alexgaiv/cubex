@@ -23,6 +23,9 @@
 
 #define IDD_ABOUT_DIALOG 90
 #define IDM_SETTINGS 100
+#define IDM_STYLE 101
+#define IDM_BLACK 102
+#define IDM_WHITE 103
 #define IDM_2 111
 #define IDM_3 112
 #define IDM_4 113

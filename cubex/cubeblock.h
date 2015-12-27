@@ -30,10 +30,13 @@ public:
 class CubeBlock : public Actor
 {
 public:
-	static Color3f colors[7];
 	static bool fRenderPickMode;
+	static bool fUseReducedModel;
+	static bool fWhiteBorders;
 	static const float size;
 
+	static void DrawWhiteBorders(bool whiteBorders);
+	
 	UINT pickId;
 	int numSides;
 	BlockColor clr;
@@ -47,15 +50,19 @@ public:
 	void Render();
 	bool IsSideColored(int side);
 private:
-	static Mesh *face, *edges, *face_pickMode;
+	static Color3f colors[6];
+	static Color3f borderDiffuse, borderAmbient;
+	static Mesh *face, *border, *border_reduced, *face_pickMode;
 	static Matrix44f face_transform[6];
+
+	void RenderFixed();
 
 	Color3f *GetSideColor(int idx) {
 		for (int i = 0; i < numSides; i++) {
 			if (coloredSides[i] == idx)
 				return &colors[clr.colorIndices[i]];
 		}
-		return &colors[6];
+		return &borderDiffuse;
 	}
 };
 

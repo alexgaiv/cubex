@@ -3,13 +3,11 @@
 #include <string>
 #include <strsafe.h>
 
-#pragma comment(lib, "Winmm.lib")
-
 Quaternion GLFrame::qResetView =
-	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 25.0f) *
-	Quaternion(Vector3f(0.0f, 1.0f, 0.0f), 45.0f);
+	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 30.0f) *
+	Quaternion(Vector3f(0.0f, 1.0f, 0.0f), -45.0f);
 
-GLFrame::GLFrame()
+GLFrame::GLFrame() : program(NULL)
 {
 	solveTime = 0;
 	wasMixed = false;
@@ -48,6 +46,8 @@ bool GLFrame::ChangeCubeSize(int size)
 
 	history.Clear();
 	resetAnim.Setup(viewer.qRotation, qResetView, 0.1f);
+
+	CubeBlock::fUseReducedModel = size >= 5;
 
 	if (size >= 2 && size <= 7) {
 		float scale[6] = { 1.1f, 1.0f, 0.86f, 0.66f, 0.56f, 0.48f };
@@ -90,6 +90,12 @@ void GLFrame::MixUpCube()
 
 	cube->MixUp(cube->size < 7 ? 15 : 20);
 	history.Clear();
+}
+
+void GLFrame::SetCubeStyle(bool whiteBorders)
+{
+	CubeBlock::DrawWhiteBorders(whiteBorders);
+	RedrawWindow();
 }
 
 void GLFrame::CancelMove() {
@@ -151,29 +157,31 @@ void GLFrame::RenderScene()
 void GLFrame::OnCreate()
 {
 	glewInit();
-	CubeBlock::InitStatic();
+	//__GLEW_ARB_shader_objects = NULL;
 
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
-	//glEnable(GL_COLOR_MATERIAL);
-	//glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+	glEnable(GL_COLOR_MATERIAL);
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
 
-	program = new ProgramObject("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
-	if (program->IsLinked()) {
-		float diffuse[4] = { 0.45f, 0.45f, 0.45f, 1.0f };
-		float specular[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
+	if (GLEW_ARB_shader_objects) {
+		program = new ProgramObject("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
+		if (program->IsLinked()) {
+			float diffuse[4] = { 0.45f, 0.45f, 0.45f, 1.0f };
+			float specular[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
 
-		program->Uniform("ColorMap", 0);
-		program->Uniform("NormalMap", 1);
-		program->Uniform("SpecularMap", 2);
-		program->Uniform("DecalMap", 3);
-		program->Uniform("FrontMaterial.diffuse", 1, diffuse);
-		program->Uniform("FrontMaterial.specular", 1, specular);
-		program->Uniform("FrontMaterial.shininess", 300);
-		program->Use();
+			program->Uniform("ColorMap", 0);
+			program->Uniform("NormalMap", 1);
+			program->Uniform("SpecularMap", 2);
+			program->Uniform("DecalMap", 3);
+			program->Uniform("FrontMaterial.specular", 1, Color3f(0.4f).data);
+			program->Use();
+		}
 	}
+
+	CubeBlock::InitStatic();
 
 	LOGFONT lf = { };
 	lf.lfHeight = 20;
@@ -281,7 +289,8 @@ void GLFrame::OnDestroy()
 {
 	KillTimer(m_hwnd, 1);
 	CubeBlock::FreeStatic();
-	delete program;
+	if (GLEW_ARB_shader_objects)
+		delete program;
 }
 
 void GLFrame::OnFaceRotated()
@@ -311,7 +320,6 @@ void GLFrame::OnCubeSolved()
 
 	StringCchPrintfA(buf, 100, "Time: %d min %d sec", mins, secs);
 	timeMsg = buf;
-
 	fSolvedAnim = true;
 	rotAngle = 0.0f;
 	SendMessage(GetParent(m_hwnd), WM_CUBESOLVED, 0, 0);

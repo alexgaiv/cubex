@@ -10,7 +10,6 @@ varying vec3 fNormal;
 varying vec3 fTangent;
 varying vec3 fBinormal;
 
-uniform bool UseNormalMap;
 uniform mat4 ModelView;
 uniform mat4 NormalMatrix;
 uniform mat4 ModelViewProjection;

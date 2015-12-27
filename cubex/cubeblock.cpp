@@ -2,7 +2,7 @@
 #include "resources.h"
 #include "global.h"
 
-Color3f CubeBlock::colors[7] =
+Color3f CubeBlock::colors[6] =
 {
 	Color3f(22,125,68)/255, // green
 	Color3f(208,95,3)/255, // orange
@@ -10,14 +10,18 @@ Color3f CubeBlock::colors[7] =
 	Color3f(168,30,15)/255, // red
 	Color3f(209,205,201)/255, // white
 	Color3f(194,181,25)/255, // yellow
-	Color3f(0.09f)
 };
+
+Color3f CubeBlock::borderDiffuse;
+Color3f CubeBlock::borderAmbient;
 
 const float CubeBlock::size = 15.0f;
 bool CubeBlock::fRenderPickMode = false;
+bool CubeBlock::fUseReducedModel = false;
 
 Mesh *CubeBlock::face = NULL;
-Mesh *CubeBlock::edges = NULL;
+Mesh *CubeBlock::border = NULL;
+Mesh *CubeBlock::border_reduced = NULL;
 Mesh *CubeBlock::face_pickMode = NULL;
 Matrix44f CubeBlock::face_transform[6];
 
@@ -26,6 +30,21 @@ CubeBlock::CubeBlock(UINT pickId)
 {
 	memset(&clr, 0, sizeof(clr));
 	memset(coloredSides, 0, sizeof(coloredSides));
+}
+
+void CubeBlock::DrawWhiteBorders(bool whiteBorders)
+{
+	if (whiteBorders) {
+		borderAmbient = Color3f(0.8f);
+		borderDiffuse = Color3f(0.85f);
+	}
+	else {
+		borderAmbient = Color3f(0.0f);
+		borderDiffuse = Color3f(0.35f);
+	}
+	ProgramObject *p = Global::GetCurProgram();
+	p->Uniform("BorderMaterial.ambient", 1, borderAmbient.data);
+	p->Uniform("BorderMaterial.diffuse", 1, borderDiffuse.data);
 }
 
 void CubeBlock::InitStatic()
@@ -44,37 +63,46 @@ void CubeBlock::InitStatic()
 		qs[i].ToMatrix(face_transform[i]);
 
 	face = new Mesh;
-	edges = new Mesh;
+	border = new Mesh;
+	border_reduced = new Mesh;
 	face_pickMode = new Mesh;
 
 	face->LoadObj("models/face.obj");
-	edges->LoadObj("models/edges.obj");
+	border->LoadObj("models/border.obj");
+	border_reduced->LoadObj("models/border_reduced.obj");
 	face_pickMode->LoadObj("models/face_pick.obj");
 
 	Texture2D face_mask("textures/face_mask.tga", GL_TEXTURE0);
-	Texture2D edge_normal("textures/edge_normal.tga", GL_TEXTURE1);
 	Texture2D face_normal("textures/face_normal.tga", GL_TEXTURE1);
-	Texture2D edge_specular("textures/edge_specular.tga", GL_TEXTURE2);
+	Texture2D border_normal("textures/border_normal.tga", GL_TEXTURE1);
+	Texture2D border_reduced_normal("textures/border_reduced_normal.tga", GL_TEXTURE1);
+	Texture2D border_specular("textures/border_specular.tga", GL_TEXTURE2);
 	Texture2D decal("textures/decal.tga", GL_TEXTURE3);
 
 	face_mask.SetFilters(GL_LINEAR);
-	edge_normal.SetFilters(GL_LINEAR);
 	face_normal.SetFilters(GL_LINEAR);
-	edge_specular.SetFilters(GL_LINEAR);
+	border_normal.SetFilters(GL_LINEAR);
+	border_reduced_normal.SetFilters(GL_LINEAR);
+	border_specular.SetFilters(GL_LINEAR);
 	decal.SetFilters(GL_LINEAR);
 	decal.Bind();
 
-	edges->BindNormalMap(edge_normal);
-	edges->BindSpecularMap(edge_specular);
-	face->BindNormalMap(face_normal);
 	face->BindTexture(face_mask);
+	face->BindNormalMap(face_normal);
+	border->BindNormalMap(border_normal);
+	border->BindSpecularMap(border_specular);
+	border_reduced->BindNormalMap(border_reduced_normal);
+
+	if (GLEW_ARB_shader_objects)
+		DrawWhiteBorders(false);
 }	
 
 void CubeBlock::FreeStatic()
 {
 	delete face;
-	delete edges;
 	delete face_pickMode;
+	delete border;
+	delete border_reduced;
 }
 
 bool CubeBlock::IsSideColored(int side)
@@ -86,71 +114,73 @@ bool CubeBlock::IsSideColored(int side)
 	return false;
 }
 
-void CubeBlock::Render()
+void CubeBlock::RenderFixed()
 {
-	Global::PushModelView();
-	this->ApplyTransform();
-
-	static ProgramObject *program = Global::GetCurProgram();
-
-	/*glEnableClientState(GL_VERTEX_ARRAY);
-	if (GLEW_ARB_vertex_buffer_object) {
-		//(fRenderPickMode ? faces_pickMode : faces)->Bind();
-		glVertexPointer(3, GL_FLOAT, 0, 0);
-	}
-	//else glVertexPointer(3, GL_FLOAT, 0, verts + (fRenderPickMode ? 72 : 0));
-	
 	for (int i = 0; i < 6; i++)
 	{
 		if (!fRenderPickMode) {
-			Color3b *c = GetSideColor(i);
-			if (c) {
-				glColor3ubv(c->data);
-			} else glColor3f(0.0f, 0.0f, 0.0f);
+			Color3f *c = GetSideColor(i);
+			if (c == &borderDiffuse)
+				glColor3f(0, 0, 0);
+			else glColor3fv((*c * 1.2f).data);
+
+			Global::PushModelView();
+				Global::MultModelView(face_transform[i]);
+				face->DrawFixed();
+			Global::PopModelView();
 		}
 		else {
 			int id = pickId | (1 << (i+10));
 			GLubyte r = id & 0xff;
 			GLubyte g = id >> 8;
+
 			glColor3ub(r, g, 1);
+			
+			Global::PushModelView();
+				Global::MultModelView(face_transform[i]);
+				face_pickMode->DrawFixed();
+			Global::PopModelView();
 		}
+	}
+	
 
-		glDrawArrays(GL_QUADS, i*4, 4);
+	if (!fRenderPickMode) {
+		glColor3f(0, 0, 0);
+		(fUseReducedModel ? border_reduced : border)->DrawFixed();
+	}
+}
 
-		for (int i = 0; i < 6; i++)
-		{
-			if (!fRenderPickMode) {
-				program->Uniform("Color", 1, GetSideColor(i)->data);
-			}
-			else {
-				//int id = pickId | (1 << (i+10));
-				//GLubyte r = id & 0xff;
-				//GLubyte g = id >> 8;
-				//glColor3ub(r, g, 1);
-			}
+void CubeBlock::Render()
+{
+	Global::PushModelView();
+	this->ApplyTransform();
 
-		}
-	}*/
+	if (!GLEW_ARB_shader_objects) {
+		RenderFixed();
+		Global::PopModelView();
+		return;
+	}
+
+	static ProgramObject *program = Global::GetCurProgram();
 
 	for (int i = 0; i < 6; i++)
 	{
 		if (!fRenderPickMode) {
 			Color3f *c = GetSideColor(i);
-			if (c == &colors[6])
-				program->Uniform("UseNormalMap", 0);
+			if (c == &borderDiffuse)
+				program->Uniform("RenderBackSide", 1);
 
 			program->Uniform("Mode", 0);
 			program->Uniform("FrontMaterial.ambient", 1, Color3f(1).data);
 			program->Uniform("FrontMaterial.diffuse", 1, c->data);
-			program->Uniform("FrontMaterial.shininess",	50);
 
 			Global::PushModelView();
 				Global::MultModelView(face_transform[i]);
 				face->Draw();
 			Global::PopModelView();
 
-			if (c == &colors[6])
-				program->Uniform("UseNormalMap", 1);
+			if (c == &borderDiffuse)
+				program->Uniform("RenderBackSide", 0);
 		}
 		else {
 			int id = pickId | (1 << (i+10));
@@ -167,12 +197,22 @@ void CubeBlock::Render()
 		}
 	}
 
-	if (!fRenderPickMode) {
+	if (!fRenderPickMode)
+	{
 		program->Uniform("Mode", 1);
-		program->Uniform("FrontMaterial.ambient", 1, Color3f(0.0f).data);
-		program->Uniform("FrontMaterial.diffuse", 1, Color3f(0.35f).data);
-		program->Uniform("FrontMaterial.shininess", 200);
-		edges->Draw();
+		program->Uniform("FrontMaterial.ambient", 1, borderAmbient.data);
+		program->Uniform("FrontMaterial.diffuse", 1, borderDiffuse.data);
+
+		if (fUseReducedModel) {
+			program->Uniform("UseSpecularMap", 0);
+			program->Uniform("FrontMaterial.shininess", 70);
+			border_reduced->Draw();
+		}
+		else {
+			program->Uniform("UseSpecularMap", 1);
+			program->Uniform("FrontMaterial.shininess", 200);
+			border->Draw();
+		}
 	}
 
 	Global::PopModelView();
