@@ -19,7 +19,7 @@ GLFrame::GLFrame() : program(NULL)
 	needRedraw = false;
 	ZeroMemory(&drag, sizeof(drag));
 
-	viewer.SetConstRotationSpeed(0.61f);
+	viewer.SetConstRotationSpeed(2.0f);
 	viewer.qRotation = qResetView;
 
 	cube = new Cube(3);
@@ -110,7 +110,7 @@ void GLFrame::CancelMove() {
 }
 
 void GLFrame::SetPerspective(int w, int h) {
-	viewer.SetPerspective(40.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
+	viewer.SetPerspective(30.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
 }
 
 void GLFrame::RenderScene()
@@ -124,7 +124,7 @@ void GLFrame::RenderScene()
 	}
 
 	Global::PushModelView();
-		Global::MultModelView(Scale(1.8f,1.8f,1.8f));
+		Global::MultModelView(Scale(1.37f,1.37f,1.37f));
 		cube->Render();
 	Global::PopModelView();
 
@@ -157,7 +157,6 @@ void GLFrame::RenderScene()
 void GLFrame::OnCreate()
 {
 	glewInit();
-	//__GLEW_ARB_shader_objects = NULL;
 
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
