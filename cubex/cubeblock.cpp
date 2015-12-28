@@ -72,6 +72,8 @@ void CubeBlock::InitStatic()
 	border_reduced->LoadObj("models/border_reduced.obj");
 	face_pickMode->LoadObj("models/face_pick.obj");
 
+	if (!GLEW_ARB_shader_objects) return;
+
 	Texture2D face_mask("textures/face_mask.tga", GL_TEXTURE0);
 	Texture2D face_normal("textures/face_normal.tga", GL_TEXTURE1);
 	Texture2D border_normal("textures/border_normal.tga", GL_TEXTURE1);
@@ -93,8 +95,7 @@ void CubeBlock::InitStatic()
 	border->BindSpecularMap(border_specular);
 	border_reduced->BindNormalMap(border_reduced_normal);
 
-	if (GLEW_ARB_shader_objects)
-		DrawWhiteBorders(false);
+	DrawWhiteBorders(false);
 }	
 
 void CubeBlock::FreeStatic()
@@ -142,7 +143,6 @@ void CubeBlock::RenderFixed()
 			Global::PopModelView();
 		}
 	}
-	
 
 	if (!fRenderPickMode) {
 		glColor3f(0, 0, 0);

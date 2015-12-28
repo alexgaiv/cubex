@@ -94,7 +94,7 @@ void main()
 			fragNormal = normalize(fNormal);
 		}
 		else {
-			vec3 t = texture(NormalMap, fTexCoord);
+			vec3 t = vec3(texture(NormalMap, fTexCoord));
 			fragNormal = t * 2 - vec3(1);
 			tbn = mat3(fTangent, fBinormal, fNormal);
 			fragNormal = normalize(tbn * fragNormal);

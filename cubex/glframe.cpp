@@ -168,17 +168,12 @@ void GLFrame::OnCreate()
 
 	if (GLEW_ARB_shader_objects) {
 		program = new ProgramObject("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
-		if (program->IsLinked()) {
-			float diffuse[4] = { 0.45f, 0.45f, 0.45f, 1.0f };
-			float specular[4] = { 0.8f, 0.8f, 0.8f, 1.0f };
-
-			program->Uniform("ColorMap", 0);
-			program->Uniform("NormalMap", 1);
-			program->Uniform("SpecularMap", 2);
-			program->Uniform("DecalMap", 3);
-			program->Uniform("FrontMaterial.specular", 1, Color3f(0.4f).data);
-			program->Use();
-		}
+		program->Uniform("ColorMap", 0);
+		program->Uniform("NormalMap", 1);
+		program->Uniform("SpecularMap", 2);
+		program->Uniform("DecalMap", 3);
+		program->Uniform("FrontMaterial.specular", 1, Color3f(0.4f).data);
+		program->Use();
 	}
 
 	CubeBlock::InitStatic();

@@ -132,7 +132,7 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 
 	EnableCancelBtn(false);
 	CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, IDM_3, MF_BYCOMMAND);
-	CheckMenuRadioItem(hSettingsMenu, IDM_BLACK, IDM_WHITE, IDM_BLACK, MF_BYCOMMAND);
+	
 
 	RECT wndRect, barRect = { };
 	GetClientRect(m_hwnd, &wndRect);
@@ -142,7 +142,21 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 		wndRect.bottom - barRect.bottom, WS_VISIBLE|WS_CHILD, 0, m_hwnd);
 	SetFocus(gl_frame->m_hwnd);
 
-	if (!GLEW_ARB_shader_objects) {
+	if (GLEW_ARB_shader_objects) {
+		DWORD white = 0;
+		HKEY key = NULL;
+		LONG r = RegCreateKey(HKEY_CURRENT_USER, "software\\Alexander Gaivanuk\\Cubex\\1.1", &key);
+		if (r == ERROR_SUCCESS)
+		{
+			DWORD type = 0, size = sizeof(DWORD);
+			RegQueryValueEx(key, "white", NULL, &type, (BYTE *)&white, &size);
+			if (white != 0)
+				gl_frame->SetCubeStyle(true);
+			RegCloseKey(key);
+		}
+		CheckMenuRadioItem(hSettingsMenu, IDM_BLACK, IDM_WHITE, white ? IDM_WHITE : IDM_BLACK, MF_BYCOMMAND);
+	}
+	else {
 		DeleteMenu(hSettingsMenu, 0, MF_BYPOSITION);
 	}
 	return 0;
@@ -175,9 +189,21 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDM_BLACK:
 		case IDM_WHITE:
+		{
 			gl_frame->SetCubeStyle(id == IDM_WHITE);
 			CheckMenuRadioItem(hSettingsMenu, IDM_BLACK, IDM_WHITE, id, MF_BYCOMMAND);
+
+			HKEY key = NULL;
+			LONG r = RegCreateKey(HKEY_CURRENT_USER, "software\\Alexander Gaivanuk\\Cubex\\1.1", &key);
+			if (r == ERROR_SUCCESS)
+			{
+				DWORD value = id == IDM_WHITE;
+				RegSetValueEx(key, "white", 0, REG_DWORD, (BYTE *)&value, sizeof(DWORD));
+				RegCloseKey(key);
+			}
+
 			break;
+		}
 		default:
 			if (id >= IDM_2 && id <= IDM_7) {
 				if (gl_frame->ChangeCubeSize(id - IDM_2 + 2)) {
