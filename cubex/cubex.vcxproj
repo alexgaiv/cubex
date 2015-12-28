@@ -170,7 +170,6 @@
     <ClInclude Include="resources.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="block.data" />
     <None Include="lib\include\datatypes.inl" />
   </ItemGroup>
   <ItemGroup>

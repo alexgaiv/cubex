@@ -127,9 +127,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="block.data">
-      <Filter>Файлы ресурсов</Filter>
-    </None>
     <None Include="lib\include\datatypes.inl">
       <Filter>lib\include</Filter>
     </None>
