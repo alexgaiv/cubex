@@ -29,7 +29,7 @@ protected:
 	int width, height;
 	int internalFormat, format;
 
-	bool _loadFromTGA(const char *filename, BYTE *&data);
+	bool _loadFromTGA(const char *name, BYTE *&data);
 	void _texImage2D(GLenum target, BYTE *imageData);
 private:
 	void _read(HANDLE hFile, LPVOID lpBuffer, DWORD nNumBytes);
@@ -39,13 +39,13 @@ class Texture2D : public BaseTexture
 {
 public:
 	Texture2D(GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_OWN_ID);
-	Texture2D(const char *filename, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_OWN_ID);
+	Texture2D(const char *name, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_OWN_ID);
 
 	int GetWidth() const { return width; }
 	int GetHeight() const { return height; }
 
 	bool IsLoaded() const { return loaded; }
-	bool LoadFromTGA(const char *filename);
+	bool LoadFromTGA(const char *name);
 	void BuildMipmaps();
 	void SetTexImage(GLenum level, GLint internalFormat, GLsizei width, GLsizei height,
 		GLint border, GLenum format, GLenum type, const GLvoid *data);

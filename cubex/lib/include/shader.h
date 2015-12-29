@@ -17,7 +17,7 @@ public:
 	GLuint Handle() const { return handle; }
 	bool IsCompiled() const { return compiled; }
 	bool CompileFile(const char *filename);
-	bool CompileSource(const char *source);
+	bool CompileSource(const char *source, int length = 0);
 private:
 	GLuint handle;
 	bool compiled;

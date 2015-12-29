@@ -11,7 +11,6 @@ uniform bool UseSpecularMap;
 uniform sampler2D ColorMap;
 uniform sampler2D NormalMap;
 uniform sampler2D SpecularMap;
-uniform sampler2D DecalMap;
 
 struct Material {
 	vec3 ambient;
@@ -66,11 +65,9 @@ vec4 PhongLight(Light l)
 		vec4 texel = texture(ColorMap, fTexCoord);
 		if (texel.a == 0) {
 			matDiffuse = BorderMaterial.diffuse;
-			//matDiffuse = vec3(0.85);
 			border = true;
 		}
 		else matDiffuse = FrontMaterial.diffuse;
-		//else matDiffuse = mix(FrontMaterial.diffuse*1.3, FrontMaterial.diffuse * vec3(texture(DecalMap, fTexCoord)), 0.5);
 	}
 	else matDiffuse = FrontMaterial.diffuse;
 

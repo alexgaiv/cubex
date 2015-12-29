@@ -166,7 +166,22 @@ void GLFrame::OnCreate()
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
 
 	if (GLEW_ARB_shader_objects) {
-		program = new ProgramObject("shaders/cube.vert.glsl", "shaders/cube.frag.glsl");
+		char *source = 0;
+		int length = 0;
+
+		GetTextResource("cube.vert.glsl", source, length);
+		Shader vertShader(GL_VERTEX_SHADER);
+		vertShader.CompileSource(source, length);
+
+		GetTextResource("cube.frag.glsl", source, length);
+		Shader fragShader(GL_FRAGMENT_SHADER);
+		fragShader.CompileSource(source, length);
+
+		program = new ProgramObject;
+		program->AttachShader(vertShader);
+		program->AttachShader(fragShader);
+		program->Link();
+
 		program->Uniform("ColorMap", 0);
 		program->Uniform("NormalMap", 1);
 		program->Uniform("SpecularMap", 2);

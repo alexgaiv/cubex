@@ -295,49 +295,40 @@ bool Mesh::LoadObj(const char *filename)
 
 bool Mesh::LoadRaw(const char *filename)
 {
-	HANDLE hFile = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-	if (hFile == INVALID_HANDLE_VALUE) return false;
+	BYTE *data = GetBinaryResource(filename);
+	if (!data) return false;
 
-	DWORD bytesRead = 0;
+	BYTE signature[3] = { 'R','A','W' };
+	for (int i = 0; i < 3; i++, data++) {
+		if (*data != signature[i]) return false;
+	}
 
-	BYTE signature[4] = { };
-	ReadFile(hFile, signature, 3, &bytesRead, NULL);
-	int a = *(int *)signature;
-	if (*(int *)signature != 0x00574152) return false;
+	verticesCount = *(int *)data; data += sizeof(int);
+	indicesCount = *(int *)data;  data += sizeof(int);
+	hasNormals = *(bool *)data;   data += sizeof(bool);
+	hasTexCoords = *(bool *)data; data += sizeof(bool);
 
-	ReadFile(hFile, &verticesCount, sizeof(int), &bytesRead, NULL);
-	ReadFile(hFile, &indicesCount, sizeof(int), &bytesRead, NULL);
-	ReadFile(hFile, &hasNormals, 1, &bytesRead, NULL);
-	ReadFile(hFile, &hasTexCoords, 1, &bytesRead, NULL);
-
-	Vector3f *verts = new Vector3f[verticesCount];
-	UINT *indx = new UINT[indicesCount];
-
-	ReadFile(hFile, verts, verticesCount*sizeof(Vector3f), &bytesRead, NULL);
-	ReadFile(hFile, indx, indicesCount*sizeof(UINT), &bytesRead, NULL);
+	Vector3f *verts = (Vector3f *)data;
+	data += verticesCount*sizeof(Vector3f);
+	UINT *indx = (UINT *)data;
+	data += indicesCount*sizeof(UINT);
 
 	vertices.SetData(verticesCount*sizeof(Vector3f), verts, GL_STATIC_DRAW);
 	indices.SetData(indicesCount*sizeof(UINT), indx, GL_STATIC_DRAW);
 
-	delete [] verts;
-	delete [] indx;
-
 	if (hasNormals)
 	{
-		Vector3f *norms = new Vector3f[verticesCount];
-		ReadFile(hFile, norms, verticesCount*sizeof(Vector3f), &bytesRead, NULL);
+		Vector3f *norms = (Vector3f *)data;
+		data += verticesCount*sizeof(Vector3f);
 		normals.SetData(verticesCount*sizeof(Vector3f), norms, GL_STATIC_DRAW);
-		delete [] norms;
 	}
 
 	if (hasTexCoords)
 	{
-		Vector2f *texs = new Vector2f[verticesCount];
-		ReadFile(hFile, texs, verticesCount*sizeof(Vector2f), &bytesRead, NULL);
+		Vector2f *texs = (Vector2f *)data;
+		data += verticesCount*sizeof(Vector2f);
 		texCoords.SetData(verticesCount*sizeof(Vector2f), texs, GL_STATIC_DRAW);
-		delete [] texs;
 	}
 
-	CloseHandle(hFile);
 	return true;
 }

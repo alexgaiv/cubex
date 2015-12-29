@@ -167,6 +167,7 @@
     <ClInclude Include="lib\include\vertexbuffer.h" />
     <ClInclude Include="lib\include\viewer3d.h" />
     <ClInclude Include="mainwindow.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="resources.h" />
   </ItemGroup>
   <ItemGroup>

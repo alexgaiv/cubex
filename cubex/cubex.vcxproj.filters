@@ -125,6 +125,9 @@
     <ClInclude Include="lib\include\texture.h">
       <Filter>lib\include</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="lib\include\datatypes.inl">

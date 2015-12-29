@@ -67,27 +67,24 @@ void CubeBlock::InitStatic()
 	border_reduced = new Mesh;
 	face_pickMode = new Mesh;
 
-	face->LoadObj("models/face.obj");
-	border->LoadObj("models/border.obj");
-	border_reduced->LoadObj("models/border_reduced.obj");
-	face_pickMode->LoadObj("models/face_pick.obj");
+	face->LoadRaw("face.raw");
+	border->LoadRaw("border.raw");
+	border_reduced->LoadRaw("border_reduced.raw");
+	face_pickMode->LoadRaw("face_pick.raw");
 
 	if (!GLEW_ARB_shader_objects) return;
 
-	Texture2D face_mask("textures/face_mask.tga", GL_TEXTURE0);
-	Texture2D face_normal("textures/face_normal.tga", GL_TEXTURE1);
-	Texture2D border_normal("textures/border_normal.tga", GL_TEXTURE1);
-	Texture2D border_reduced_normal("textures/border_reduced_normal.tga", GL_TEXTURE1);
-	Texture2D border_specular("textures/border_specular.tga", GL_TEXTURE2);
-	Texture2D decal("textures/decal.tga", GL_TEXTURE3);
+	Texture2D face_mask("face_mask.tga", GL_TEXTURE0);
+	Texture2D face_normal("face_normal.tga", GL_TEXTURE1);
+	Texture2D border_normal("border_normal.tga", GL_TEXTURE1);
+	Texture2D border_reduced_normal("border_reduced_normal.tga", GL_TEXTURE1);
+	Texture2D border_specular("border_specular.tga", GL_TEXTURE2);
 
 	face_mask.SetFilters(GL_LINEAR);
 	face_normal.SetFilters(GL_LINEAR);
 	border_normal.SetFilters(GL_LINEAR);
 	border_reduced_normal.SetFilters(GL_LINEAR);
 	border_specular.SetFilters(GL_LINEAR);
-	decal.SetFilters(GL_LINEAR);
-	decal.Bind();
 
 	face->BindTexture(face_mask);
 	face->BindNormalMap(face_normal);

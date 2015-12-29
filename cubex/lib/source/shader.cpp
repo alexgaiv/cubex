@@ -4,6 +4,7 @@
 
 Shader::Shader(GLenum type) {
 	handle = glCreateShader(type);
+	compiled = false;
 }
 
 Shader::Shader(GLenum type, const char *path) {
@@ -38,9 +39,9 @@ bool Shader::CompileFile(const char *filename)
 	return _log();
 }
 
-bool Shader::CompileSource(const char *source)
+bool Shader::CompileSource(const char *source, int length)
 {
-	glShaderSource(handle, 1, &source, NULL);
+	glShaderSource(handle, 1, &source, length ? &length : NULL);
 	glCompileShader(handle);
 	return _log();
 }
@@ -58,6 +59,7 @@ bool Shader::_log()
 		OutputDebugString(infoLog);
 		delete[] infoLog;
 	}
+	compiled = isCompiled ? true : false;
 	return isCompiled == TRUE;
 }
 

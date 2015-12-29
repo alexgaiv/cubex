@@ -27,4 +27,17 @@ void Swap(T &a, T &b) {
 	b = tmp;
 }
 
+inline BYTE *GetBinaryResource(LPCTSTR name)
+{
+	HRSRC hRes = FindResource(NULL, name, RT_RCDATA);
+	return (BYTE *)LockResource(LoadResource(NULL, hRes));
+}
+
+inline void GetTextResource(LPCTSTR name, char *&str, int &length)
+{
+	HRSRC hRes = FindResource(NULL, name, RT_RCDATA);
+	str = (char *)LockResource(LoadResource(NULL, hRes));
+	length = SizeofResource(NULL, hRes);
+}
+
 #endif // _COMMON_H_

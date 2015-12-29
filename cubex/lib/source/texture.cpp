@@ -72,17 +72,15 @@ void BaseTexture::_read(HANDLE hFile, LPVOID lpBuffer, DWORD nNumBytes)
 		throw false;
 }
 
-bool BaseTexture::_loadFromTGA(const char *filename, BYTE *&data)
+bool BaseTexture::_loadFromTGA(const char *name, BYTE *&data)
 {
-	HANDLE file = CreateFileA(filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
-	if (file == INVALID_HANDLE_VALUE) {
-		return false;
-	}
+	BYTE *ptr = GetBinaryResource(name);
+	if (!ptr) return false;
 
 	data = 0;
 	try {
-		TGAHEADER tgaHeader = { };
-		_read(file, &tgaHeader, sizeof(TGAHEADER));
+		TGAHEADER tgaHeader = *(TGAHEADER *)ptr;
+		ptr += sizeof(TGAHEADER);
 
 		if (tgaHeader.colorMapType != 0 ||
 			tgaHeader.imageType != 2 && tgaHeader.imageType != 3) {
@@ -108,14 +106,14 @@ bool BaseTexture::_loadFromTGA(const char *filename, BYTE *&data)
 		}
 
 		if (tgaHeader.idLength != 0) {
-			SetFilePointer(file, tgaHeader.idLength, NULL, FILE_CURRENT);
+			ptr += tgaHeader.idLength;
 		}
 
 		DWORD imageSize = tgaHeader.width * tgaHeader.height * tgaHeader.depth / 8;
 		data = new(std::nothrow) BYTE[imageSize];
 		if (!data) throw false;
 
-		_read(file, data, imageSize);
+		memcpy(data, ptr, imageSize);
 		width = tgaHeader.width;
 		height = tgaHeader.height;
 
@@ -153,10 +151,8 @@ bool BaseTexture::_loadFromTGA(const char *filename, BYTE *&data)
 			delete [] data;
 			data = 0;
 		}
-		CloseHandle(file);
 		return false;
 	}
-	CloseHandle(file);
 	return true;
 }
 
@@ -171,16 +167,16 @@ Texture2D::Texture2D(GLenum textureUnit, GLuint id)
 	: BaseTexture(GL_TEXTURE_2D, textureUnit, id), loaded(false)
 { }
 
-Texture2D::Texture2D(const char *filename, GLenum textureUnit, GLuint id)
+Texture2D::Texture2D(const char *name, GLenum textureUnit, GLuint id)
 	: BaseTexture(GL_TEXTURE_2D, textureUnit, id), loaded(false)
 {
-	LoadFromTGA(filename);
+	LoadFromTGA(name);
 }
 
-bool Texture2D::LoadFromTGA(const char *filename)
+bool Texture2D::LoadFromTGA(const char *name)
 {
 	BYTE *imageData = NULL;
-	loaded = _loadFromTGA(filename, imageData);
+	loaded = _loadFromTGA(name, imageData);
 	if (loaded) {
 		_texImage2D(target, imageData);
 		delete [] imageData;
