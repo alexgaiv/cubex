@@ -14,6 +14,8 @@
 #define IDS_TOOLBARNAMES 70
 #define IDS_MENU_ABOUT 71
 #define IDS_ABOUT 72
+#define IDS_TIME 73
+#define IDS_MOVES 74
 
 #define IDC_NEWGAME 80
 #define IDC_MIXUP 81

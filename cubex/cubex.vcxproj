@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="text2d.cpp" />
     <ClInclude Include="cube.h" />
     <ClCompile Include="cube.cpp" />
     <ClCompile Include="cubeblock.cpp" />
@@ -149,6 +150,7 @@
     <ClCompile Include="lib\source\viewer3d.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
+    <ClInclude Include="text2d.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h" />
@@ -167,7 +169,6 @@
     <ClInclude Include="lib\include\vertexbuffer.h" />
     <ClInclude Include="lib\include\viewer3d.h" />
     <ClInclude Include="mainwindow.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="resources.h" />
   </ItemGroup>
   <ItemGroup>

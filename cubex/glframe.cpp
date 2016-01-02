@@ -1,5 +1,7 @@
 #include "glframe.h"
+#include "resources.h"
 #include "transform.h"
+#include "text2d.h"
 #include <string>
 #include <strsafe.h>
 
@@ -119,6 +121,8 @@ void GLFrame::RenderScene()
 	Global::PushModelView();
 
 	viewer.ApplyTransform();
+	Global::GetCurProgram()->Uniform("FrontMaterial.diffuse", 1, Color3f(0,0,1).data);
+
 	if (fSolvedAnim) {
 		Global::MultModelView(Rotate(rotAngle, 1, 1, 1));
 	}
@@ -130,25 +134,9 @@ void GLFrame::RenderScene()
 
 	if (fSolvedAnim && !CubeBlock::fRenderPickMode)
 	{
-		RECT winRect = { };
-		GetClientRect(m_hwnd, &winRect);
-
-		Global::PushProjection();
-		Global::SetProjection(Ortho(0.0f, (float)winRect.right, (float)winRect.bottom, 0.0f, -1.0f, 1.0f));
-
-		Global::PushModelView();
-		Global::SetModelView(Matrix44f::Identity());
-
-		glColor3f(0.07f, 0.31f, 0.76f);
-		glListBase(1);
-
-		glRasterPos2i(50, 50);
-		glCallLists(movesMsg.size(), GL_UNSIGNED_BYTE, movesMsg.c_str());
-		glRasterPos2i(50, 70);
-		glCallLists(timeMsg.size(), GL_UNSIGNED_BYTE, timeMsg.c_str());
-
-		Global::PopModelView();
-		Global::PopProjection();
+		Global::GetCurProgram()->Uniform("FrontMaterial.diffuse", 0.07f, 0.31f, 0.76f);
+		movesMsg->Draw(50, 40);
+		timeMsg->Draw(50, 60);
 	}
 
 	Global::PopModelView();
@@ -164,6 +152,9 @@ void GLFrame::OnCreate()
 	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
+
+	timeMsg = new Text2D("font.fnt");
+	movesMsg = new Text2D(*timeMsg);
 
 	if (GLEW_ARB_shader_objects) {
 		char *source = 0;
@@ -185,24 +176,11 @@ void GLFrame::OnCreate()
 		program->Uniform("ColorMap", 0);
 		program->Uniform("NormalMap", 1);
 		program->Uniform("SpecularMap", 2);
-		program->Uniform("DecalMap", 3);
 		program->Uniform("FrontMaterial.specular", 1, Color3f(0.4f).data);
 		program->Use();
 	}
 
 	CubeBlock::InitStatic();
-
-	LOGFONT lf = { };
-	lf.lfHeight = 20;
-	lf.lfWeight = FW_BOLD;
-	lf.lfCharSet = DEFAULT_CHARSET;
-	StringCchCopy(lf.lfFaceName, LF_FACESIZE, "Arial");
-	HFONT hFont = CreateFontIndirect(&lf);
-
-	HFONT hPrevFont = (HFONT)SelectObject(m_hdc, hFont);
-	wglUseFontBitmaps(m_hdc, 0, 255, 1);
-	SelectObject(m_hdc, hPrevFont);
-	DeleteObject(hFont);
 
 	SetTimer(m_hwnd, 1, 25, NULL);
 	solveTime = time(NULL);
@@ -242,9 +220,10 @@ void GLFrame::OnMouseDown(MouseButton button, int winX, int winY)
 void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 {
 	if (fSolvedAnim) return;
-	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneDrag) {
+	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneDrag)
+	{
+		if (!resetAnim.IsComplete()) resetAnim = QSlerp();
 		viewer.Rotate(x, y);
-
 		if (!cube->IsAnim()) RedrawWindow();
 		else needRedraw = true;
 	}
@@ -298,6 +277,8 @@ void GLFrame::OnDestroy()
 {
 	KillTimer(m_hwnd, 1);
 	CubeBlock::FreeStatic();
+	delete timeMsg;
+	delete movesMsg;
 	if (GLEW_ARB_shader_objects)
 		delete program;
 }
@@ -319,16 +300,21 @@ void GLFrame::OnMixed()
 
 void GLFrame::OnCubeSolved()
 {
-	char buf[100] = "";
-	StringCchPrintfA(buf, 100, "Moves: %d", numMoves);
-	movesMsg = buf;
+	WCHAR time_str[30] = { };
+	WCHAR moves_str[30] = { };
+	LoadStringW(NULL, IDS_TIME, time_str, 30);
+	LoadStringW(NULL, IDS_MOVES, moves_str, 30);
+
+	wchar_t buf[100] = L"";
+	StringCchPrintfW(buf, 100, moves_str, numMoves);
+	movesMsg->SetText(buf);
 
 	solveTime = time(NULL) - solveTime;
 	int mins = (int)solveTime / 60;
 	int secs = (int)(mins ? solveTime % mins : solveTime);
 
-	StringCchPrintfA(buf, 100, "Time: %d min %d sec", mins, secs);
-	timeMsg = buf;
+	StringCchPrintfW(buf, 100, time_str, mins, secs);
+	timeMsg->SetText(buf);
 	fSolvedAnim = true;
 	rotAngle = 0.0f;
 	SendMessage(GetParent(m_hwnd), WM_CUBESOLVED, 0, 0);

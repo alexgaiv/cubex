@@ -77,12 +77,16 @@ vec4 PhongLight(Light l)
 		vec3 specular = UseSpecularMap ? vec3(texture(SpecularMap, fTexCoord)) : FrontMaterial.specular;
 		c += GetSpecular(l.direction, l.specular) * specular;
 	}
-
+	
 	return vec4(c, 1);
 }
 
 void main()
 {
+	if (Mode == 4) {
+		gl_FragColor = vec4(FrontMaterial.diffuse, texture(ColorMap, fTexCoord).a);
+	}
+	else
 	if (Mode == 3) {
 		gl_FragColor = vec4(FrontMaterial.diffuse, 1);
 	}

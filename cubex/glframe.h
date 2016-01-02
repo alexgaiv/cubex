@@ -7,6 +7,7 @@
 #include "shader.h"
 #include "viewer3d.h"
 #include "qslerp.h"
+#include "text2d.h"
 #include "cube.h"
 
 #define WM_ROTATEFACE (WM_USER+1)
@@ -66,8 +67,8 @@ private:
 	bool isFaceRotating, isMixing;
 	bool needRedraw;
 
-	std::string timeMsg;
-	std::string movesMsg;
+	Text2D *timeMsg;
+	Text2D *movesMsg;
 
 	struct {
 		Axis face[2];

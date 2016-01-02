@@ -170,6 +170,7 @@ void CubeBlock::Render()
 			program->Uniform("Mode", 0);
 			program->Uniform("FrontMaterial.ambient", 1, Color3f(1).data);
 			program->Uniform("FrontMaterial.diffuse", 1, c->data);
+			program->Uniform("FrontMaterial.shininess", 70);
 
 			Global::PushModelView();
 				Global::MultModelView(face_transform[i]);
