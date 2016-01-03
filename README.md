@@ -1,4 +1,4 @@
 ### Cubex - Rubik's Cube Simulator
 Controls: <kbd>mouse</kbd>
 
-![](http://i.imgur.com/musoF3n.png)
+![](http://raw.githubusercontent.com/alexgaiv/alexgaiv.github.io/master/cubex/screenshots/readme.png)
