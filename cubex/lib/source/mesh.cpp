@@ -101,23 +101,19 @@ void Mesh::Draw(int first, int count)
 		glUseProgram(programId);
 
 	glEnableVertexAttribArray(AttribsLocations.Vertex);
-	vertices.Bind();
 	vertices.AttribPointer(AttribsLocations.Vertex, 3, GL_FLOAT);
 
 	if (hasNormals) {
 		glEnableVertexAttribArray(AttribsLocations.Normal);
-		normals.Bind();
 		normals.AttribPointer(AttribsLocations.Normal, 3, GL_FLOAT);
 	}
 
 	if (hasTexCoords) {
 		glEnableVertexAttribArray(AttribsLocations.TexCoord);
-		texCoords.Bind();
 		texCoords.AttribPointer(AttribsLocations.TexCoord, 2, GL_FLOAT);
 	}
 
-	indices.Bind();
-	glDrawElements(GL_TRIANGLES, count == -1 ? indicesCount : count, GL_UNSIGNED_INT, (void *)first);
+	indices.DrawElements(GL_TRIANGLES, count == -1 ? indicesCount : count, GL_UNSIGNED_INT, first);
 
 	glDisableVertexAttribArray(AttribsLocations.Vertex);
 	glDisableVertexAttribArray(AttribsLocations.Normal);
@@ -134,23 +130,19 @@ void Mesh::DrawFixed(int first, int count)
 		texture.Bind();
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	vertices.Bind();
-	glVertexPointer(3, GL_FLOAT, 0, 0);
+	vertices.VertexPointer(3, GL_FLOAT, 0);
 
 	if (hasNormals) {
 		glEnableClientState(GL_NORMAL_ARRAY);
-		normals.Bind();
-		glNormalPointer(GL_FLOAT, 0, 0);
+		normals.NormalPointer(GL_FLOAT, 0);
 	}
 
 	if (hasTexCoords) {
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		texCoords.Bind();
-		glTexCoordPointer(2, GL_FLOAT, 0, 0);
+		texCoords.TexCoordPointer(2, GL_FLOAT, 0);
 	}
 
-	indices.Bind();
-	glDrawElements(GL_TRIANGLES, count == -1 ? indicesCount : count, GL_UNSIGNED_INT, (void *)first);
+	indices.DrawElements(GL_TRIANGLES, count == -1 ? indicesCount : count, GL_UNSIGNED_INT, first);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);

@@ -16,6 +16,12 @@ public:
 	void AttribPointer(GLuint index, GLint size, GLenum type,
 		GLboolean normalized = GL_FALSE, GLsizei stride = 0, GLubyte offset = 0) const;
 
+	void VertexPointer(GLint size, GLenum type, GLsizei stride) const;
+	void NormalPointer(GLenum type, GLsizei stride) const;
+	void TexCoordPointer(GLint size, GLenum type, GLsizei stride) const;
+
+	void DrawElements(GLenum mode, GLsizei count, GLenum type, int first = 0);
+
 	void Bind() const { glBindBuffer(target, id); }
 	void Unbind() const { glBindBuffer(target, 0); }
 
@@ -32,6 +38,9 @@ public:
 private:
 	GLuint id;
 	GLenum target;
+
+	BYTE *data;
+	int size;
 };
 
 #endif // _VERTEX_BUFFER_H

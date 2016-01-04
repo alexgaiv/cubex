@@ -97,12 +97,6 @@ private:
 	void OnTimer();
 	void OnDestroy();
 
-	void OnMouseWheel(short delta, UINT keysPressed, int x, int y)
-	{
-		//viewer.Zoom(delta > 0 ? 1.1f : 0.9f);
-		//RedrawWindow();
-	}
-
 	void OnFaceRotated();
 	void OnMixed();
 	void OnCubeSolved();

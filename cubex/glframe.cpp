@@ -9,7 +9,7 @@ Quaternion GLFrame::qResetView =
 	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 30.0f) *
 	Quaternion(Vector3f(0.0f, 1.0f, 0.0f), -45.0f);
 
-GLFrame::GLFrame() : program(NULL)
+GLFrame::GLFrame() : program(NULL), timeMsg(NULL), movesMsg(NULL)
 {
 	solveTime = 0;
 	wasMixed = false;
@@ -121,8 +121,6 @@ void GLFrame::RenderScene()
 	Global::PushModelView();
 
 	viewer.ApplyTransform();
-	Global::GetCurProgram()->Uniform("FrontMaterial.diffuse", 1, Color3f(0,0,1).data);
-
 	if (fSolvedAnim) {
 		Global::MultModelView(Rotate(rotAngle, 1, 1, 1));
 	}
@@ -134,9 +132,11 @@ void GLFrame::RenderScene()
 
 	if (fSolvedAnim && !CubeBlock::fRenderPickMode)
 	{
-		Global::GetCurProgram()->Uniform("FrontMaterial.diffuse", 0.07f, 0.31f, 0.76f);
-		movesMsg->Draw(50, 40);
-		timeMsg->Draw(50, 60);
+		if (GLEW_ARB_shader_objects) {
+			Global::GetCurProgram()->Uniform("FrontMaterial.diffuse", 0.07f, 0.31f, 0.76f);
+			movesMsg->Draw(50, 40);
+			timeMsg->Draw(50, 60);
+		}
 	}
 
 	Global::PopModelView();
@@ -153,10 +153,11 @@ void GLFrame::OnCreate()
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
 
-	timeMsg = new Text2D("font.fnt");
-	movesMsg = new Text2D(*timeMsg);
+	if (GLEW_ARB_shader_objects)
+	{
+		timeMsg = new Text2D("font.fnt");
+		movesMsg = new Text2D(*timeMsg);
 
-	if (GLEW_ARB_shader_objects) {
 		char *source = 0;
 		int length = 0;
 
@@ -179,7 +180,7 @@ void GLFrame::OnCreate()
 		program->Uniform("FrontMaterial.specular", 1, Color3f(0.4f).data);
 		program->Use();
 	}
-
+	
 	CubeBlock::InitStatic();
 
 	SetTimer(m_hwnd, 1, 25, NULL);
@@ -277,10 +278,11 @@ void GLFrame::OnDestroy()
 {
 	KillTimer(m_hwnd, 1);
 	CubeBlock::FreeStatic();
-	delete timeMsg;
-	delete movesMsg;
-	if (GLEW_ARB_shader_objects)
+	if (GLEW_ARB_shader_objects) {
+		delete timeMsg;
+		delete movesMsg;
 		delete program;
+	}
 }
 
 void GLFrame::OnFaceRotated()
@@ -300,21 +302,24 @@ void GLFrame::OnMixed()
 
 void GLFrame::OnCubeSolved()
 {
-	WCHAR time_str[30] = { };
-	WCHAR moves_str[30] = { };
-	LoadStringW(NULL, IDS_TIME, time_str, 30);
-	LoadStringW(NULL, IDS_MOVES, moves_str, 30);
+	if (GLEW_ARB_shader_objects) {
+		WCHAR time_str[30] = { };
+		WCHAR moves_str[30] = { };
+		LoadStringW(NULL, IDS_TIME, time_str, 30);
+		LoadStringW(NULL, IDS_MOVES, moves_str, 30);
 
-	wchar_t buf[100] = L"";
-	StringCchPrintfW(buf, 100, moves_str, numMoves);
-	movesMsg->SetText(buf);
+		wchar_t buf[100] = L"";
+		StringCchPrintfW(buf, 100, moves_str, numMoves);
+		movesMsg->SetText(buf);
 
-	solveTime = time(NULL) - solveTime;
-	int mins = (int)solveTime / 60;
-	int secs = (int)(mins ? solveTime % mins : solveTime);
+		solveTime = time(NULL) - solveTime;
+		int mins = (int)solveTime / 60;
+		int secs = (int)(mins ? solveTime % mins : solveTime);
 
-	StringCchPrintfW(buf, 100, time_str, mins, secs);
-	timeMsg->SetText(buf);
+		StringCchPrintfW(buf, 100, time_str, mins, secs);
+		timeMsg->SetText(buf);
+	}
+
 	fSolvedAnim = true;
 	rotAngle = 0.0f;
 	SendMessage(GetParent(m_hwnd), WM_CUBESOLVED, 0, 0);
