@@ -62,7 +62,7 @@ private:
 	float rotAngle;
 	static Quaternion qResetView;
 	QSlerp resetAnim;
-	Point2i mousePos, mousePos2, prevMousePos;
+	Point2i mousePos;
 	bool faceDrag, sceneDrag;
 	bool isFaceRotating, isMixing;
 	bool needRedraw;

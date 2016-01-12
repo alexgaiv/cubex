@@ -198,7 +198,6 @@ void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 	if (fSolvedAnim) return;
 	if (button == MouseButton::RBUTTON) {
 		viewer.BeginRotate(x, y);
-		SetCursor(NULL);
 	}
 	else if (button == MouseButton::LBUTTON)
 	{
@@ -206,18 +205,17 @@ void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 		ZeroMemory(&drag, sizeof(drag));
 		if (!GetBlockUnderMouse(x, y, block)) {
 			viewer.BeginRotate(x, y);
-			SetCursor(NULL);
 			sceneDrag = true;
 		}
 		else if (!cube->IsAnim()) {
 			CubeBlock *b = cube->blocks[block.pos.x][block.pos.y][block.pos.z];
 			if (b->IsSideColored(block.side)) {
 				CalcRotDirections(block);
+				mousePos = Point2i(x, y);
 				faceDrag = true;
 			}
 		}
 	}
-	mousePos = mousePos2 = prevMousePos = Point2i(x, y);
 }
 
 void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
@@ -225,57 +223,10 @@ void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 	if (fSolvedAnim) return;
 	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneDrag)
 	{
-		POINT curPos = { x, y };
-		RECT wndRect = { };
-		GetClientRect(m_hwnd, &wndRect);
-
-		bool setPos = false;
-		if (curPos.x >= wndRect.right - 1) {
-			int delta = curPos.x - wndRect.right + 1;
-			mousePos.x = delta + 10;
-			mousePos2.x += delta;
-			setPos = true;
-		} else if (curPos.x <= 1) {
-			int delta = curPos.x - wndRect.left - 1;
-			mousePos.x = wndRect.right - delta - 10;
-			mousePos2.x += delta;
-			setPos = true;
-		}
-		else {
-			mousePos2.x += x - mousePos.x;
-			mousePos.x = x;
-		}
-
-		if (curPos.y >= wndRect.bottom - 1) {
-			int delta = curPos.y - wndRect.bottom + 1;
-			mousePos.y = delta + 10;
-			mousePos2.y += delta;
-			setPos = true;
-		}
-		else if (curPos.y <= 1) {
-			int delta = curPos.y - wndRect.top - 1;
-			mousePos.y = wndRect.bottom - delta - 10;
-			mousePos2.y += delta;
-			setPos = true;
-		}
-		else {
-			mousePos2.y += y - mousePos.y;
-			mousePos.y = y;
-		}
-
-		if (setPos)
-		{
-			POINT p = { mousePos.x, mousePos.y };
-			ClientToScreen(m_hwnd, &p);
-			SetCursorPos(p.x, p.y);
-		}
-
 		if (!resetAnim.IsComplete()) resetAnim = QSlerp();
-		viewer.Rotate(mousePos2.x, mousePos2.y);
+		viewer.Rotate(x, y);
 		if (!cube->IsAnim()) RedrawWindow();
 		else needRedraw = true;
-
-		SetCursor(NULL);
 	}
 	else if (keysPressed & KeyModifiers::KM_LBUTTON && faceDrag) {
 		
@@ -291,13 +242,7 @@ void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 
 void GLFrame::OnMouseUp(MouseButton button, int x, int y)
 {
-	if (button == MouseButton::RBUTTON || sceneDrag) {
-		sceneDrag = false;
-		POINT p = { prevMousePos.x, prevMousePos.y };
-		ClientToScreen(m_hwnd, &p);
-		SetCursorPos(p.x, p.y);
-		SetCursor(LoadCursor(NULL, IDC_ARROW));
-	}
+	sceneDrag = false;
 }
 
 void GLFrame::OnTimer()
