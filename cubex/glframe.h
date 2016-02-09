@@ -73,7 +73,7 @@ private:
 	struct {
 		Axis face[2];
 		int index[2];
-		Vector3d dir[2];
+		Vector3f dir[2];
 		bool neg[2];
 	} drag;
 
@@ -104,11 +104,11 @@ private:
 	bool GetBlockUnderMouse(int winX, int winY, BlockDesc &block);
 	void GetNeighbors(const BlockDesc &block, Point3i &neighbor1, Point3i &neighbor2);
 	void CalcRotDirections(const BlockDesc &block);
-	void MouseRot(const Vector3d &mouseDir);
+	void MouseRot(const Vector3f &mouseDir);
 
-	Vector3d CalcBlockWinPos(const Point3i &block,
-		const Matrix44d &modelview,
-		const Matrix44d &projection, int viewport[4]);
+	Vector3f CalcBlockWinPos(const Point3i &block,
+		const Matrix44f &modelview,
+		const Matrix44f &projection, int viewport[4]);
 };
 
 #endif // _APP_WINDOW_H_

@@ -1,8 +1,10 @@
-varying vec3 fPosition;
-varying vec2 fTexCoord;
-varying vec3 fNormal;
-varying vec3 fTangent;
-varying vec3 fBinormal;
+#version 130
+
+in vec3 fPosition;
+in vec2 fTexCoord;
+in vec3 fNormal;
+in vec3 fTangent;
+in vec3 fBinormal;
 
 uniform int Mode;
 uniform bool RenderBackSide;

@@ -146,6 +146,12 @@ void GLFrame::OnCreate()
 {
 	glewInit();
 
+	if (GL_ARB_vertex_array_object) {
+		GLuint vao;
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+	}
+
 	glEnable(GL_MULTISAMPLE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_CULL_FACE);
@@ -172,6 +178,7 @@ void GLFrame::OnCreate()
 		program = new ProgramObject;
 		program->AttachShader(vertShader);
 		program->AttachShader(fragShader);
+		glBindFragDataLocation(program->Handle(), 0, "FragColor");
 		program->Link();
 
 		program->Uniform("ColorMap", 0);
@@ -374,27 +381,24 @@ void GLFrame::GetNeighbors(const BlockDesc &b, Point3i &neighbor1, Point3i &neig
 	if (p[i2] == cube->size - 1) drag.neg[1] = true;
 }
 
-Vector3d GLFrame::CalcBlockWinPos(const Point3i &b,
-	const Matrix44d &modelview, const Matrix44d &projection, int viewport[4])
+Vector3f GLFrame::CalcBlockWinPos(const Point3i &b,
+	const Matrix44f &modelview, const Matrix44f &projection, int viewport[4])
 {
-	Vector3d ret;
 	Vector3f l = cube->blocks[b.x][b.y][b.z]->location;
 	l.x -= cube->blockSize * 0.5f;
-	gluProject(l.x, l.y, l.z, modelview.data, projection.data, viewport, &ret.x, &ret.y, &ret.z);
-	return ret;
+	return Project(l, modelview, projection, viewport);
 };
 
 void GLFrame::CalcRotDirections(const BlockDesc &b)
 {
 	Point3i n1, n2;
-	Vector3d target;
+	Vector3f target;
 
 	GetNeighbors(b, n1, n2);
 
-	Matrix44d modelview(viewer.GetViewMatrix());
-	double projection[16];
+	Matrix44f modelview = viewer.GetViewMatrix();
+	Matrix44f projection = Global::GetProjection();
 	int viewport[4];
-	glGetDoublev(GL_PROJECTION_MATRIX, projection);
 	glGetIntegerv(GL_VIEWPORT, viewport);
 
 	target = CalcBlockWinPos(b.pos, modelview, projection, viewport);
@@ -415,7 +419,7 @@ void GLFrame::CalcRotDirections(const BlockDesc &b)
 	}
 }
 
-void GLFrame::MouseRot(const Vector3d &mouseDir)
+void GLFrame::MouseRot(const Vector3f &mouseDir)
 {
 	double a1 = acos(Dot(mouseDir, drag.dir[0]));
 	double a2 = acos(Dot(mouseDir, drag.dir[1]));

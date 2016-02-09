@@ -111,7 +111,7 @@ Text2D::~Text2D()
 
 void Text2D::SetText(const wchar_t *text)
 {
-	numVerts = 4*wcslen(text);
+	numVerts = 6*wcslen(text);
 	Vector3f *verts = new Vector3f[numVerts];
 	Vector2f *texs = new Vector2f[numVerts];
 
@@ -135,21 +135,25 @@ void Text2D::SetText(const wchar_t *text)
 		}
 
 		int w = charWidth[index];
-		int k = 4*i;
+		int k = 6*i;
 		verts[k]   = Vector3f(dw, 0, 0);
 		verts[k+1] = Vector3f(dw, (float)fontHeight, 0);
-		verts[k+2] = Vector3f(dw + w, (float)fontHeight, 0);
-		verts[k+3] = Vector3f(dw + w, 0, 0);
+		verts[k+2] = Vector3f(dw + w, 0, 0);
+		verts[k+3] = verts[k+2];
+		verts[k+4] = verts[k+1];
+		verts[k+5] = Vector3f(dw + w, (float)fontHeight, 0);
 
-		float kw = (float)cellWidth / fontTexture.GetWidth();
-		float kh = (float)cellHeight / fontTexture.GetHeight();
+		float kw = x * (float)cellWidth / fontTexture.GetWidth();
+		float kh = y * (float)cellHeight / fontTexture.GetHeight();
 		float kf = (float)fontHeight / fontTexture.GetHeight();
 		float kc = (float)w / fontTexture.GetHeight();
 
-		texs[k]   = Vector2f(x*kw, y*kh);
-		texs[k+1] = Vector2f(x*kw, y*kh + kf);
-		texs[k+2] = Vector2f(x*kw + kc, y*kh + kf);
-		texs[k+3] = Vector2f(x*kw + kc, y*kh);
+		texs[k]   = Vector2f(kw, kh);
+		texs[k+1] = Vector2f(kw, kh + kf);
+		texs[k+2] = Vector2f(kw + kc, kh);
+		texs[k+3] = texs[k+2];
+		texs[k+4] = texs[k+1];
+		texs[k+5] = Vector2f(kw + kc, kh + kf);
 
 		dw += w;
 	}
@@ -183,9 +187,9 @@ void Text2D::Draw(int x, int y)
 	texCoords.Bind();
 	texCoords.AttribPointer(AttribsLocations.TexCoord, 2, GL_FLOAT);
 
-	glEnable (GL_BLEND);
+	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDrawArrays(GL_QUADS, 0, numVerts);
+	glDrawArrays(GL_TRIANGLES, 0, numVerts);
 	glDisable(GL_BLEND);
 
 	glDisableVertexAttribArray(AttribsLocations.Vertex);

@@ -1,14 +1,16 @@
-attribute vec3 Vertex;
-attribute vec2 TexCoord;
-attribute vec3 Normal;
-attribute vec3 Tangent;
-attribute vec3 Binormal;
+#version 130
 
-varying vec3 fPosition;
-varying vec2 fTexCoord;
-varying vec3 fNormal;
-varying vec3 fTangent;
-varying vec3 fBinormal;
+in vec3 Vertex;
+in vec2 TexCoord;
+in vec3 Normal;
+in vec3 Tangent;
+in vec3 Binormal;
+
+out vec3 fPosition;
+out vec2 fTexCoord;
+out vec3 fNormal;
+out vec3 fTangent;
+out vec3 fBinormal;
 
 uniform mat4 ModelView;
 uniform mat4 NormalMatrix;
