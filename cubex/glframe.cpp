@@ -146,7 +146,7 @@ void GLFrame::OnCreate()
 {
 	glewInit();
 
-	if (GL_ARB_vertex_array_object) {
+	if (GL_ARB_vertex_array_object && glGenVertexArrays && glBindVertexArray) {
 		GLuint vao;
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
