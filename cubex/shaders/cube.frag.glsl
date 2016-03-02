@@ -54,7 +54,7 @@ vec3 GetSpecular(vec3 lightDir, vec3 lightSpecular)
 	return specCoeff * lightSpecular;
 }
 
-vec4 PhongLight(Light l)
+vec4 PhongLight(const Light l)
 {
 	vec3 matDiffuse;
 
