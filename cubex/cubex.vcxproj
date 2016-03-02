@@ -66,12 +66,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib;C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\HP\Documents\Visual Studio 2012\Projects\3D\opengl\cubex\cubex\lib\gl;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)lib;$(ProjectDir)lib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib\gl;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\gajvanjuk.a\Documents\Visual Studio 2012\Projects\cubex\cubex\lib;C:\Users\gajvanjuk.a\Documents\Visual Studio 2012\Projects\cubex\cubex\lib\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\gajvanjuk.a\Documents\Visual Studio 2012\Projects\cubex\cubex\lib\gl;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)lib;$(ProjectDir)lib\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)lib\gl;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
