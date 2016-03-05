@@ -2,6 +2,7 @@
 #define _GLWINDOW_H_
 
 #include "common.h"
+#include "glcontext.h"
 
 struct GLWindowInfoStruct
 {
@@ -28,9 +29,9 @@ enum KeyModifiers
 class GLWindow
 {
 public:
-	HWND  m_hwnd;
-	HDC   m_hdc;
-	HGLRC m_hrc;
+	HWND m_hwnd;
+	HDC m_hdc;
+	GLRenderingContext *m_rc;
 
 	GLWindow();
 	virtual ~GLWindow();
@@ -47,7 +48,10 @@ public:
 
 	void CreateFullScreen(LPCTSTR lpCaption);
 
-	void Show(int nCmdShow) { ShowWindow(m_hwnd, nCmdShow); }
+	void Destroy() { DestroyWindow(m_hwnd); }
+	void Show(int nCmdShow) {
+		ShowWindow(m_hwnd, (bFullScreen && nCmdShow == SW_MAXIMIZE) ? SW_SHOW : nCmdShow);
+	}
 
 	void RedrawWindow() {
 		OnDisplay();
@@ -57,7 +61,7 @@ public:
 	void MainLoop();
 protected:
 	virtual GLWindowInfoStruct GetWindowInfo();
-	virtual PIXELFORMATDESCRIPTOR GetDCPixelFormat();
+	virtual GLRenderingContextParams GetRCParams();
 
 	virtual void OnCreate() { }
 	virtual void OnDisplay() { }
@@ -74,16 +78,17 @@ protected:
 	virtual void OnDestroy() { }
 	virtual void OnMessage(UINT uMsg, WPARAM wParam, LPARAM lParam) { }
 private:
+	friend class GLRenderingContext;
+
 	bool bFullScreen;
 	bool bDummy;
 	
-	static ATOM _RegisterWindow(GLWindow *pThis);
-	static LRESULT CALLBACK _WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	static ATOM registerWindow(GLWindow *pThis);
+	static LRESULT CALLBACK wndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-	HRESULT _HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	void _InitRC();
-	bool _CreateCompabilityContext();
-	void _ChangeDisplaySettings();
+	HRESULT handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+	void initRC();
+	void changeDisplaySettings();
 };
 
 #endif // _GLWINDOW_H_

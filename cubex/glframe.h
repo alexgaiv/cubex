@@ -42,7 +42,6 @@ class GLFrame : public GLWindow
 {
 public:
 	GLFrame();
-	~GLFrame();
 
 	bool ChangeCubeSize(int size);
 	void ResetCube();
@@ -53,7 +52,7 @@ public:
 private:
 	ProgramObject *program;
 	Cube *cube;
-	Viewer3D viewer;
+	Viewer3D *viewer;
 
 	time_t solveTime;
 	bool wasMixed;

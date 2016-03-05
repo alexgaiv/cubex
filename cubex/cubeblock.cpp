@@ -1,6 +1,6 @@
 #include "cubeblock.h"
 #include "resources.h"
-#include "global.h"
+#include "glcontext.h"
 
 Color3f CubeBlock::colors[6] =
 {
@@ -25,14 +25,14 @@ Mesh *CubeBlock::border_reduced = NULL;
 Mesh *CubeBlock::face_pickMode = NULL;
 Matrix44f CubeBlock::face_transform[6];
 
-CubeBlock::CubeBlock(UINT pickId)
-	: pickId(pickId), numSides(0)
+CubeBlock::CubeBlock(GLRenderingContext *rc, UINT pickId) : Actor(rc),
+	pickId(pickId), numSides(0)
 {
 	memset(&clr, 0, sizeof(clr));
 	memset(coloredSides, 0, sizeof(coloredSides));
 }
 
-void CubeBlock::DrawWhiteBorders(bool whiteBorders)
+void CubeBlock::DrawWhiteBorders(GLRenderingContext *rc, bool whiteBorders)
 {
 	if (whiteBorders) {
 		borderAmbient = Color3f(0.8f);
@@ -42,12 +42,12 @@ void CubeBlock::DrawWhiteBorders(bool whiteBorders)
 		borderAmbient = Color3f(0.0f);
 		borderDiffuse = Color3f(0.35f);
 	}
-	ProgramObject *p = Global::GetCurProgram();
+	ProgramObject *p = rc->GetCurProgram();
 	p->Uniform("BorderMaterial.ambient", 1, borderAmbient.data);
 	p->Uniform("BorderMaterial.diffuse", 1, borderDiffuse.data);
 }
 
-void CubeBlock::InitStatic()
+void CubeBlock::InitStatic(GLRenderingContext *rc)
 {
 	Quaternion qs[6] =
 	{
@@ -62,10 +62,10 @@ void CubeBlock::InitStatic()
 	for (int i = 0; i < 6; i++)
 		qs[i].ToMatrix(face_transform[i]);
 
-	face = new Mesh;
-	border = new Mesh;
-	border_reduced = new Mesh;
-	face_pickMode = new Mesh;
+	face = new Mesh(rc);
+	border = new Mesh(rc);
+	border_reduced = new Mesh(rc);
+	face_pickMode = new Mesh(rc);
 
 	face->LoadRaw("face.raw");
 	border->LoadRaw("border.raw");
@@ -80,11 +80,11 @@ void CubeBlock::InitStatic()
 	Texture2D border_reduced_normal("border_reduced_normal.tga", GL_TEXTURE1);
 	Texture2D border_specular("border_specular.tga", GL_TEXTURE2);
 
-	face_mask.SetFilters(GL_LINEAR);
-	face_normal.SetFilters(GL_LINEAR);
-	border_normal.SetFilters(GL_LINEAR);
-	border_reduced_normal.SetFilters(GL_LINEAR);
-	border_specular.SetFilters(GL_LINEAR);
+	face_mask.SetFilters(GL_LINEAR, GL_LINEAR);
+	face_normal.SetFilters(GL_LINEAR, GL_LINEAR);
+	border_normal.SetFilters(GL_LINEAR, GL_LINEAR);
+	border_reduced_normal.SetFilters(GL_LINEAR, GL_LINEAR);
+	border_specular.SetFilters(GL_LINEAR, GL_LINEAR);
 
 	face->BindTexture(face_mask);
 	face->BindNormalMap(face_normal);
@@ -92,7 +92,7 @@ void CubeBlock::InitStatic()
 	border->BindSpecularMap(border_specular);
 	border_reduced->BindNormalMap(border_reduced_normal);
 
-	DrawWhiteBorders(false);
+	DrawWhiteBorders(rc, false);
 }	
 
 void CubeBlock::FreeStatic()
@@ -122,10 +122,10 @@ void CubeBlock::RenderFixed()
 				glColor3f(0, 0, 0);
 			else glColor3fv((*c * 1.2f).data);
 
-			Global::PushModelView();
-				Global::MultModelView(face_transform[i]);
+			rc->PushModelView();
+				rc->MultModelView(face_transform[i]);
 				face->DrawFixed();
-			Global::PopModelView();
+			rc->PopModelView();
 		}
 		else {
 			int id = pickId | (1 << (i+10));
@@ -134,10 +134,10 @@ void CubeBlock::RenderFixed()
 
 			glColor3ub(r, g, 1);
 			
-			Global::PushModelView();
-				Global::MultModelView(face_transform[i]);
+			rc->PushModelView();
+				rc->MultModelView(face_transform[i]);
 				face_pickMode->DrawFixed();
-			Global::PopModelView();
+			rc->PopModelView();
 		}
 	}
 
@@ -149,16 +149,16 @@ void CubeBlock::RenderFixed()
 
 void CubeBlock::Render()
 {
-	Global::PushModelView();
+	rc->PushModelView();
 	this->ApplyTransform();
 
 	if (!GLEW_ARB_shader_objects) {
 		RenderFixed();
-		Global::PopModelView();
+		rc->PopModelView();
 		return;
 	}
 
-	static ProgramObject *program = Global::GetCurProgram();
+	static ProgramObject *program = rc->GetCurProgram();
 
 	for (int i = 0; i < 6; i++)
 	{
@@ -172,10 +172,10 @@ void CubeBlock::Render()
 			program->Uniform("FrontMaterial.diffuse", 1, c->data);
 			program->Uniform("FrontMaterial.shininess", 70);
 
-			Global::PushModelView();
-				Global::MultModelView(face_transform[i]);
+			rc->PushModelView();
+				rc->MultModelView(face_transform[i]);
 				face->Draw();
-			Global::PopModelView();
+			rc->PopModelView();
 
 			if (c == &borderDiffuse)
 				program->Uniform("RenderBackSide", 0);
@@ -188,10 +188,10 @@ void CubeBlock::Render()
 			program->Uniform("Mode", 3);
 			program->Uniform("FrontMaterial.diffuse", r/255.0f, g/255.0f, 1/255.0f);
 			
-			Global::PushModelView();
-				Global::MultModelView(face_transform[i]);
+			rc->PushModelView();
+				rc->MultModelView(face_transform[i]);
 				face_pickMode->Draw();
-			Global::PopModelView();
+			rc->PopModelView();
 		}
 	}
 
@@ -213,5 +213,5 @@ void CubeBlock::Render()
 		}
 	}
 
-	Global::PopModelView();
+	rc->PopModelView();
 }

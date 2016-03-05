@@ -3,8 +3,9 @@
 
 #define TEX_ID_NONE GLuint(-2)
 
-Mesh::Mesh()
-  : texture(GL_TEXTURE_2D, GL_TEXTURE0, TEX_ID_NONE),
+Mesh::Mesh(GLRenderingContext *rc)
+  : rc(rc),
+	texture(GL_TEXTURE_2D, GL_TEXTURE0, TEX_ID_NONE),
 	normalMap(GL_TEXTURE1, TEX_ID_NONE),
 	specularMap(GL_TEXTURE2, TEX_ID_NONE)
 {
@@ -86,18 +87,18 @@ void Mesh::RecalcTangents()
 void Mesh::Draw(int first, int count)
 {
 	if (texture.GetId() != TEX_ID_NONE)
-		texture.Bind();
+		texture.Bind(rc);
 	if (specularMap.GetId() != TEX_ID_NONE)
-		specularMap.Bind();
+		specularMap.Bind(rc);
 	if (normalMap.GetId() != TEX_ID_NONE) {
 		glEnableVertexAttribArray(AttribsLocations.Tangent);
 		glEnableVertexAttribArray(AttribsLocations.Binormal);
 		tangents.AttribPointer(AttribsLocations.Tangent, 3, GL_FLOAT);
 		binormals.AttribPointer(AttribsLocations.Binormal, 3, GL_FLOAT);
-		normalMap.Bind();
+		normalMap.Bind(rc);
 	}
 
-	if (programId && programId != Global::curProgram)
+	if (programId && programId != rc->curProgram)
 		glUseProgram(programId);
 
 	glEnableVertexAttribArray(AttribsLocations.Vertex);
@@ -127,7 +128,7 @@ void Mesh::Draw(int first, int count)
 void Mesh::DrawFixed(int first, int count)
 {
 	if (texture.GetId() != GLuint(-2))
-		texture.Bind();
+		texture.Bind(rc);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	vertices.VertexPointer(3, GL_FLOAT, 0);

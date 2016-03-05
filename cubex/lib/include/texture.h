@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "datatypes.h"
+#include "glcontext.h"
 
 #define TEX_OWN_ID GLuint(-1)
 
@@ -11,23 +12,29 @@ class BaseTexture
 public:
 	BaseTexture(GLenum target, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_OWN_ID);
 
-	GLuint GetId() const { return id; }
-	void Bind();
-	void Delete() {
-		glDeleteTextures(1, &id);
-	}
+	void Bind(GLRenderingContext *rc);
+	void Delete() { glDeleteTextures(1, &id); }
 
+	GLuint GetId() const { return id; }
+	GLenum GetTarget() const { return target; }
 	GLenum GetTextureUnit() const { return textureUnit; }
 	void SetTextureUnit(GLenum unit) { textureUnit = unit; }
 
-	void SetFilters(GLint minFilter, GLint magFilter = -1);
+	void SetFilters(GLint minFilter, GLint magFilter);
 	void SetWrapMode(GLint wrapS, GLint wrapT, GLint wrapR = -1);
 	void SetBorderColor(Color4f color);
+
+	void BuildMipmaps();
 protected:
 	GLuint id;
 	GLenum target, textureUnit;
 	int width, height;
 	int internalFormat, format;
+
+	void _bind() {
+		glActiveTexture(textureUnit);
+		glBindTexture(target, id);
+	}
 
 	bool _loadFromTGA(const char *name, BYTE *&data);
 	void _texImage2D(GLenum target, BYTE *imageData);
@@ -46,7 +53,6 @@ public:
 
 	bool IsLoaded() const { return loaded; }
 	bool LoadFromTGA(const char *name);
-	void BuildMipmaps();
 	void SetTexImage(GLenum level, GLint internalFormat, GLsizei width, GLsizei height,
 		GLint border, GLenum format, GLenum type, const GLvoid *data);
 private:

@@ -42,9 +42,6 @@
     <ClCompile Include="lib\source\basewindow.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
-    <ClCompile Include="lib\source\global.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
     <ClCompile Include="lib\source\glwindow.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
@@ -71,6 +68,9 @@
     </ClCompile>
     <ClCompile Include="text2d.cpp">
       <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\glcontext.cpp">
+      <Filter>lib\source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -119,9 +119,6 @@
     <ClInclude Include="lib\include\viewer3d.h">
       <Filter>lib\include</Filter>
     </ClInclude>
-    <ClInclude Include="lib\include\global.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
     <ClInclude Include="lib\include\mesh.h">
       <Filter>lib\include</Filter>
     </ClInclude>
@@ -130,6 +127,9 @@
     </ClInclude>
     <ClInclude Include="text2d.h">
       <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\glcontext.h">
+      <Filter>lib\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

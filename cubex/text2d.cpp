@@ -1,10 +1,10 @@
 #include "text2d.h"
 #include "datatypes.h"
 #include "transform.h"
-#include "global.h"
+#include "glcontext.h"
 
-Text2D::Text2D(const char *name)
-	: charsets(NULL), charWidth(NULL)
+Text2D::Text2D(GLRenderingContext *rc, const char *name)
+	: rc(rc), charsets(NULL), charWidth(NULL)
 {
 	numVerts = numCharsets = 0;
 	cellWidth = cellHeight = fontHeight = 0;
@@ -37,7 +37,7 @@ Text2D::Text2D(const char *name)
 				path[i] = *data;
 
 			fontTexture.LoadFromTGA(path);
-			fontTexture.SetFilters(GL_LINEAR);
+			fontTexture.SetFilters(GL_LINEAR, GL_LINEAR);
 		}
 		else if (*data++ != ' ') continue;
 		else if (!strcmp(prefix, "cw"))
@@ -170,14 +170,14 @@ void Text2D::Draw(int x, int y)
 	float viewport[4] = { };
 	glGetFloatv(GL_VIEWPORT, viewport);
 
-	Global::GetCurProgram()->Uniform("Mode", 4);
-	Global::PushProjection();
-	Global::PushModelView();
+	rc->GetCurProgram()->Uniform("Mode", 4);
+	rc->PushProjection();
+	rc->PushModelView();
 
-	Global::SetProjection(Ortho2D(0, viewport[2], viewport[3], 0));
-	Global::SetModelView(Translate((float)x, (float)y, 0));
+	rc->SetProjection(Ortho2D(0, viewport[2], viewport[3], 0));
+	rc->SetModelView(Translate((float)x, (float)y, 0));
 
-	fontTexture.Bind();
+	fontTexture.Bind(rc);
 
 	glEnableVertexAttribArray(AttribsLocations.Vertex);
 	vertices.Bind();
@@ -194,6 +194,6 @@ void Text2D::Draw(int x, int y)
 
 	glDisableVertexAttribArray(AttribsLocations.Vertex);
 	glDisableVertexAttribArray(AttribsLocations.TexCoord);
-	Global::PopModelView();
-	Global::PopProjection();
+	rc->PopModelView();
+	rc->PopProjection();
 }

@@ -3,9 +3,20 @@
 
 #include "common.h"
 #include "datatypes.h"
+#include "glcontext.h"
 #include <fstream>
 #include <vector>
 #include <string>
+
+class GLRenderingContext;
+
+const struct {
+	int Vertex;
+	int Normal;
+	int TexCoord;
+	int Tangent;
+	int Binormal;
+} AttribsLocations = { 0, 1, 2, 3, 4 };
 
 class Shader
 {
@@ -27,9 +38,9 @@ private:
 class ProgramObject
 {
 public:
-	ProgramObject();
+	ProgramObject(GLRenderingContext *rc);
+	ProgramObject(GLRenderingContext *rc, const char *vertPath, const char *fragPath);
 	ProgramObject(const ProgramObject &p);
-	ProgramObject(const char *vertPath, const char *fragPath);
 	~ProgramObject();
 	ProgramObject &operator=(const ProgramObject &p);
 
@@ -80,6 +91,7 @@ private:
 		}
 	} uniforms;
 
+	GLRenderingContext *rc;
 	GLuint handle;
 	bool linked;
 
@@ -105,7 +117,5 @@ private:
 			t == GL_UNSIGNED_INT_VEC4 || t == GL_BOOL_VEC4;
 	}
 };
-
-#include "global.h"
 
 #endif // _SHADER_H_

@@ -1,24 +1,36 @@
 #ifndef _ACTOR_H_
 #define _ACTOR_H_
 
-#include "global.h"
 #include "quaternion.h"
 #include "vertexbuffer.h"
+#include "mesh.h"
 
 class Actor
 {
 public:
 	Vector3f location;
 	Quaternion rotation;
+	float scale;
 	Matrix44f transform;
+	Mesh mesh;
 
-	virtual void Render() = 0;
+	Actor(GLRenderingContext *rc) : rc(rc), mesh(rc), scale(1.0f) { }
 
 	void ApplyTransform() {
 		rotation.ToMatrix(transform);
 		transform.translate = location;
-		Global::MultModelView(transform.data);
+		if (scale != 1.0f) transform.Scale(scale);
+		rc->MultModelView(transform);
 	}
+
+	void Draw() {
+		rc->PushModelView();
+		ApplyTransform();
+		mesh.Draw();
+		rc->PopModelView();
+	}
+protected:
+	GLRenderingContext *rc;
 };
 
 class BlockColor
@@ -35,16 +47,16 @@ public:
 	static bool fWhiteBorders;
 	static const float size;
 
-	static void DrawWhiteBorders(bool whiteBorders);
+	static void DrawWhiteBorders(GLRenderingContext *rc, bool whiteBorders);
 	
 	UINT pickId;
 	int numSides;
 	BlockColor clr;
 	int coloredSides[3];
 
-	CubeBlock(UINT pickId);
+	CubeBlock(GLRenderingContext *rc, UINT pickId);
 
-	static void InitStatic();
+	static void InitStatic(GLRenderingContext *rc);
 	static void FreeStatic();
 
 	void Render();

@@ -18,7 +18,7 @@ struct BlockDesc
 class Cube
 {
 public:
-	Cube(int size);
+	Cube(GLRenderingContext *rc, int size);
 	~Cube();
 
 	const int size;
@@ -37,6 +37,7 @@ public:
 	bool IsAnim() const { return curFace.anim; }
 	void Render() const;
 private:
+	GLRenderingContext *rc;
 	BlockColor **tmp;
 	bool reseting;
 

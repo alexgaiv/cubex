@@ -3,11 +3,12 @@
 
 #include "vertexbuffer.h"
 #include "texture.h"
+#include "glcontext.h"
 
 class Text2D
 {
 public:
-	Text2D(const char *name);
+	Text2D(GLRenderingContext *rc, const char *name);
 	Text2D(const Text2D &t);
 	~Text2D();
 	void SetText(const wchar_t *text);
@@ -21,6 +22,7 @@ private:
 		int endChar;
 	};
 
+	GLRenderingContext *rc;
 	int numChars, numCharsets;
 	Charset *charsets;
 	int *charWidth;

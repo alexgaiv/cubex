@@ -1,15 +1,16 @@
-#ifndef _VIEWER3D_H
-#define _VIEWER3D_H
+#ifndef _VIEWER3D_
+#define _VIEWER3D_
 
+#include "common.h"
+#include "glcontext.h"
 #include "datatypes.h"
 #include "quaternion.h"
-#include <gl\GL.h>
 
 class Viewer3D
 {
 public:
 	Quaternion qRotation;
-	Viewer3D();
+	Viewer3D(GLRenderingContext *rc);
 
 	Matrix44f GetViewMatrix();
 	void ApplyTransform();
@@ -34,6 +35,7 @@ public:
 	void SetConstRotationSpeed(float rotSpeed)
 		{ isConstSpeed = true; constSpeedValue = 1.0f / rotSpeed; }
 private:
+	GLRenderingContext *rc;
 	bool isConstSpeed;
 	float constSpeedValue;
 
@@ -47,4 +49,4 @@ private:
 	void calcMatr();
 };
 
-#endif // _VIEWER3D_H
+#endif // _VIEWER3D_

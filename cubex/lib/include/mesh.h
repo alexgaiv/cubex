@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
-#include "common.h"
-#include "vertexbuffer.h"
 #include "texture.h"
+#include "glcontext.h"
+#include "vertexbuffer.h"
 #include "shader.h"
 
 using namespace std;
@@ -16,7 +16,7 @@ using namespace std;
 class Mesh
 {
 public:
-	Mesh();
+	Mesh(GLRenderingContext *rc);
 
 	bool HasNormals() const { return hasNormals; }
 	bool HasTexCoords() const { return hasTexCoords; }
@@ -42,6 +42,7 @@ public:
 	VertexBuffer texCoords;
 	VertexBuffer tangents, binormals;
 private:
+	GLRenderingContext *rc;
 	BaseTexture texture;
 	Texture2D normalMap, specularMap;
 	GLuint programId;

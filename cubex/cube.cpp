@@ -12,8 +12,8 @@
 		y > 0 && y < size - 1 && \
 		z > 0 && z < size - 1) continue
 
-Cube::Cube(int size)
-	: size(size), reseting(false),
+Cube::Cube(GLRenderingContext *rc, int size)
+	: rc(rc), size(size), reseting(false),
 	blockSize(CubeBlock::size), rotateSpeed(13.0f)
 {
 	srand((UINT)time(NULL));
@@ -38,7 +38,7 @@ Cube::Cube(int size)
 			for (int z = 0; z < size; z++)
 			{
 				CubeBlock *&b = blocks[x][y][z];
-				b = new CubeBlock(pickId++);
+				b = new CubeBlock(rc, pickId++);
 				b->location = Vector3f(x*blockSize - s, y*blockSize - s, z*blockSize - s);
 				InitBlockSides(b, x, y, z);
 			}
@@ -171,8 +171,8 @@ bool Cube::AnimationStep()
 
 void Cube::Render() const
 {
-	Global::PushModelView();
-		Global::MultModelView(curFace.mRot.data);
+	rc->PushModelView();
+		rc->MultModelView(curFace.mRot.data);
 		int x, y, z;
 		for (int a = 0; a < size; a++)
 			for (int b = 0; b < size; b++)
@@ -185,7 +185,7 @@ void Cube::Render() const
 				VISIBLEBLOCKS();
 				blocks[x][y][z]->Render();
 			}
-	Global::PopModelView();
+	rc->PopModelView();
 
 	FORALLBLOCKS(x, y, z) {
 		VISIBLEBLOCKS();

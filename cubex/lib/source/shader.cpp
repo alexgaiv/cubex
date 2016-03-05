@@ -1,5 +1,4 @@
 #include "shader.h"
-#include "global.h"
 #include <strsafe.h>
 
 Shader::Shader(GLenum type) {
@@ -63,20 +62,17 @@ bool Shader::_log()
 	return isCompiled == TRUE;
 }
 
-ProgramObject::ProgramObject() {
-	Global::AttachProgram(this);
+ProgramObject::ProgramObject(GLRenderingContext *rc) : rc(rc) {
+	rc->AttachProgram(this);
 	memset(&uniforms, 0, sizeof(uniforms));
 	linked = false;
 	handle = glCreateProgram();
 }
 
-ProgramObject::ProgramObject(const ProgramObject &p) {
-	clone(p);
-}
-
-ProgramObject::ProgramObject(const char *vertPath, const char *fragPath)
+ProgramObject::ProgramObject(GLRenderingContext *rc, const char *vertPath, const char *fragPath)
+	: rc(rc)
 {
-	Global::AttachProgram(this);
+	rc->AttachProgram(this);
 	memset(&uniforms, 0, sizeof(uniforms));
 	linked = false;
 	handle = glCreateProgram();
@@ -91,8 +87,12 @@ ProgramObject::ProgramObject(const char *vertPath, const char *fragPath)
 	}
 }
 
+ProgramObject::ProgramObject(const ProgramObject &p) {
+	clone(p);
+}
+
 ProgramObject::~ProgramObject() {
-	Global::DetachProgram(this);
+	rc->DetachProgram(this);
 	glDeleteProgram(handle);
 	uniforms.free();
 }
@@ -132,8 +132,8 @@ void ProgramObject::DetachShader(const Shader &shader) {
 }
 
 void ProgramObject::Use() {
-	if (Global::curProgram != handle) {
-		Global::curProgram = handle;
+	if (rc->curProgram != handle) {
+		rc->curProgram = handle;
 		glUseProgram(handle);
 	}
 }

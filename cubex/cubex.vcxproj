@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="lib\source\glcontext.cpp" />
     <ClCompile Include="text2d.cpp" />
     <ClInclude Include="cube.h" />
     <ClCompile Include="cube.cpp" />
@@ -140,7 +141,6 @@
     <ClCompile Include="glframe.cpp" />
     <ClCompile Include="lib\source\texture.cpp" />
     <ClCompile Include="lib\source\basewindow.cpp" />
-    <ClCompile Include="lib\source\global.cpp" />
     <ClCompile Include="lib\source\glwindow.cpp" />
     <ClCompile Include="lib\source\mesh.cpp" />
     <ClCompile Include="lib\source\quaternion.cpp" />
@@ -150,6 +150,7 @@
     <ClCompile Include="lib\source\viewer3d.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
+    <ClInclude Include="lib\include\glcontext.h" />
     <ClInclude Include="text2d.h" />
   </ItemGroup>
   <ItemGroup>
@@ -158,7 +159,6 @@
     <ClInclude Include="lib\include\basewindow.h" />
     <ClInclude Include="lib\include\common.h" />
     <ClInclude Include="lib\include\datatypes.h" />
-    <ClInclude Include="lib\include\global.h" />
     <ClInclude Include="lib\include\glwindow.h" />
     <ClInclude Include="lib\include\mesh.h" />
     <ClInclude Include="lib\include\qslerp.h" />
