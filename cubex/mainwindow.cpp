@@ -13,7 +13,7 @@ void MainWindow::InitToolbar()
 	hImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, numBtns, 0);
 	hGrayedImgList = ImageList_Create(24, 24, ILC_MASK|ILC_COLOR32, numBtns, 0);
 	
-	int ids[numBtns] = { IDI_NEWGAME, IDI_MIXUP, IDI_CANCEL, IDI_SETTINGS, IDI_ABOUT };
+	int ids[numBtns] = { IDI_NEWGAME, IDI_SCRAMBLE, IDI_CANCEL, IDI_SETTINGS, IDI_ABOUT };
 
 	for (int i = 0; i < numBtns; i++) {
 		HICON hIcon = (HICON)LoadImage(hInst, MAKEINTRESOURCE(ids[i]), IMAGE_ICON, 24, 24, 0);
@@ -173,8 +173,8 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 			EnableCancelBtn(false);
 			break;
 			}
-		case IDC_MIXUP:
-			gl_frame->MixUpCube();
+		case IDC_SCRAMBLE:
+			gl_frame->ScrambleCube();
 			EnableCancelBtn(false);
 			break;
 		case IDC_CANCEL:

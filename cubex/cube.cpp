@@ -18,7 +18,7 @@ Cube::Cube(GLRenderingContext *rc, int size)
 {
 	srand((UINT)time(NULL));
 	blocks = NULL;
-	ZeroMemory(&mixup, sizeof(mixup));
+	ZeroMemory(&scramble, sizeof(scramble));
 	ZeroMemory(&curFace, sizeof(curFace));
 	curFace.mRot.LoadIdentity();
 
@@ -66,10 +66,10 @@ Cube::~Cube()
 void Cube::Serialize(ofstream &os)
 {
 	os << reseting << ' ' <<
-		mixup.curSteps << ' ' <<
-		mixup.maxSteps << ' ' <<
-		mixup.prevNormal << ' ' <<
-		mixup.prevIndex << ' ' <<
+		scramble.curSteps << ' ' <<
+		scramble.maxSteps << ' ' <<
+		scramble.prevNormal << ' ' <<
+		scramble.prevIndex << ' ' <<
 		curFace.anim << ' ' <<
 		curFace.angle << ' ' <<
 		curFace.normal << ' ' <<
@@ -92,10 +92,10 @@ void Cube::Serialize(ofstream &os)
 void Cube::Deserialize(ifstream &is)
 {
 	is >> reseting >>
-		mixup.curSteps >>
-		mixup.maxSteps >>
-		(int &)mixup.prevNormal >>
-		mixup.prevIndex >>
+		scramble.curSteps >>
+		scramble.maxSteps >>
+		(int &)scramble.prevNormal >>
+		scramble.prevIndex >>
 		curFace.anim >>
 		curFace.angle >>
 		(int &)curFace.normal >>
@@ -140,7 +140,7 @@ void Cube::Reset()
 
 void Cube::DoReset()
 {
-	ZeroMemory(&mixup, sizeof(mixup));
+	ZeroMemory(&scramble, sizeof(scramble));
 	FORALLBLOCKS(x, y, z) {
 		VISIBLEBLOCKS();
 		CubeBlock *b = blocks[x][y][z];
@@ -151,11 +151,11 @@ void Cube::DoReset()
 	reseting = false;
 }
 
-void Cube::MixUp(int steps)
+void Cube::Scramble(int steps)
 {
 	if (!curFace.anim) {
-		mixup.curSteps = mixup.maxSteps = steps;
-		MixupStep();
+		scramble.curSteps = scramble.maxSteps = steps;
+		ScrambleStep();
 	}
 }
 
@@ -208,7 +208,7 @@ bool Cube::AnimationStep()
 
 		if (!reseting) {
 			TransformColors();
-			if (mixup.curSteps) MixupStep();
+			if (scramble.curSteps) ScrambleStep();
 		}
 		else DoReset();
 	}
@@ -249,7 +249,7 @@ void Cube::Render() const
 	}
 }
 
-void Cube::MixupStep()
+void Cube::ScrambleStep()
 {
 	Axis normal;
 	int index;
@@ -258,14 +258,14 @@ void Cube::MixupStep()
 	do {
 		normal = (Axis)(rand() % 3);
 		index = rand() % size;
-	} while (mixup.curSteps != mixup.maxSteps &&
-		normal == mixup.prevNormal && index == mixup.prevIndex);
+	} while (scramble.curSteps != scramble.maxSteps &&
+		normal == scramble.prevNormal && index == scramble.prevIndex);
 
 	BeginRotateFace(normal, index, dir);
 
-	mixup.prevNormal = normal;
-	mixup.prevIndex = index;
-	mixup.curSteps--;
+	scramble.prevNormal = normal;
+	scramble.prevIndex = index;
+	scramble.curSteps--;
 }
 
 void Cube::InitBlockSides(CubeBlock *cb, int x, int y, int z)

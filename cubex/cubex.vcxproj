@@ -177,13 +177,6 @@
     <None Include="lib\include\datatypes.inl" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="images\app.ico" />
-    <Image Include="images\cancel.ico" />
-    <Image Include="images\cancel_grayed.ico" />
-    <Image Include="images\newgame.ico" />
-    <Image Include="images\mixup.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <Manifest Include="cubex.exe.manifest" />
   </ItemGroup>
   <ItemGroup>
@@ -191,6 +184,15 @@
       <SubType>
       </SubType>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icons\about.ico" />
+    <Image Include="icons\app.ico" />
+    <Image Include="icons\cancel.ico" />
+    <Image Include="icons\cancel_grayed.ico" />
+    <Image Include="icons\newgame.ico" />
+    <Image Include="icons\scramble.ico" />
+    <Image Include="icons\settings.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

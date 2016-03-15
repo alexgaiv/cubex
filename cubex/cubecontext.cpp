@@ -11,9 +11,9 @@ CubeContext::CubeContext(GLRenderingContext *m_rc, int cubeSize)
 	solveTime = solveTimeLast = 0;
 	fSolvedAnim = false;
 	rotAngle = 0.0f;
-	wasMixed = false;
+	wasScrambled = false;
 	numMoves = numActualMoves = 0;
-	isFaceRotating = isMixing = false;
+	isFaceRotating = isScrambling = false;
 	qRotation = qResetView;
 }
 
@@ -23,7 +23,6 @@ CubeContext::~CubeContext() {
 
 void CubeContext::Serialize(ofstream &os)
 {
-	os.write((char *)&qRotation, sizeof(qRotation));
 	os << qRotation.x << ' ' <<
 		qRotation.y << ' ' <<
 		qRotation.z << ' ' <<
@@ -32,11 +31,11 @@ void CubeContext::Serialize(ofstream &os)
 		rotAngle << ' ' <<
 		solveTime << ' ' <<
 		solveTimeLast << ' ' <<
-		wasMixed << ' ' <<
+		wasScrambled << ' ' <<
 		numMoves << ' ' <<
 		numActualMoves << ' ' <<
 		isFaceRotating << ' ' <<
-		isMixing << ' ';
+		isScrambling << ' ';
 
 	history.Serialize(os);
 	cube->Serialize(os);
@@ -52,11 +51,11 @@ void CubeContext::Deserialize(ifstream &is)
 		rotAngle >>
 		solveTime >>
 		solveTimeLast >>
-		wasMixed >>
+		wasScrambled >>
 		numMoves >>
 		numActualMoves >>
 		isFaceRotating >>
-		isMixing;
+		isScrambling;
 
 	history.Deserialize(is);
 	cube->Deserialize(is);
@@ -97,20 +96,20 @@ void CubeContext::Reset()
 	solveTime = 0;
 	solveTimeLast = time(NULL);
 	fSolvedAnim = false;
-	wasMixed = false;
+	wasScrambled = false;
 	numMoves = numActualMoves = 0;
-	isMixing = false;
+	isScrambling = false;
 	cube->Reset();
 	history.Clear();
 }
 
-void CubeContext::MixUp()
+void CubeContext::Scramble()
 {
 	fSolvedAnim = false;
-	wasMixed = true;
+	wasScrambled = true;
 	numMoves = numActualMoves = 0;
-	isMixing = true;
-	cube->MixUp(cube->size < 7 ? 15 : 20);
+	isScrambling = true;
+	cube->Scramble(cube->size < 7 ? 15 : 20);
 	history.Clear();
 }
 
@@ -150,10 +149,10 @@ void CubeContext::OnTimer(bool &needRedraw, bool &isSolved)
 		}
 		isFaceRotating = false;
 	}
-	if (isMixing && !fCubeAnim) {
+	if (isScrambling && !fCubeAnim) {
 		solveTime = 0;
 		solveTimeLast = time(NULL);
-		isMixing = false;
+		isScrambling = false;
 	}
 
 	needRedraw = fCubeAnim;
@@ -171,8 +170,8 @@ void CubeContext::BeginRotateFace(const MoveDesc &m)
 bool CubeContext::CheckSolved()
 {
 	if (cube->IsSolved()) {
-		bool ret = wasMixed || numActualMoves >= cube->GOD_NUMBER;
-		wasMixed = false;
+		bool ret = wasScrambled || numActualMoves >= cube->GOD_NUMBER;
+		wasScrambled = false;
 		numActualMoves = 0;
 		return ret;
 	}

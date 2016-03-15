@@ -3,7 +3,7 @@
 
 #define IDI_APPICON 10
 #define IDI_NEWGAME 20
-#define IDI_MIXUP 30
+#define IDI_SCRAMBLE 30
 #define IDI_CANCEL 40
 #define IDI_CANCEL_GRAYED 50
 #define IDI_SETTINGS 51
@@ -18,7 +18,7 @@
 #define IDS_MOVES 74
 
 #define IDC_NEWGAME 80
-#define IDC_MIXUP 81
+#define IDC_SCRAMBLE 81
 #define IDC_CANCEL 82
 #define IDC_SETTINGS 83
 #define IDC_ABOUT 84

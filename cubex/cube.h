@@ -33,7 +33,7 @@ public:
 
 	void GetBlockById(int id, BlockDesc &block) const;
 	void Reset();
-	void MixUp(int steps = 15);
+	void Scramble(int steps = 15);
 	bool IsSolved() const;
 	void BeginRotateFace(Axis faceNormal, int index, bool clockWise);
 	bool AnimationStep();
@@ -49,7 +49,7 @@ private:
 		int maxSteps;
 		Axis prevNormal;
 		int prevIndex;
-	} mixup;
+	} scramble;
 
 	struct {
 		bool anim;
@@ -61,7 +61,7 @@ private:
 	} curFace;
 
 	void DoReset();
-	void MixupStep();
+	void ScrambleStep();
 	void InitBlockSides(CubeBlock *cb, int x, int y, int z);
 	void TransformColors();
 	void OrientateColors(CubeBlock *cb, int x, int y, int z);

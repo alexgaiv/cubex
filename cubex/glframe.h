@@ -24,7 +24,7 @@ public:
 	bool CanCancelMove() { return ctx->CanCancelMove(); }
 	bool ChangeCubeSize(int size);
 	void ResetCube();
-	void MixUpCube();
+	void ScrambleCube();
 	void CancelMove();
 	void SetCubeStyle(bool whiteBorders);
 private:

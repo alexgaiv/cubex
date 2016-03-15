@@ -3,6 +3,11 @@
 #include "transform.h"
 #include "text2d.h"
 #include <string>
+#include <ShlObj.h>
+#include <Shlwapi.h>
+
+#pragma comment(lib, "Shell32.lib")
+#pragma comment(lib, "Shlwapi.lib")
 
 GLFrame::GLFrame() : program(NULL), timeMsg(NULL), movesMsg(NULL)
 {
@@ -54,11 +59,11 @@ void GLFrame::ResetCube()
 	resetAnim.Setup(viewer->qRotation, CubeContext::qResetView, 0.1f);
 }
 
-void GLFrame::MixUpCube()
+void GLFrame::ScrambleCube()
 {
 	if (ctx->fSolvedAnim && resetAnim.IsComplete())
 		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
-	ctx->MixUp();
+	ctx->Scramble();
 }
 
 void GLFrame::SetCubeStyle(bool whiteBorders)
@@ -77,7 +82,13 @@ void GLFrame::CancelMove() {
 
 void GLFrame::SaveConfig()
 {
-	ofstream file("save.dat", ios::binary);
+	WCHAR path[MAX_PATH] = L"";
+	SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path);
+	PathAppendW(path, L"\\Cubex");
+	CreateDirectoryW(path, NULL);
+	PathAppendW(path, L"\\save.dat");
+
+	ofstream file(path);
 	if (!file) return;
 
 	file << ctx->cube->size << ' ';
@@ -89,7 +100,11 @@ void GLFrame::SaveConfig()
 
 void GLFrame::LoadConfig()
 {
-	ifstream file("save.dat");
+	WCHAR path[MAX_PATH] = L"";
+	SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path);
+	PathAppendW(path, L"\\Cubex\\save.dat");
+
+	ifstream file(path);
 	if (!file) {
 		ctx = cubes[1];
 		return;

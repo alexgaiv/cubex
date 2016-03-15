@@ -66,11 +66,11 @@ private:
 	CircularStack<MoveDesc, 100> history;
 	time_t solveTime;
 	time_t solveTimeLast;
-	bool wasMixed;
+	bool wasScrambled;
 	int numMoves;
 	int numActualMoves;
 	bool isFaceRotating;
-	bool isMixing;
+	bool isScrambling;
 public:
 	CubeContext(GLRenderingContext *m_rc, int cubeSize);
 	~CubeContext();
@@ -84,7 +84,7 @@ public:
 	void GetTimeStr(WCHAR *buf, int bufLen);
 	void GetMovesStr(WCHAR *buf, int bufLen);
 	void Reset();
-	void MixUp();
+	void Scramble();
 	void CancelMove();
 	void OnTimer(bool &needRedraw, bool &isSolved);
 	void BeginRotateFace(const MoveDesc &m);
