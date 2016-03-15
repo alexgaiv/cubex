@@ -72,6 +72,9 @@
     <ClCompile Include="lib\source\glcontext.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
+    <ClCompile Include="cubecontext.cpp">
+      <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h">
@@ -130,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="lib\include\glcontext.h">
       <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="cubecontext.h">
+      <Filter>Заголовочные файлы</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

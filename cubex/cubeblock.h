@@ -1,5 +1,5 @@
-#ifndef _ACTOR_H_
-#define _ACTOR_H_
+#ifndef _CUBE_BLOCK_H_
+#define _CUBE_BLOCK_H_
 
 #include "quaternion.h"
 #include "vertexbuffer.h"
@@ -44,7 +44,6 @@ class CubeBlock : public Actor
 public:
 	static bool fRenderPickMode;
 	static bool fUseReducedModel;
-	static bool fWhiteBorders;
 	static const float size;
 
 	static void DrawWhiteBorders(GLRenderingContext *rc, bool whiteBorders);
@@ -78,4 +77,4 @@ private:
 	}
 };
 
-#endif // _ACTOR_H_
+#endif // _CUBE_BLOCK_H_

@@ -3,41 +3,35 @@
 #include "transform.h"
 #include "text2d.h"
 #include <string>
-#include <strsafe.h>
-
-Quaternion GLFrame::qResetView =
-	Quaternion(Vector3f(1.0f, 0.0f, 0.0f), 30.0f) *
-	Quaternion(Vector3f(0.0f, 1.0f, 0.0f), -45.0f);
 
 GLFrame::GLFrame() : program(NULL), timeMsg(NULL), movesMsg(NULL)
 {
-	solveTime = 0;
-	wasMixed = false;
-	numMoves = numActualMoves = 0;
-	fSolvedAnim = false;
-	rotAngle = 0.0f;
 	faceDrag = sceneDrag = false;
-	isFaceRotating = isMixing = false;
 	needRedraw = false;
 	ZeroMemory(&drag, sizeof(drag));
 }
 
+GLFrame::~GLFrame() {
+	SaveConfig();
+}
+
 bool GLFrame::ChangeCubeSize(int size)
 {
-	if (cube->size == size) return false;
-		
-	solveTime = time(NULL);
-	wasMixed = false;
-	numMoves = numActualMoves = 0;
-	fSolvedAnim = false;
-	rotAngle = 0.0f;
+	if (size < 2 || size > 7 || ctx->cube->size == size)
+		return false;
+	
+	ctx->SuspendTimeCounter();
+	ctx->qRotation = viewer->qRotation;
+
+	ctx = cubes[size - 2];
+	ctx->StartTimeCounter();
+	viewer->qRotation = ctx->qRotation;
+
+	if (ctx->fSolvedAnim) ConstructText();
+
 	faceDrag = sceneDrag = false;
-	isFaceRotating = isMixing = false;
 	needRedraw = false;
 	ZeroMemory(&drag, sizeof(drag));
-
-	history.Clear();
-	resetAnim.Setup(viewer->qRotation, qResetView, 0.1f);
 
 	CubeBlock::fUseReducedModel = size >= 5;
 
@@ -46,8 +40,6 @@ bool GLFrame::ChangeCubeSize(int size)
 		viewer->SetScale(scale[size - 2]);
 	}
 
-	delete cube;
-	cube = new Cube(m_rc, size);
 	RedrawWindow();
 	return true;
 }
@@ -56,32 +48,17 @@ void GLFrame::ResetCube()
 {
 	if (!resetAnim.IsComplete()) return;
 
-	if (fSolvedAnim)
-		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), rotAngle);
-
-	isMixing = false;
-	fSolvedAnim = false;
-	wasMixed = false;
-	numMoves = numActualMoves = 0;
-	solveTime = time(NULL);
-
-	cube->Reset();
-	history.Clear();
-	resetAnim.Setup(viewer->qRotation, qResetView, 0.1f);
+	if (ctx->fSolvedAnim)
+		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
+	ctx->Reset();
+	resetAnim.Setup(viewer->qRotation, CubeContext::qResetView, 0.1f);
 }
 
 void GLFrame::MixUpCube()
 {
-	if (fSolvedAnim && resetAnim.IsComplete())
-		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), rotAngle);
-
-	isMixing = true;
-	fSolvedAnim = false;
-	wasMixed = true;
-	numMoves = numActualMoves = 0;
-
-	cube->MixUp(cube->size < 7 ? 15 : 20);
-	history.Clear();
+	if (ctx->fSolvedAnim && resetAnim.IsComplete())
+		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
+	ctx->MixUp();
 }
 
 void GLFrame::SetCubeStyle(bool whiteBorders)
@@ -90,19 +67,57 @@ void GLFrame::SetCubeStyle(bool whiteBorders)
 	RedrawWindow();
 }
 
-void GLFrame::CancelMove() {
-	if (!cube->IsAnim()) {
-		MoveDesc *m = history.Pop();
-		if (m) {
-			cube->BeginRotateFace(m->normal, m->index, !m->clockWise);
-			numMoves--;
-			if (numActualMoves > 0) numActualMoves--;
-		}
-	}
-}
-
 void GLFrame::SetPerspective(int w, int h) {
 	viewer->SetPerspective(30.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
+}
+
+void GLFrame::CancelMove() {
+	ctx->CancelMove();
+}
+
+void GLFrame::SaveConfig()
+{
+	ofstream file("save.dat", ios::binary);
+	if (!file) return;
+
+	file << ctx->cube->size << ' ';
+	ctx->qRotation = viewer->qRotation;
+	for (int i = 0; i < 6; i++)
+		cubes[i]->Serialize(file);
+	file.close();
+}
+
+void GLFrame::LoadConfig()
+{
+	ifstream file("save.dat");
+	if (!file) {
+		ctx = cubes[1];
+		return;
+	}
+
+	int size = 0;
+	file >> size;
+	if (size >= 2 && size <= 7) {
+		ctx = cubes[size - 2];
+		float scale[6] = { 1.1f, 1.0f, 0.86f, 0.66f, 0.56f, 0.48f };
+		viewer->SetScale(scale[size - 2]);
+	}
+	else ctx = cubes[1];
+
+	for (int i = 0; i < 6; i++)
+		cubes[i]->Deserialize(file);
+	file.close();
+}
+
+void GLFrame::ConstructText()
+{
+	if (GLEW_ARB_shader_objects) {
+		WCHAR buf[100] = L"";
+		ctx->GetMovesStr(buf, 100);
+		movesMsg->SetText(buf);
+		ctx->GetTimeStr(buf, 100);
+		timeMsg->SetText(buf);
+	}
 }
 
 void GLFrame::RenderScene()
@@ -111,16 +126,16 @@ void GLFrame::RenderScene()
 	m_rc->PushModelView();
 
 	viewer->ApplyTransform();
-	if (fSolvedAnim) {
-		m_rc->MultModelView(Rotate(rotAngle, 1, 1, 1));
+	if (ctx->fSolvedAnim) {
+		m_rc->MultModelView(Rotate(ctx->rotAngle, 1, 1, 1));
 	}
 
 	m_rc->PushModelView();
 		m_rc->MultModelView(Scale(1.37f,1.37f,1.37f));
-		cube->Render();
+		ctx->cube->Render();
 	m_rc->PopModelView();
 
-	if (fSolvedAnim && !CubeBlock::fRenderPickMode)
+	if (ctx->fSolvedAnim && !CubeBlock::fRenderPickMode)
 	{
 		if (GLEW_ARB_shader_objects) {
 			m_rc->GetCurProgram()->Uniform("FrontMaterial.diffuse", 0.07f, 0.31f, 0.76f);
@@ -149,15 +164,20 @@ void GLFrame::OnCreate()
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
 
-	cube = new Cube(m_rc, 3);
 	viewer = new Viewer3D(m_rc);
 	viewer->SetConstRotationSpeed(2.0f);
-	viewer->qRotation = qResetView;
+
+	for (int i = 0; i < 6; i++)
+		cubes[i] = new CubeContext(m_rc, i + 2);
+
+	LoadConfig();
+	viewer->qRotation = ctx->qRotation;
 
 	if (GLEW_ARB_shader_objects)
 	{
 		timeMsg = new Text2D(m_rc, "font.fnt");
 		movesMsg = new Text2D(*timeMsg);
+		if (ctx->fSolvedAnim) ConstructText();
 
 		char *source = 0;
 		int length = 0;
@@ -186,7 +206,7 @@ void GLFrame::OnCreate()
 	CubeBlock::InitStatic(m_rc);
 
 	SetTimer(m_hwnd, 1, 25, NULL);
-	solveTime = time(NULL);
+	ctx->StartTimeCounter();
 }
 
 void GLFrame::OnSize(int w, int h)
@@ -197,7 +217,7 @@ void GLFrame::OnSize(int w, int h)
 
 void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 {
-	if (fSolvedAnim) return;
+	if (ctx->fSolvedAnim) return;
 	if (button == MouseButton::RBUTTON) {
 		viewer->BeginRotate(x, y);
 	}
@@ -209,8 +229,8 @@ void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 			viewer->BeginRotate(x, y);
 			sceneDrag = true;
 		}
-		else if (!cube->IsAnim()) {
-			CubeBlock *b = cube->blocks[block.pos.x][block.pos.y][block.pos.z];
+		else if (!ctx->cube->IsAnim()) {
+			CubeBlock *b = ctx->cube->blocks[block.pos.x][block.pos.y][block.pos.z];
 			if (b->IsSideColored(block.side)) {
 				CalcRotDirections(block);
 				mousePos = Point2i(x, y);
@@ -222,12 +242,12 @@ void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 
 void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 {
-	if (fSolvedAnim) return;
+	if (ctx->fSolvedAnim) return;
 	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneDrag)
 	{
 		if (!resetAnim.IsComplete()) resetAnim = QSlerp();
 		viewer->Rotate(x, y);
-		if (!cube->IsAnim()) RedrawWindow();
+		if (!ctx->cube->IsAnim()) RedrawWindow();
 		else needRedraw = true;
 	}
 	else if (keysPressed & KeyModifiers::KM_LBUTTON && faceDrag) {
@@ -249,28 +269,15 @@ void GLFrame::OnMouseUp(MouseButton button, int x, int y)
 
 void GLFrame::OnTimer()
 {
-	if (fSolvedAnim) {
-		rotAngle += 3.0f;
-		if (rotAngle > 360.0f) rotAngle -= 360.0f;
-		RedrawWindow();
-		return;
-	}
-
 	bool fResetAnim = !resetAnim.IsComplete();
-	bool fCubeAnim = cube->AnimationStep();
-
 	if (fResetAnim) viewer->qRotation = resetAnim.Next();
 
-	if (isFaceRotating && !fCubeAnim) {
-		OnFaceRotated();
-		isFaceRotating = false;
-	}
-	if (isMixing && !fCubeAnim) {
-		OnMixed();
-		isMixing = false;
-	}
+	bool redraw = false, solved = false;
+	ctx->OnTimer(redraw, solved);
 
-	if (needRedraw || fCubeAnim || fResetAnim) {
+	if (solved) OnCubeSolved();
+
+	if (needRedraw || redraw || fResetAnim) {
 		RedrawWindow();
 		needRedraw = false;
 	}
@@ -278,7 +285,8 @@ void GLFrame::OnTimer()
 
 void GLFrame::OnDestroy()
 {
-	delete cube;
+	for (int i = 0; i < 6; i++)
+		delete cubes[i];
 	delete viewer;
 	KillTimer(m_hwnd, 1);
 	CubeBlock::FreeStatic();
@@ -289,43 +297,9 @@ void GLFrame::OnDestroy()
 	}
 }
 
-void GLFrame::OnFaceRotated()
-{
-	if (cube->IsSolved()) {
-		if (wasMixed || numActualMoves >= cube->GOD_NUMBER)
-			OnCubeSolved();
-		wasMixed = false;
-		numActualMoves = 0;
-	}
-}
-
-void GLFrame::OnMixed()
-{
-	solveTime = time(NULL);
-}
-
 void GLFrame::OnCubeSolved()
 {
-	if (GLEW_ARB_shader_objects) {
-		WCHAR time_str[30] = { };
-		WCHAR moves_str[30] = { };
-		LoadStringW(NULL, IDS_TIME, time_str, 30);
-		LoadStringW(NULL, IDS_MOVES, moves_str, 30);
-
-		wchar_t buf[100] = L"";
-		StringCchPrintfW(buf, 100, moves_str, numMoves);
-		movesMsg->SetText(buf);
-
-		solveTime = time(NULL) - solveTime;
-		int mins = (int)solveTime / 60;
-		int secs = (int)(mins ? solveTime % mins : solveTime);
-
-		StringCchPrintfW(buf, 100, time_str, mins, secs);
-		timeMsg->SetText(buf);
-	}
-
-	fSolvedAnim = true;
-	rotAngle = 0.0f;
+	ConstructText();
 	SendMessage(GetParent(m_hwnd), WM_CUBESOLVED, 0, 0);
 }
 
@@ -344,7 +318,7 @@ bool GLFrame::GetBlockUnderMouse(int winX, int winY, BlockDesc &b)
 
 	if (clr[2] != 1) return false;
 	UINT id = clr[0] | (clr[1] << 8);
-	cube->GetBlockById(id, b);
+	ctx->cube->GetBlockById(id, b);
 	return true;
 }
 
@@ -364,9 +338,9 @@ void GLFrame::GetNeighbors(const BlockDesc &b, Point3i &neighbor1, Point3i &neig
 
 	n1[i3] = n2[i3] = p[i3];
 
-	n1[i1] = p[i1] == cube->size - 1 ? 0 : p[i1] + 1;
+	n1[i1] = p[i1] == ctx->cube->size - 1 ? 0 : p[i1] + 1;
 	n1[i2] = p[i2];
-	n2[i2] = p[i2] == cube->size - 1 ? 0 : p[i2] + 1;
+	n2[i2] = p[i2] == ctx->cube->size - 1 ? 0 : p[i2] + 1;
 	n2[i1] = p[i1];
 
 	drag.face[0] = (Axis)i1;
@@ -374,15 +348,15 @@ void GLFrame::GetNeighbors(const BlockDesc &b, Point3i &neighbor1, Point3i &neig
 	drag.face[1] = (Axis)i2;
 	drag.index[1] = p[i2];
 
-	if (p[i1] == cube->size - 1) drag.neg[0] = true;
-	if (p[i2] == cube->size - 1) drag.neg[1] = true;
+	if (p[i1] == ctx->cube->size - 1) drag.neg[0] = true;
+	if (p[i2] == ctx->cube->size - 1) drag.neg[1] = true;
 }
 
 Vector3f GLFrame::CalcBlockWinPos(const Point3i &b,
 	const Matrix44f &modelview, const Matrix44f &projection, int viewport[4])
 {
-	Vector3f l = cube->blocks[b.x][b.y][b.z]->location;
-	l.x -= cube->blockSize * 0.5f;
+	Vector3f l = ctx->cube->blocks[b.x][b.y][b.z]->location;
+	l.x -= ctx->cube->blockSize * 0.5f;
 	return Project(l, modelview, projection, viewport);
 };
 
@@ -443,10 +417,6 @@ void GLFrame::MouseRot(const Vector3f &mouseDir)
 		m.clockWise = k == 2;
 	}
 
-	cube->BeginRotateFace(m.normal, m.index, m.clockWise);
-	history.Push(m);
-	isFaceRotating = true;
-	numMoves++;
-	numActualMoves++;
+	ctx->BeginRotateFace(m);
 	SendMessage(GetParent(m_hwnd), WM_ROTATEFACE, 0, 0);
 }

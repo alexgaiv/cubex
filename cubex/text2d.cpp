@@ -81,6 +81,7 @@ Text2D &Text2D::operator=(const Text2D &t)
 
 void Text2D::clone(const Text2D &t)
 {
+	rc = t.rc;
 	numChars = t.numChars;
 	numCharsets = t.numCharsets;
 	fontTexture = t.fontTexture;

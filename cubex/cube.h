@@ -21,6 +21,9 @@ public:
 	Cube(GLRenderingContext *rc, int size);
 	~Cube();
 
+	void Serialize(ofstream &os);
+	void Deserialize(ifstream &is);
+
 	const int size;
 	const float blockSize;
 	const float rotateSpeed;

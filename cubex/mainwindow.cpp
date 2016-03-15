@@ -130,10 +130,6 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 	hSettingsMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDM_SETTINGS));
 	hSettingsMenu = GetSubMenu(hSettingsMenu, 0);
 
-	EnableCancelBtn(false);
-	CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, IDM_3, MF_BYCOMMAND);
-	
-
 	RECT wndRect, barRect = { };
 	GetClientRect(m_hwnd, &wndRect);
 	GetClientRect(hRebar, &barRect);
@@ -141,6 +137,9 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 	gl_frame->CreateParam("Cubex", 0, barRect.bottom, wndRect.right,
 		wndRect.bottom - barRect.bottom, WS_VISIBLE|WS_CHILD, 0, m_hwnd);
 	SetFocus(gl_frame->m_hwnd);
+
+	EnableCancelBtn(gl_frame->CanCancelMove());
+	CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, IDM_2 + gl_frame->GetCubeSize() - 2, MF_BYCOMMAND);
 
 	if (GLEW_ARB_shader_objects) {
 		DWORD white = 0;
@@ -208,7 +207,7 @@ LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 			if (id >= IDM_2 && id <= IDM_7) {
 				if (gl_frame->ChangeCubeSize(id - IDM_2 + 2)) {
 					CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, id, MF_BYCOMMAND);
-					EnableCancelBtn(false);
+					EnableCancelBtn(gl_frame->CanCancelMove());
 				}
 			}
 			break;

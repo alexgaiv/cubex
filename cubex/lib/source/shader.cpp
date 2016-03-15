@@ -106,6 +106,7 @@ ProgramObject &ProgramObject::operator=(const ProgramObject &p)
 
 void ProgramObject::clone(const ProgramObject &p)
 {
+	rc = p.rc;
 	memcpy(&uniforms, &p.uniforms, sizeof(uniforms));
 	handle = p.handle;
 	linked = p.linked;

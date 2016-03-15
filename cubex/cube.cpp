@@ -63,6 +63,58 @@ Cube::~Cube()
 	delete [] tmp;
 }
 
+void Cube::Serialize(ofstream &os)
+{
+	os << reseting << ' ' <<
+		mixup.curSteps << ' ' <<
+		mixup.maxSteps << ' ' <<
+		mixup.prevNormal << ' ' <<
+		mixup.prevIndex << ' ' <<
+		curFace.anim << ' ' <<
+		curFace.angle << ' ' <<
+		curFace.normal << ' ' <<
+		curFace.index << ' ' <<
+		curFace.dir << ' ';
+
+	for (int i = 0; i < 16; i++)
+		os << curFace.mRot.data[i] << ' ';
+
+	FORALLBLOCKS(x, y, z)
+	{
+		VISIBLEBLOCKS();
+		CubeBlock *cb = blocks[x][y][z];
+		os << cb->clr.colorIndices[0] << ' ' <<
+			cb->clr.colorIndices[1] << ' ' <<
+			cb->clr.colorIndices[2] << ' ';
+	}
+}
+
+void Cube::Deserialize(ifstream &is)
+{
+	is >> reseting >>
+		mixup.curSteps >>
+		mixup.maxSteps >>
+		(int &)mixup.prevNormal >>
+		mixup.prevIndex >>
+		curFace.anim >>
+		curFace.angle >>
+		(int &)curFace.normal >>
+		curFace.index >>
+		curFace.dir;
+
+	for (int i = 0; i < 16; i++)
+		is >> curFace.mRot.data[i];
+
+	FORALLBLOCKS(x, y, z)
+	{
+		VISIBLEBLOCKS();
+		CubeBlock *cb = blocks[x][y][z];
+		is >> cb->clr.colorIndices[0] >>
+			cb->clr.colorIndices[1] >>
+			cb->clr.colorIndices[2];
+	}
+}
+
 void Cube::GetBlockById(int id, BlockDesc &b) const
 {
 	int blockIndex = id & 0x3ff;

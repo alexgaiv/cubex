@@ -1,69 +1,41 @@
-#ifndef _APP_WINDOW_H_
-#define _APP_WINDOW_H_
+#ifndef _GL_WINDOW_H_
+#define _GL_WINDOW_H_
 
 #include <string>
-#include <time.h>
+#include "resources.h"
 #include "glwindow.h"
 #include "shader.h"
 #include "viewer3d.h"
 #include "qslerp.h"
 #include "text2d.h"
 #include "cube.h"
+#include "cubecontext.h"
 
-#define WM_ROTATEFACE (WM_USER+1)
-#define WM_CUBESOLVED (WM_USER+2)
-
-template<class T, int capacity>
-class CircularStack
-{
-public:
-	CircularStack() : size(0), cur(0) { }
-	int GetSize() { return size; }
-	void Clear() { size = cur = 0; }
-
-	void Push(T val) {
-		if (cur == capacity) cur = 0;
-		if (size != capacity) size++;
-		data[cur++] = val;
-	}
-	T *Pop() {
-		if (size == 0) return NULL;
-		if (cur > 0) cur--;
-		else cur = capacity - 1;
-		size--;
-		return &data[cur];
-	}
-private:
-	T data[capacity];
-	int size, cur;
-};
+#define WM_ROTATEFACE (WM_USER + 1)
+#define WM_CUBESOLVED (WM_USER + 2)
 
 class GLFrame : public GLWindow
 {
 public:
 	GLFrame();
+	~GLFrame();
 
+	int GetCubeSize() const { return ctx->cube->size; }
+	bool CanCancelMove() { return ctx->CanCancelMove(); }
 	bool ChangeCubeSize(int size);
 	void ResetCube();
 	void MixUpCube();
-	void SetCubeStyle(bool whiteBorders);
 	void CancelMove();
-	bool CanCancelMove() { return history.GetSize() != 0; }
+	void SetCubeStyle(bool whiteBorders);
 private:
-	ProgramObject *program;
-	Cube *cube;
 	Viewer3D *viewer;
+	ProgramObject *program;
+	CubeContext *cubes[6];
+	CubeContext *ctx;
 
-	time_t solveTime;
-	bool wasMixed;
-	int numMoves, numActualMoves;
-	bool fSolvedAnim;
-	float rotAngle;
-	static Quaternion qResetView;
 	QSlerp resetAnim;
 	Point2i mousePos;
 	bool faceDrag, sceneDrag;
-	bool isFaceRotating, isMixing;
 	bool needRedraw;
 
 	Text2D *timeMsg;
@@ -76,14 +48,10 @@ private:
 		bool neg[2];
 	} drag;
 
-	struct MoveDesc {
-		Axis normal;
-		int index;
-		bool clockWise;
-	};
+	void SaveConfig();
+	void LoadConfig();
 
-	CircularStack<MoveDesc, 100> history;
-
+	void ConstructText();
 	void SetPerspective(int w, int h);
 	void RenderScene();
 
@@ -96,8 +64,6 @@ private:
 	void OnTimer();
 	void OnDestroy();
 
-	void OnFaceRotated();
-	void OnMixed();
 	void OnCubeSolved();
 
 	bool GetBlockUnderMouse(int winX, int winY, BlockDesc &block);
@@ -110,4 +76,4 @@ private:
 		const Matrix44f &projection, int viewport[4]);
 };
 
-#endif // _APP_WINDOW_H_
+#endif // _GL_WINDOW_H_
