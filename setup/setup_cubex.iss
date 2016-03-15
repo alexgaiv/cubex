@@ -1,5 +1,5 @@
 #define   Name       "Cubex"
-#define   Version    "1.1.2"
+#define   Version    "1.2.0"
 #define   Publisher  "Alexander Gaivanuk"
 #define   ExeName    "Cubex.exe"
 #define   URL        "https://github.com/alexgaiv/"
@@ -42,3 +42,6 @@ Name: "{commondesktop}\{#Name}"; Filename: "{app}\{#ExeName}"; Tasks: desktopico
 
 [Run]
 Filename: "{app}\{#ExeName}"; Description: {cm:LaunchProgram, {#Name}}; Flags: postinstall
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{userappdata}\Cubex"
