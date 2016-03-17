@@ -1,10 +1,8 @@
-#version 130
-
-in vec3 fPosition;
-in vec2 fTexCoord;
-in vec3 fNormal;
-in vec3 fTangent;
-in vec3 fBinormal;
+varying vec3 fPosition;
+varying vec2 fTexCoord;
+varying vec3 fNormal;
+varying vec3 fTangent;
+varying vec3 fBinormal;
 
 uniform int Mode;
 uniform bool RenderBackSide;
@@ -64,7 +62,7 @@ vec4 PhongLight(const Light l)
 		matDiffuse = FrontMaterial.diffuse;
 	}
 	else if (Mode == 0) {
-		vec4 texel = texture(ColorMap, fTexCoord);
+		vec4 texel = texture2D(ColorMap, fTexCoord);
 		if (texel.a == 0) {
 			matDiffuse = BorderMaterial.diffuse;
 			border = true;
@@ -76,7 +74,7 @@ vec4 PhongLight(const Light l)
 	vec3 ambient = (border ? BorderMaterial : FrontMaterial).ambient;
 	vec3 c = (ambient + GetDiffuse(l.direction, l.diffuse)) * matDiffuse;
 	if (Mode == 1 || border) {
-		vec3 specular = UseSpecularMap ? vec3(texture(SpecularMap, fTexCoord)) : FrontMaterial.specular;
+		vec3 specular = UseSpecularMap ? vec3(texture2D(SpecularMap, fTexCoord)) : FrontMaterial.specular;
 		c += GetSpecular(l.direction, l.specular) * specular;
 	}
 	
@@ -86,7 +84,7 @@ vec4 PhongLight(const Light l)
 void main()
 {
 	if (Mode == 4) {
-		gl_FragColor = vec4(FrontMaterial.diffuse, texture(ColorMap, fTexCoord).a);
+		gl_FragColor = vec4(FrontMaterial.diffuse, texture2D(ColorMap, fTexCoord).a);
 	}
 	else
 	if (Mode == 3) {
@@ -97,7 +95,7 @@ void main()
 			fragNormal = normalize(fNormal);
 		}
 		else {
-			vec3 t = vec3(texture(NormalMap, fTexCoord));
+			vec3 t = vec3(texture2D(NormalMap, fTexCoord));
 			fragNormal = t * 2 - vec3(1);
 			tbn = mat3(fTangent, fBinormal, fNormal);
 			fragNormal = normalize(tbn * fragNormal);

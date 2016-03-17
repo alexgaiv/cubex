@@ -23,14 +23,54 @@ struct TGAHEADER
 BaseTexture::BaseTexture(GLenum target, GLenum unit, GLuint id)
 	: target(target), textureUnit(unit)
 {
+	refs = new int(1);
 	width = height = 0;
 	internalFormat = format = 0;
 
-	if (id == TEX_OWN_ID)
+	if (id == TEX_GENERATE_ID) {
 		glGenTextures(1, &this->id);
-	else {
+		needDelete = true;
+	} else {
 		this->id = id;
+		needDelete = false;
 	}
+}
+
+BaseTexture::BaseTexture(const BaseTexture &t) {
+	clone(t);
+}
+
+BaseTexture::~BaseTexture() {
+	if (--*refs == 0) {
+		delete refs;
+		if (needDelete)
+			glDeleteTextures(1, &id);
+	}
+}
+
+BaseTexture &BaseTexture::operator=(const BaseTexture &t)
+{
+	if (--*refs == 0) {
+		delete refs;
+		if (needDelete)
+			glDeleteTextures(1, &id);
+	}
+	clone(t);
+	return *this;
+}
+
+void BaseTexture::clone(const BaseTexture &t)
+{
+	++*t.refs;
+	refs = t.refs;
+	needDelete = t.needDelete;
+	id = t.id;
+	target = t.target;
+	textureUnit = t.textureUnit;
+	width = t.width;
+	height = t.height;
+	internalFormat = t.internalFormat;
+	format = t.format;
 }
 
 void BaseTexture::Bind(GLRenderingContext *rc)
@@ -71,7 +111,7 @@ void BaseTexture::BuildMipmaps() {
 	}
 }
 
-void BaseTexture::_read(HANDLE hFile, LPVOID lpBuffer, DWORD nNumBytes)
+void BaseTexture::read(HANDLE hFile, LPVOID lpBuffer, DWORD nNumBytes)
 {
 	DWORD bytesRead;
 	BOOL success = ReadFile(hFile, lpBuffer, nNumBytes, &bytesRead, NULL);
@@ -79,7 +119,7 @@ void BaseTexture::_read(HANDLE hFile, LPVOID lpBuffer, DWORD nNumBytes)
 		throw false;
 }
 
-bool BaseTexture::_loadFromTGA(const char *name, BYTE *&data)
+bool BaseTexture::loadFromTGA(const char *name, BYTE *&data)
 {
 	BYTE *ptr = GetBinaryResource(name);
 	if (!ptr) return false;
@@ -163,7 +203,7 @@ bool BaseTexture::_loadFromTGA(const char *name, BYTE *&data)
 	return true;
 }
 
-void BaseTexture::_texImage2D(GLenum target, BYTE *imageData)
+void BaseTexture::texImage2D(GLenum target, BYTE *imageData)
 {
 	_bind();
 	glTexImage2D(target, 0, internalFormat, width,
@@ -180,12 +220,23 @@ Texture2D::Texture2D(const char *name, GLenum textureUnit, GLuint id)
 	LoadFromTGA(name);
 }
 
+Texture2D::Texture2D(const Texture2D &t) : BaseTexture(t) {
+	loaded = t.loaded;
+}
+
+Texture2D &Texture2D::operator=(const Texture2D &t)
+{
+	BaseTexture::operator=(t);
+	loaded = t.loaded;
+	return *this;
+}
+
 bool Texture2D::LoadFromTGA(const char *name)
 {
 	BYTE *imageData = NULL;
-	loaded = _loadFromTGA(name, imageData);
+	loaded = loadFromTGA(name, imageData);
 	if (loaded) {
-		_texImage2D(target, imageData);
+		texImage2D(target, imageData);
 		delete [] imageData;
 	}
 	return loaded;
@@ -208,6 +259,17 @@ CubeTexture::CubeTexture(const char **sides, GLenum textureUnit)
 	LoadFromTGA(sides);
 }
 
+CubeTexture::CubeTexture(const CubeTexture &t) : BaseTexture(t) {
+	loaded = t.loaded;
+}
+
+CubeTexture &CubeTexture::operator=(const CubeTexture &t)
+{
+	BaseTexture::operator=(t);
+	loaded = t.loaded;
+	return *this;
+}
+
 bool CubeTexture::LoadFromTGA(const char **sides)
 {
 	SetFilters(GL_LINEAR, GL_LINEAR);
@@ -225,9 +287,9 @@ bool CubeTexture::LoadFromTGA(const char **sides)
 	loaded = true;
 	for (int i = 0; i < 6; i++) {
 		BYTE *imageData = NULL;
-		loaded &= _loadFromTGA(sides[i], imageData);
+		loaded &= loadFromTGA(sides[i], imageData);
 		if (!loaded) break;
-		_texImage2D(targets[i], imageData);
+		texImage2D(targets[i], imageData);
 		delete [] imageData;
 	}
 	return loaded;

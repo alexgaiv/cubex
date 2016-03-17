@@ -27,7 +27,7 @@ public:
 	const int size;
 	const float blockSize;
 	const float rotateSpeed;
-	static const int GOD_NUMBER = 20;
+	static const int GOD_NUMBER = 2;
 
 	CubeBlock ****blocks;
 

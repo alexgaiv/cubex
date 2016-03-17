@@ -190,10 +190,6 @@ void GLFrame::OnCreate()
 
 	if (GLEW_ARB_shader_objects)
 	{
-		timeMsg = new Text2D(m_rc, "font.fnt");
-		movesMsg = new Text2D(*timeMsg);
-		if (ctx->fSolvedAnim) ConstructText();
-
 		char *source = 0;
 		int length = 0;
 
@@ -208,14 +204,25 @@ void GLFrame::OnCreate()
 		program = new ProgramObject(m_rc);
 		program->AttachShader(vertShader);
 		program->AttachShader(fragShader);
-		glBindFragDataLocation(program->Handle(), 0, "FragColor");
 		program->Link();
 
-		program->Uniform("ColorMap", 0);
-		program->Uniform("NormalMap", 1);
-		program->Uniform("SpecularMap", 2);
-		program->Uniform("FrontMaterial.specular", 1, Color3f(0.4f).data);
-		program->Use();
+		if (program->IsLinked()) {
+			font = new Font2D("font.fnt");
+			timeMsg = new Text2D(m_rc, font);
+			movesMsg = new Text2D(m_rc, font);
+			if (ctx->fSolvedAnim) ConstructText();
+
+			program->Uniform("ColorMap", 0);
+			program->Uniform("NormalMap", 1);
+			program->Uniform("SpecularMap", 2);
+			program->Uniform("FrontMaterial.specular", 1, Color3f(0.4f).data);
+			program->Use();
+		}
+		else {
+			delete program;
+			__GLEW_ARB_shader_objects = NULL;
+		}
+
 	}
 	
 	CubeBlock::InitStatic(m_rc);
@@ -306,6 +313,7 @@ void GLFrame::OnDestroy()
 	KillTimer(m_hwnd, 1);
 	CubeBlock::FreeStatic();
 	if (GLEW_ARB_shader_objects) {
+		delete font;
 		delete timeMsg;
 		delete movesMsg;
 		delete program;

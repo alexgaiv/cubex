@@ -84,7 +84,7 @@ GLRenderingContext::GLRenderingContext(HDC hdc,
 		else hrc = wglCreateContext(hdc);
 	}
 
-	wglMakeCurrent(hdc, hrc);
+	this->MakeCurrent();
 }
 
 GLRenderingContext::~GLRenderingContext()

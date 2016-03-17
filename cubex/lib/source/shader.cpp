@@ -34,7 +34,7 @@ bool Shader::CompileFile(const char *filename)
 
 	glShaderSource(handle, numLines, (const GLchar **)source, NULL);
 	glCompileShader(handle);
-	delete[] source;
+	delete [] source;
 	return _log();
 }
 
@@ -56,7 +56,7 @@ bool Shader::_log()
 		GLchar *infoLog = new GLchar[logLen];
 		glGetShaderInfoLog(handle, logLen, &logLen, infoLog);
 		OutputDebugString(infoLog);
-		delete[] infoLog;
+		delete [] infoLog;
 	}
 	compiled = isCompiled ? true : false;
 	return isCompiled == TRUE;
@@ -159,7 +159,7 @@ bool ProgramObject::Link()
 		GLchar *infoLog = new GLchar[logLen];
 		glGetProgramInfoLog(handle, logLen, &logLen, infoLog);
 		OutputDebugString(infoLog);
-		delete[] infoLog;
+		delete [] infoLog;
 	}
 
 	linked = isLinked == TRUE;

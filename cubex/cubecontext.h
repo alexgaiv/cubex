@@ -90,7 +90,6 @@ public:
 	void BeginRotateFace(const MoveDesc &m);
 private:
 	bool CheckSolved();
-
 };
 
 #endif // _CUBE_CONTEXT_H_

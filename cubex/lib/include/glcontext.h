@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <stack>
 #include <list>
+#include <vector>
 #include "datatypes.h"
 #include "shader.h"
 
@@ -38,6 +39,8 @@ public:
 
 	GLRenderingContext(HDC hdc, const GLRenderingContextParams *params = NULL);
 	~GLRenderingContext();
+
+	void MakeCurrent() { wglMakeCurrent(_hdc, hrc); }
 
 	ProgramObject *GetCurProgram();
 

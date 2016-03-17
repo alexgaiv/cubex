@@ -56,7 +56,7 @@ Cube::~Cube()
 		}
 		delete [] blocks[x];
 	}
-	delete blocks;
+	delete [] blocks;
 
 	for (int i = 0; i < size; i++)
 		delete [] tmp[i];

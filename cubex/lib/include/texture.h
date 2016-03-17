@@ -5,12 +5,16 @@
 #include "datatypes.h"
 #include "glcontext.h"
 
-#define TEX_OWN_ID GLuint(-1)
+#define TEX_GENERATE_ID GLuint(-1)
 
 class BaseTexture
 {
 public:
-	BaseTexture(GLenum target, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_OWN_ID);
+	BaseTexture(GLenum target, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_GENERATE_ID);
+	BaseTexture(const BaseTexture &t);
+	~BaseTexture();
+
+	BaseTexture &operator=(const BaseTexture &t);
 
 	void Bind(GLRenderingContext *rc);
 	void Delete() { glDeleteTextures(1, &id); }
@@ -36,17 +40,23 @@ protected:
 		glBindTexture(target, id);
 	}
 
-	bool _loadFromTGA(const char *name, BYTE *&data);
-	void _texImage2D(GLenum target, BYTE *imageData);
+	bool loadFromTGA(const char *name, BYTE *&data);
+	void texImage2D(GLenum target, BYTE *imageData);
 private:
-	void _read(HANDLE hFile, LPVOID lpBuffer, DWORD nNumBytes);
+	mutable int *refs;
+	bool needDelete;
+	void clone(const BaseTexture &t);
+	void read(HANDLE hFile, LPVOID lpBuffer, DWORD nNumBytes);
 };
 
 class Texture2D : public BaseTexture
 {
 public:
-	Texture2D(GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_OWN_ID);
-	Texture2D(const char *name, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_OWN_ID);
+	Texture2D(GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_GENERATE_ID);
+	Texture2D(const char *name, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_GENERATE_ID);
+	Texture2D(const Texture2D &t);
+
+	Texture2D &operator=(const Texture2D &t);
 
 	int GetWidth() const { return width; }
 	int GetHeight() const { return height; }
@@ -64,6 +74,9 @@ class CubeTexture : public BaseTexture
 public:
 	CubeTexture(GLenum textureUnit = GL_TEXTURE0);
 	CubeTexture(const char **sides, GLenum textureUnit = GL_TEXTURE0);
+	CubeTexture(const CubeTexture &t);
+
+	CubeTexture &operator=(const CubeTexture &t);
 
 	bool IsLoaded() const { return loaded; }
 	bool LoadFromTGA(const char **sides);

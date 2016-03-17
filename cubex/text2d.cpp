@@ -3,18 +3,72 @@
 #include "transform.h"
 #include "glcontext.h"
 
-Text2D::Text2D(GLRenderingContext *rc, const char *name)
-	: rc(rc), charsets(NULL), charWidth(NULL)
+Font2D::Font2D(const char *name)
 {
-	numVerts = numCharsets = 0;
-	cellWidth = cellHeight = fontHeight = 0;
+	numChars = numCharsets = 0;
+	charsets = NULL;
+	charWidth = NULL;
+	numCellsX = numCellsY = 0;
+	fontHeight = 0;
+	load(name);
+}
 
+Font2D::Font2D(const Font2D &f) {
+	clone(f);
+}
+
+Font2D::~Font2D()
+{
+	if (charsets) delete [] charsets;
+	if (charWidth) delete [] charWidth;
+	fontTexture.Delete();
+}
+
+Font2D &Font2D::operator=(const Font2D &f)
+{
+	if (charsets) delete [] charsets;
+	if (charWidth) delete [] charWidth;
+	clone(f);
+	return *this;
+}
+
+void Font2D::clone(const Font2D &f)
+{
+	numChars = f.numChars;
+	numCharsets = f.numCharsets;
+
+	if (f.charsets) {
+		charsets = new Charset[numCharsets];
+		memcpy(charsets, f.charsets, numCharsets * sizeof(Charset));
+	}
+	else charsets = NULL;
+
+	if (f.charWidth) {
+		charWidth = new int[numChars];
+		memcpy(charWidth, f.charWidth, numChars * sizeof(int));
+	}
+	else charWidth = NULL;
+
+	fontTexture = f.fontTexture;
+	numCellsX = f.numCellsX;
+	numCellsY = f.numCellsY;
+	fontHeight = f.fontHeight;
+
+	dty = f.dty;
+	numCellsX_inv = f.numCellsX_inv;
+	numCellsY_inv = f.numCellsY_inv;
+	texWidth_inv = f.texWidth_inv;
+}
+
+void Font2D::load(const char *name)
+{
 	char *data = NULL;
 	int len = 0;
 	GetTextResource(name, data, len);
 	if (!data) return;
 
 	int curCharset = 0;
+	int cellWidth = 0, cellHeight = 0;
 
 	while (*data)
 	{
@@ -40,12 +94,17 @@ Text2D::Text2D(GLRenderingContext *rc, const char *name)
 			fontTexture.SetFilters(GL_LINEAR, GL_LINEAR);
 		}
 		else if (*data++ != ' ') continue;
-		else if (!strcmp(prefix, "cw"))
+		else if (!strcmp(prefix, "cw")) {
 			sscanf_s(data, "%d", &cellWidth);
-		else if (!strcmp(prefix, "ch"))
+		}
+		else if (!strcmp(prefix, "ch")) {
 			sscanf_s(data, "%d", &cellHeight);
-		else if (!strcmp(prefix, "fh"))
-			sscanf_s(data, "%d", &fontHeight);
+		}
+		else if (!strcmp(prefix, "fh")) {
+			int fh = 0;
+			sscanf_s(data, "%d", &fh);
+			fontHeight = (float)fh;
+		}
 		else if (!strcmp(prefix, "fw"))
 		{
 			charWidth = new int[numChars];
@@ -65,6 +124,46 @@ Text2D::Text2D(GLRenderingContext *rc, const char *name)
 		while (*data && *data++ != '\n');
 		while (*data == '\r' || *data == '\n') data++;
 	}
+
+	if (!fontTexture.IsLoaded()) return;
+	dty = fontHeight / fontTexture.GetHeight();
+	texWidth_inv = 1.0f / fontTexture.GetWidth();
+
+	if (cellWidth != 0) {
+		numCellsX = fontTexture.GetWidth() / cellWidth;
+		numCellsX_inv = 1.0f / numCellsX;
+	}
+	if (cellHeight != 0) {
+		numCellsY = fontTexture.GetHeight() / cellHeight;
+		numCellsY_inv = 1.0f / numCellsY;
+	}
+}
+
+const char *Text2D::shaderSource[2] = 
+{
+	"#version 130\n"
+	"in vec3 Vertex;"
+	"in vec2 TexCoord;"
+	"out vec2 fTexCoord;"
+	"uniform mat4 ModelViewProjection;"
+	"void main() {"
+		"fTexCoord = TexCoord;"
+		"gl_Position = ModelViewProjection * vec4(Vertex, 1.0);"
+	"}"
+	,
+	"#version 130\n"
+	"in vec2 fTexCoord;"
+	"uniform sampler2D ColorMap;"
+	"uniform vec3 Color;"
+	"void main() {"
+		"gl_FragColor = vec4(Color, texture(ColorMap, fTexCoord).a)"
+	"}"
+};
+
+Text2D::Text2D(GLRenderingContext *rc, Font2D *font)
+	: rc(rc), font(font), numVerts(0)
+{
+
 }
 
 Text2D::Text2D(const Text2D &t) {
@@ -73,8 +172,6 @@ Text2D::Text2D(const Text2D &t) {
 
 Text2D &Text2D::operator=(const Text2D &t)
 {
-	if (charsets) delete [] charsets;
-	if (charWidth) delete [] charWidth;
 	clone(t);
 	return *this;
 }
@@ -82,32 +179,11 @@ Text2D &Text2D::operator=(const Text2D &t)
 void Text2D::clone(const Text2D &t)
 {
 	rc = t.rc;
-	numChars = t.numChars;
-	numCharsets = t.numCharsets;
-	fontTexture = t.fontTexture;
-	cellWidth = t.cellWidth;
-	cellHeight = t.cellHeight;
-	fontHeight = t.fontHeight;
-	numVerts = t.numVerts;
-
-	charsets = new Charset[numCharsets];
-	for (int i = 0; i < numCharsets; i++)
-		charsets[i] = t.charsets[i];
-
-	charWidth = new int[numChars];
-	for (int i = 0; i < numChars; i++)
-		charWidth[i] = t.charWidth[i];
-
-	if (numVerts != 0) {
+	font = t.font;
+	if (t.numVerts != 0) {
 		t.vertices.CloneTo(vertices);
 		t.texCoords.CloneTo(texCoords);
 	}
-}
-
-Text2D::~Text2D()
-{
-	if (charsets) delete [] charsets;
-	if (charWidth) delete [] charWidth;
 }
 
 void Text2D::SetText(const wchar_t *text)
@@ -116,47 +192,46 @@ void Text2D::SetText(const wchar_t *text)
 	Vector3f *verts = new Vector3f[numVerts];
 	Vector2f *texs = new Vector2f[numVerts];
 
-	float dw = 0;
+	float w = 0;
 	for (int i = 0; *text; i++, text++)
 	{
 		wchar_t ch = *text;
 		int index = 0;
 		int x = 0, y = 0;
 
-		for (int j = 0; j < numCharsets; j++)
+		for (int j = 0; j < font->numCharsets; j++)
 		{
-			Charset &c = charsets[j];
+			Font2D::Charset &c = font->charsets[j];
 			if (ch >= c.startChar && ch <= c.endChar)
 			{
 				index = ch - c.startChar + c.base;
-				x = index % (fontTexture.GetWidth() / cellWidth);
-				y = index / (fontTexture.GetHeight() / cellHeight);
+				x = index % font->numCellsX;
+				y = index / font->numCellsY;
 				break;
 			}
 		}
 
-		int w = charWidth[index];
+		float dw = (float)font->charWidth[index];
 		int k = 6*i;
-		verts[k]   = Vector3f(dw, 0, 0);
-		verts[k+1] = Vector3f(dw, (float)fontHeight, 0);
-		verts[k+2] = Vector3f(dw + w, 0, 0);
+		verts[k]   = Vector3f(w, 0, 0);
+		verts[k+1] = Vector3f(w, font->fontHeight, 0);
+		verts[k+2] = Vector3f(w + dw, 0, 0);
 		verts[k+3] = verts[k+2];
 		verts[k+4] = verts[k+1];
-		verts[k+5] = Vector3f(dw + w, (float)fontHeight, 0);
+		verts[k+5] = Vector3f(w + dw, font->fontHeight, 0);
 
-		float kw = x * (float)cellWidth / fontTexture.GetWidth();
-		float kh = y * (float)cellHeight / fontTexture.GetHeight();
-		float kf = (float)fontHeight / fontTexture.GetHeight();
-		float kc = (float)w / fontTexture.GetHeight();
-
-		texs[k]   = Vector2f(kw, kh);
-		texs[k+1] = Vector2f(kw, kh + kf);
-		texs[k+2] = Vector2f(kw + kc, kh);
+		float tx = (float)x * font->numCellsX_inv;
+		float ty = (float)y * font->numCellsY_inv;
+		float dtx = dw * font->texWidth_inv;
+		
+		texs[k]   = Vector2f(tx, ty);
+		texs[k+1] = Vector2f(tx, ty + font->dty);
+		texs[k+2] = Vector2f(tx + dtx, ty);
 		texs[k+3] = texs[k+2];
 		texs[k+4] = texs[k+1];
-		texs[k+5] = Vector2f(kw + kc, kh + kf);
+		texs[k+5] = Vector2f(tx + dtx, ty + font->dty);
 
-		dw += w;
+		w += dw;
 	}
 	
 	vertices.SetData(numVerts*sizeof(Vector3f), verts, GL_STATIC_DRAW);
@@ -178,14 +253,12 @@ void Text2D::Draw(int x, int y)
 	rc->SetProjection(Ortho2D(0, viewport[2], viewport[3], 0));
 	rc->SetModelView(Translate((float)x, (float)y, 0));
 
-	fontTexture.Bind(rc);
+	font->fontTexture.Bind(rc);
 
 	glEnableVertexAttribArray(AttribsLocations.Vertex);
-	vertices.Bind();
 	vertices.AttribPointer(AttribsLocations.Vertex, 3, GL_FLOAT);
 
 	glEnableVertexAttribArray(AttribsLocations.TexCoord);
-	texCoords.Bind();
 	texCoords.AttribPointer(AttribsLocations.TexCoord, 2, GL_FLOAT);
 
 	glEnable(GL_BLEND);

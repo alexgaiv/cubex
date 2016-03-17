@@ -38,6 +38,7 @@ private:
 	bool faceDrag, sceneDrag;
 	bool needRedraw;
 
+	Font2D *font;
 	Text2D *timeMsg;
 	Text2D *movesMsg;
 
