@@ -158,7 +158,7 @@ void CubeBlock::Render()
 		return;
 	}
 
-	static ProgramObject *program = rc->GetCurProgram();
+	ProgramObject *program = rc->GetCurProgram();
 
 	for (int i = 0; i < 6; i++)
 	{
@@ -185,7 +185,7 @@ void CubeBlock::Render()
 			GLubyte r = id & 0xff;
 			GLubyte g = id >> 8;
 
-			program->Uniform("Mode", 3);
+			program->Uniform("Mode", 2);
 			program->Uniform("FrontMaterial.diffuse", r/255.0f, g/255.0f, 1/255.0f);
 			
 			rc->PushModelView();

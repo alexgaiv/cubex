@@ -1,16 +1,11 @@
 #include "vertexbuffer.h"
+#include "shader.h"
 
-VertexBuffer::VertexBuffer(GLenum target) : target(target), data(NULL), size(0)
+VertexBuffer::VertexBuffer(GLRenderingContext *rc, GLenum target)
+	: rc(rc), target(target), ptr(new Shared)
 {
 	if (GLEW_ARB_vertex_buffer_object)
-		glGenBuffers(1, &id);
-}
-
-VertexBuffer::~VertexBuffer()
-{
-	if (GLEW_ARB_vertex_buffer_object)
-		glDeleteBuffers(1, &id);
-	else if (data) delete [] data;
+		glGenBuffers(1, &ptr->id);
 }
 
 void VertexBuffer::AttribPointer(GLuint index, GLint size, GLenum type,
@@ -27,7 +22,7 @@ void VertexBuffer::VertexPointer(GLint size, GLenum type, GLsizei stride) const
 		glVertexPointer(size, type, stride, 0);
 	}
 	else {
-		glVertexPointer(size, type, stride, data);
+		glVertexPointer(size, type, stride, ptr->data);
 	}
 }
 
@@ -38,7 +33,7 @@ void VertexBuffer::NormalPointer(GLenum type, GLsizei stride) const
 		glNormalPointer(type, stride, 0);
 	}
 	else {
-		glNormalPointer(type, stride, data);
+		glNormalPointer(type, stride, ptr->data);
 	}
 }
 
@@ -49,18 +44,31 @@ void VertexBuffer::TexCoordPointer(GLint size, GLenum type, GLsizei stride) cons
 		glTexCoordPointer(size, type, stride, 0);
 	}
 	else {
-		glTexCoordPointer(size, type, stride, data);
+		glTexCoordPointer(size, type, stride, ptr->data);
 	}
+}
+
+void VertexBuffer::DrawArrays(GLenum mode, GLint first, GLsizei count)
+{
+	if (GLEW_ARB_vertex_buffer_object) {
+		ProgramObject *p = rc->GetCurProgram();
+		if (p) p->updateMatrices();
+	}
+	glDrawArrays(mode, first, count);
 }
 
 void VertexBuffer::DrawElements(GLenum mode, GLsizei count, GLenum type, int first)
 {
-	if (GLEW_ARB_vertex_buffer_object) {
+	if (GLEW_ARB_vertex_buffer_object)
+	{
+		ProgramObject *p = rc->GetCurProgram();
+		if (p) p->updateMatrices();
+
 		Bind();
 		glDrawElements(mode, count, type, (void *)first);
 	}
 	else {
-		glDrawElements(mode, count, type, data);
+		glDrawElements(mode, count, type, ptr->data);
 	}
 }
 
@@ -71,10 +79,10 @@ void VertexBuffer::SetData(GLsizeiptr size, const void *data, GLenum usage)
 		glBufferData(target, size, data, usage);
 	}
 	else {
-		this->size = size;
-		if (this->data) delete [] this->data;
-		this->data = new BYTE[size];
-		memcpy(this->data, data, size);
+		ptr->size = size;
+		delete [] ptr->data;
+		ptr->data = new BYTE[size];
+		memcpy(ptr->data, data, size);
 	}
 }
 
@@ -84,8 +92,8 @@ void VertexBuffer::SetSubData(GLintptr offset, GLsizeiptr size, const void *data
 		Bind();
 		glBufferSubData(target, offset, size, data);
 	}
-	else if (offset < this->size) {
-		memcpy(this->data + offset, data, max(size, this->size - offset));
+	else if (offset < ptr->size) {
+		memcpy(ptr->data + offset, data, min(size, ptr->size - offset));
 	}
 }
 
@@ -95,8 +103,8 @@ void VertexBuffer::GetSubData(GLintptr offset, GLsizeiptr size, void *data) cons
 		Bind();
 		glGetBufferSubData(target, offset, size, data);
 	}
-	else if (offset < this->size) {
-		memcpy(data, this->data + offset, max(size, this->size - offset));
+	else if (offset < ptr->size) {
+		memcpy(data, ptr->data + offset, min(size, ptr->size - offset));
 	}
 }
 
@@ -108,7 +116,7 @@ int VertexBuffer::GetSize() const
 		glGetBufferParameteriv(target, GL_BUFFER_SIZE, &size);
 		return size;
 	}
-	return this->size;
+	return ptr->size;
 }
 
 GLenum VertexBuffer::GetUsage() const
@@ -119,7 +127,7 @@ GLenum VertexBuffer::GetUsage() const
 		glGetBufferParameteriv(target, GL_BUFFER_USAGE, &usage);
 		return (GLenum)usage;
 	}
-	else return GL_STATIC_DRAW;
+	return GL_STATIC_DRAW;
 }
 
 void *VertexBuffer::Map(GLenum access) const
@@ -128,7 +136,7 @@ void *VertexBuffer::Map(GLenum access) const
 		Bind();
 		return glMapBuffer(target, access);
 	}
-	else return data;
+	else return ptr->data;
 }
 
 bool VertexBuffer::Unmap() const
@@ -150,9 +158,9 @@ void VertexBuffer::CloneTo(VertexBuffer &vb) const
 		}
 	}
 	else {
-		if (vb.data) delete [] vb.data;
-		vb.size = size;
-		vb.data = new BYTE[size];
-		memcpy(vb.data, data, size);
+		delete [] vb.ptr->data;
+		vb.ptr->size = ptr->size;
+		vb.ptr->data = new BYTE[ptr->size];
+		memcpy(vb.ptr->data, ptr->data, ptr->size);
 	}
 }

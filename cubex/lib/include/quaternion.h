@@ -33,8 +33,8 @@ public:
 	Quaternion operator-(const Quaternion &q) const;
 	Quaternion operator-() const;
 	Quaternion operator*(const Quaternion &q) const;
-	Quaternion operator*(float scale);
-	Quaternion operator/(float scale);
+	Quaternion operator*(float scale) const;
+	Quaternion operator/(float scale) const;
 	friend Quaternion operator*(float scale, const Quaternion &q);
 
 	Quaternion &operator+=(const Quaternion &q);

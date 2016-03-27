@@ -19,13 +19,6 @@
 #define DEG_TO_RAD(a) ((a) * M_PIf / 180.0f)
 #define RAD_TO_DEG(a) ((a) / M_PIf * 180.0f)
 
-template<class T>
-void Swap(T &a, T &b) {
-	T tmp = a;
-	a = b;
-	b = tmp;
-}
-
 inline BYTE *GetBinaryResource(LPCTSTR name)
 {
 	HRSRC hRes = FindResource(NULL, name, RT_RCDATA);

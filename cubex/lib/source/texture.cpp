@@ -21,77 +21,36 @@ struct TGAHEADER
 #pragma pack(pop)
 
 BaseTexture::BaseTexture(GLenum target, GLenum unit, GLuint id)
-	: target(target), textureUnit(unit)
+	: target(target), textureUnit(unit), ptr(new Shared)
 {
-	refs = new int(1);
 	width = height = 0;
 	internalFormat = format = 0;
 
 	if (id == TEX_GENERATE_ID) {
-		glGenTextures(1, &this->id);
-		needDelete = true;
+		glGenTextures(1, &ptr->id);
+		ptr->needDelete = true;
 	} else {
-		this->id = id;
-		needDelete = false;
+		ptr->id = id;
+		ptr->needDelete = false;
 	}
 }
 
-BaseTexture::BaseTexture(const BaseTexture &t) {
-	clone(t);
-}
-
-BaseTexture::~BaseTexture() {
-	if (--*refs == 0) {
-		delete refs;
-		if (needDelete)
-			glDeleteTextures(1, &id);
-	}
-}
-
-BaseTexture &BaseTexture::operator=(const BaseTexture &t)
+void BaseTexture::Bind()
 {
-	if (--*refs == 0) {
-		delete refs;
-		if (needDelete)
-			glDeleteTextures(1, &id);
-	}
-	clone(t);
-	return *this;
-}
-
-void BaseTexture::clone(const BaseTexture &t)
-{
-	++*t.refs;
-	refs = t.refs;
-	needDelete = t.needDelete;
-	id = t.id;
-	target = t.target;
-	textureUnit = t.textureUnit;
-	width = t.width;
-	height = t.height;
-	internalFormat = t.internalFormat;
-	format = t.format;
-}
-
-void BaseTexture::Bind(GLRenderingContext *rc)
-{
-	if (rc->curTextureUnit != textureUnit) {
-		rc->curTextureUnit = textureUnit;
-		glActiveTexture(textureUnit);
-	}
-	glBindTexture(target, id);
+	if (glActiveTexture) glActiveTexture(textureUnit);
+	glBindTexture(target, ptr->id);
 }
 
 void BaseTexture::SetFilters(GLint minFilter, GLint magFilter)
 {
-	_bind();
+	Bind();
 	glTexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilter);
 	glTexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilter);
 }
 
 void BaseTexture::SetWrapMode(GLint wrapS, GLint wrapT, GLint wrapR)
 {
-	_bind();
+	Bind();
 	glTexParameteri(target, GL_TEXTURE_WRAP_S, wrapS);
 	glTexParameteri(target, GL_TEXTURE_WRAP_T, wrapT);
 	if (wrapR != -1)
@@ -100,13 +59,13 @@ void BaseTexture::SetWrapMode(GLint wrapS, GLint wrapT, GLint wrapR)
 
 void BaseTexture::SetBorderColor(Color4f color)
 {
-	_bind();
+	Bind();
 	glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, color.data);
 }
 
 void BaseTexture::BuildMipmaps() {
 	if (glGenerateMipmap) {
-		_bind();
+		Bind();
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 }
@@ -194,10 +153,8 @@ bool BaseTexture::loadFromTGA(const char *name, BYTE *&data)
 		}
 	}
 	catch(bool) {
-		if (data) {
-			delete [] data;
-			data = 0;
-		}
+		delete [] data;
+		data = 0;
 		return false;
 	}
 	return true;
@@ -205,7 +162,7 @@ bool BaseTexture::loadFromTGA(const char *name, BYTE *&data)
 
 void BaseTexture::texImage2D(GLenum target, BYTE *imageData)
 {
-	_bind();
+	Bind();
 	glTexImage2D(target, 0, internalFormat, width,
 		height, 0, format, GL_UNSIGNED_BYTE, imageData);
 }
@@ -218,17 +175,6 @@ Texture2D::Texture2D(const char *name, GLenum textureUnit, GLuint id)
 	: BaseTexture(GL_TEXTURE_2D, textureUnit, id), loaded(false)
 {
 	LoadFromTGA(name);
-}
-
-Texture2D::Texture2D(const Texture2D &t) : BaseTexture(t) {
-	loaded = t.loaded;
-}
-
-Texture2D &Texture2D::operator=(const Texture2D &t)
-{
-	BaseTexture::operator=(t);
-	loaded = t.loaded;
-	return *this;
 }
 
 bool Texture2D::LoadFromTGA(const char *name)
@@ -245,7 +191,7 @@ bool Texture2D::LoadFromTGA(const char *name)
 void Texture2D::SetTexImage(GLenum level, GLint internalFormat, GLsizei width, GLsizei height,
 	GLint border, GLenum format, GLenum type, const GLvoid *data)
 {
-	_bind();
+	Bind();
 	glTexImage2D(target, level, internalFormat, width, height, border, format, type, data);
 }
 
@@ -257,17 +203,6 @@ CubeTexture::CubeTexture(const char **sides, GLenum textureUnit)
 	: BaseTexture(GL_TEXTURE_CUBE_MAP, textureUnit), loaded(false)
 {
 	LoadFromTGA(sides);
-}
-
-CubeTexture::CubeTexture(const CubeTexture &t) : BaseTexture(t) {
-	loaded = t.loaded;
-}
-
-CubeTexture &CubeTexture::operator=(const CubeTexture &t)
-{
-	BaseTexture::operator=(t);
-	loaded = t.loaded;
-	return *this;
 }
 
 bool CubeTexture::LoadFromTGA(const char **sides)

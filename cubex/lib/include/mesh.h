@@ -17,6 +17,10 @@ class Mesh
 {
 public:
 	Mesh(GLRenderingContext *rc);
+	Mesh(const Mesh &m);
+	~Mesh();
+
+	Mesh &operator=(const Mesh &m);
 
 	bool HasNormals() const { return hasNormals; }
 	bool HasTexCoords() const { return hasTexCoords; }
@@ -43,15 +47,18 @@ public:
 	VertexBuffer tangents, binormals;
 private:
 	GLRenderingContext *rc;
-	BaseTexture texture;
-	Texture2D normalMap, specularMap;
-	GLuint programId;
-	bool tangentsComputed;
+	ProgramObject *program;
+	BaseTexture *texture;
+	Texture2D *normalMap, *specularMap;
 
+	bool tangentsComputed;
 	bool hasNormals;
 	bool hasTexCoords;
 	int verticesCount;
 	int indicesCount;
+
+	void clone(const Mesh &m);
+	void cleanup();
 
 	void read_num(const string &line, char &c, int &i, int &n) {
 		n = 0;

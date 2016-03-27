@@ -135,7 +135,7 @@
   <ItemGroup>
     <ClCompile Include="cubecontext.cpp" />
     <ClCompile Include="lib\source\glcontext.cpp" />
-    <ClCompile Include="text2d.cpp" />
+    <ClCompile Include="lib\source\text2d.cpp" />
     <ClInclude Include="cube.h" />
     <ClCompile Include="cube.cpp" />
     <ClCompile Include="cubeblock.cpp" />
@@ -153,7 +153,8 @@
     <ClCompile Include="mainwindow.cpp" />
     <ClInclude Include="cubecontext.h" />
     <ClInclude Include="lib\include\glcontext.h" />
-    <ClInclude Include="text2d.h" />
+    <ClInclude Include="lib\include\sharedptr.h" />
+    <ClInclude Include="lib\include\text2d.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cubeblock.h" />

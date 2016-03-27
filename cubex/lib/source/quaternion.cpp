@@ -113,11 +113,11 @@ Quaternion Quaternion::operator*(const Quaternion &q) const {
 	return Quaternion::Multiply(*this, q);
 }
 
-Quaternion Quaternion::operator*(float scale) {
+Quaternion Quaternion::operator*(float scale) const {
 	return Quaternion::Multiply(*this, scale);
 }
 
-Quaternion Quaternion::operator/(float scale) {
+Quaternion Quaternion::operator/(float scale) const {
 	return Quaternion(x / scale, y / scale, z / scale, w / scale);
 }
 

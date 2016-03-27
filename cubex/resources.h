@@ -14,8 +14,7 @@
 #define IDS_TOOLBARNAMES 70
 #define IDS_MENU_ABOUT 71
 #define IDS_ABOUT 72
-#define IDS_TIME 73
-#define IDS_MOVES 74
+#define IDS_SCORE 73
 
 #define IDC_NEWGAME 80
 #define IDC_SCRAMBLE 81
@@ -23,11 +22,16 @@
 #define IDC_SETTINGS 83
 #define IDC_ABOUT 84
 
+#define IDA_NEWGAME 85
+#define IDA_SCRAMBLE 86
+#define IDA_CANCEL 87
+
 #define IDD_ABOUT_DIALOG 90
 #define IDM_SETTINGS 100
 #define IDM_STYLE 101
 #define IDM_BLACK 102
 #define IDM_WHITE 103
+#define IDM_SHOWTIMER 104
 #define IDM_2 111
 #define IDM_3 112
 #define IDM_4 113

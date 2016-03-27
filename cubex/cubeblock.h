@@ -12,22 +12,14 @@ public:
 	Quaternion rotation;
 	float scale;
 	Matrix44f transform;
-	Mesh mesh;
 
-	Actor(GLRenderingContext *rc) : rc(rc), mesh(rc), scale(1.0f) { }
+	Actor(GLRenderingContext *rc) : rc(rc), scale(1.0f) { }
 
 	void ApplyTransform() {
 		rotation.ToMatrix(transform);
 		transform.translate = location;
 		if (scale != 1.0f) transform.Scale(scale);
 		rc->MultModelView(transform);
-	}
-
-	void Draw() {
-		rc->PushModelView();
-		ApplyTransform();
-		mesh.Draw();
-		rc->PopModelView();
 	}
 protected:
 	GLRenderingContext *rc;

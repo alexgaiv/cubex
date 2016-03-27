@@ -4,8 +4,9 @@
 GLRenderingContext::GLRenderingContext(HDC hdc,
 	const GLRenderingContextParams *params) : hrc(NULL), _hdc(hdc)
 {
-	curProgram = 0;
+	curProgram = NULL;
 	curTextureUnit = GL_TEXTURE0;
+	mvpComputed = normComputed = false;
 
 	PIXELFORMATDESCRIPTOR pfd = { };
 	if (!params->pixelFormat)
@@ -93,6 +94,10 @@ GLRenderingContext::~GLRenderingContext()
 		wglMakeCurrent(_hdc, NULL);
 		wglDeleteContext(hrc);
 	}
+	for (int i = 0, s = modules.size(); i < s; i++) {
+		modules[i]->Destroy();
+		delete modules[i];
+	}
 }
 
 HGLRC GLRenderingContext::createContextAttrib(HDC hdc, const GLRenderingContextParams *params)
@@ -149,58 +154,24 @@ HGLRC GLRenderingContext::createContextAttrib(HDC hdc, const GLRenderingContextP
 
 void GLRenderingContext::set_mv(const Matrix44f &mat)
 {
-	Matrix44f mvp = projection * mat;
-	Matrix44f normalMatrix;
-	bool fnorm = true;
-
-	list<ProgramObject *>::iterator p;
-	for (p = shaders.begin(); p != shaders.end(); p++)
-	{
-		ProgramObject *po = *p;
-
-		if (po->HasNormalMatrix()) {
-			if (fnorm) {
-				normalMatrix = mat.GetInverse();
-				normalMatrix = normalMatrix.GetTranspose();
-				fnorm = false;
-			}
-			po->NormalMatrix(normalMatrix);
-		}
-
-		po->ModelView(mat);
-		po->ModelViewProjection(mvp);
-	}
+	list<_PO_Shared *>::iterator pi;
+	for (pi = shaders.begin(); pi != shaders.end(); pi++)
+		(*pi)->fUpdateMV = true;
+	mvpComputed = normComputed = false;
 }
 
 void GLRenderingContext::set_proj(const Matrix44f &mat)
 {
-	Matrix44f mvp = mat * modelview;
-	list<ProgramObject *>::iterator p;
-	for (p = shaders.begin(); p != shaders.end(); p++)
-	{
-		ProgramObject *po = *p;
-		po->Projection(mat);
-		po->ModelViewProjection(mvp);
-	}
+	list<_PO_Shared *>::iterator pi;
+	for (pi = shaders.begin(); pi != shaders.end(); pi++)
+		(*pi)->fUpdateProj = true;
+	mvpComputed = false;
 }
-
-ProgramObject *GLRenderingContext::GetCurProgram()
-{
-	list<ProgramObject *>::iterator p;
-	for (p = shaders.begin(); p != shaders.end(); p++)
-	{
-		ProgramObject *po = *p;
-		if (po->Handle() == curProgram)
-			return po;
-	}
-	return NULL;
-}
-
 
 void GLRenderingContext::SetModelView(const Matrix44f &mat)
 {
 	modelview = mat;
-	if (shaders.size()) {
+	if (curProgram) {
 		set_mv(modelview);
 	}
 	else {
@@ -212,7 +183,7 @@ void GLRenderingContext::SetModelView(const Matrix44f &mat)
 void GLRenderingContext::SetProjection(const Matrix44f &mat)
 {
 	projection = mat;
-	if (shaders.size()) {
+	if (curProgram) {
 		set_proj(projection);
 	}
 	else {
@@ -243,4 +214,17 @@ void GLRenderingContext::MultProjection(const Matrix44f &mat)
 		glMatrixMode(GL_PROJECTION);
 		glMultMatrixf(mat.data);
 	}
+}
+
+void GLRenderingContext::AddModule(GLRC_Module *module)
+{
+	if (GetModule(module->Name())) return;
+	modules.push_back(module);
+	module->Initialize(this);
+}
+GLRC_Module *GLRenderingContext::GetModule(const char *name)
+{
+	for (int i = 0, s = modules.size(); i < s; i++)
+		if (!strcmp(name, modules[i]->Name())) return modules[i];
+	return NULL;
 }

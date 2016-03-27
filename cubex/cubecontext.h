@@ -48,6 +48,58 @@ private:
 	int size, cur;
 };
 
+class TimeCounter
+{
+public:
+	TimeCounter() {
+		Reset();
+	}
+	int GetTime() {
+		bool f = started && !suspended;
+		return (int)(f ? totalTime + time(NULL) - lastTime : totalTime);
+	}
+	bool IsStarted() const {
+		return started;
+	}
+	void Reset() {
+		totalTime = lastTime = 0;
+		started = suspended = false;
+	}
+	void Start() {
+		totalTime = 0;
+		lastTime = time(NULL);
+		started = true;
+		suspended = false;
+	}
+	void Stop() {
+		if (!suspended)
+			totalTime += time(NULL) - lastTime;
+		started = false;
+	}
+	void Suspend() {
+		if (!started) return;
+		totalTime += time(NULL) - lastTime;
+		suspended = true;
+	}
+	void Resume() {
+		if (!started || !suspended) return;
+		lastTime = time(NULL);
+		suspended = false;
+	}
+
+	void Serialize(ofstream &os) {
+		os << totalTime << ' ' << lastTime << ' ' << started << ' ' << suspended << ' ';
+	}
+	void Deserialize(ifstream &is) {
+		is >> totalTime >> lastTime >> started >> suspended;
+	}
+private:
+	time_t totalTime;
+	time_t lastTime;
+	bool started;
+	bool suspended;
+};
+
 struct MoveDesc {
 		Axis normal;
 		int index;
@@ -60,17 +112,15 @@ public:
 	static Quaternion qResetView;
 	Cube *cube;
 	Quaternion qRotation;
-	bool fSolvedAnim;
+	TimeCounter timer;
 	float rotAngle;
 private:
 	CircularStack<MoveDesc, 100> history;
-	time_t solveTime;
-	time_t solveTimeLast;
-	bool wasScrambled;
+	bool isSolved;
 	int numMoves;
 	int numActualMoves;
+	bool wasScrambled;
 	bool isFaceRotating;
-	bool isScrambling;
 public:
 	CubeContext(GLRenderingContext *m_rc, int cubeSize);
 	~CubeContext();
@@ -78,18 +128,17 @@ public:
 	void Serialize(ofstream &os);
 	void Deserialize(ifstream &is);
 
+	bool IsSolved() const { return isSolved; }
 	bool CanCancelMove() const { return history.GetSize() != 0; }
-	void StartTimeCounter();
-	void SuspendTimeCounter();
-	void GetTimeStr(WCHAR *buf, int bufLen);
-	void GetMovesStr(WCHAR *buf, int bufLen);
+	void GetScoreStr(WCHAR *buf, int bufLen);
 	void Reset();
 	void Scramble();
 	void CancelMove();
 	void OnTimer(bool &needRedraw, bool &isSolved);
 	void BeginRotateFace(const MoveDesc &m);
 private:
-	bool CheckSolved();
+	void reset();
+	bool checkSolved();
 };
 
 #endif // _CUBE_CONTEXT_H_

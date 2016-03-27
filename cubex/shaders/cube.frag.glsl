@@ -83,11 +83,7 @@ vec4 PhongLight(const Light l)
 
 void main()
 {
-	if (Mode == 4) {
-		gl_FragColor = vec4(FrontMaterial.diffuse, texture2D(ColorMap, fTexCoord).a);
-	}
-	else
-	if (Mode == 3) {
+	if (Mode == 2) {
 		gl_FragColor = vec4(FrontMaterial.diffuse, 1);
 	}
 	else {

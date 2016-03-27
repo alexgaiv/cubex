@@ -1,9 +1,14 @@
 #include "mainwindow.h"
 
-MainWindow::MainWindow() : gl_frame(NULL)
+MainWindow::MainWindow()
 {
 	gl_frame = new GLFrame();
 	this->Create("Cubex", CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, WS_OVERLAPPEDWINDOW, 0, NULL);
+}
+
+MainWindow::~MainWindow()
+{
+	delete gl_frame;
 }
 
 void MainWindow::InitToolbar()
@@ -141,18 +146,11 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 	EnableCancelBtn(gl_frame->CanCancelMove());
 	CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, IDM_2 + gl_frame->GetCubeSize() - 2, MF_BYCOMMAND);
 
+	bool showTimer = gl_frame->IsTimerVisible();
+	CheckMenuItem(hSettingsMenu, IDM_SHOWTIMER, MF_BYCOMMAND | (showTimer ? MF_CHECKED : MF_UNCHECKED));
+
 	if (GLEW_ARB_shader_objects) {
-		DWORD white = 0;
-		HKEY key = NULL;
-		LONG r = RegCreateKey(HKEY_CURRENT_USER, "software\\Alexander Gaivanuk\\Cubex\\1.1", &key);
-		if (r == ERROR_SUCCESS)
-		{
-			DWORD type = 0, size = sizeof(DWORD);
-			RegQueryValueEx(key, "white", NULL, &type, (BYTE *)&white, &size);
-			if (white != 0)
-				gl_frame->SetCubeStyle(true);
-			RegCloseKey(key);
-		}
+		bool white = gl_frame->GetCubeStyle();
 		CheckMenuRadioItem(hSettingsMenu, IDM_BLACK, IDM_WHITE, white ? IDM_WHITE : IDM_BLACK, MF_BYCOMMAND);
 	}
 	else {
@@ -163,56 +161,53 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 
 LRESULT MainWindow::OnCommand(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	if (HIWORD(wParam) == BN_CLICKED) {
-		WORD id = LOWORD(wParam);
-		switch(id) 
+	WORD id = LOWORD(wParam);
+	switch(id) 
+	{
+	case IDC_NEWGAME:
 		{
-		case IDC_NEWGAME:
-			{
-			gl_frame->ResetCube();
-			EnableCancelBtn(false);
-			break;
-			}
-		case IDC_SCRAMBLE:
-			gl_frame->ScrambleCube();
-			EnableCancelBtn(false);
-			break;
-		case IDC_CANCEL:
-			gl_frame->CancelMove();
-			if (!gl_frame->CanCancelMove()) {
-				EnableCancelBtn(false);
-			}
-			break;
-		case IDC_ABOUT:
-			DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT_DIALOG), m_hwnd, AboutDialogProc);
-			break;
-		case IDM_BLACK:
-		case IDM_WHITE:
-		{
-			gl_frame->SetCubeStyle(id == IDM_WHITE);
-			CheckMenuRadioItem(hSettingsMenu, IDM_BLACK, IDM_WHITE, id, MF_BYCOMMAND);
-
-			HKEY key = NULL;
-			LONG r = RegCreateKey(HKEY_CURRENT_USER, "software\\Alexander Gaivanuk\\Cubex\\1.1", &key);
-			if (r == ERROR_SUCCESS)
-			{
-				DWORD value = id == IDM_WHITE;
-				RegSetValueEx(key, "white", 0, REG_DWORD, (BYTE *)&value, sizeof(DWORD));
-				RegCloseKey(key);
-			}
-
-			break;
+		gl_frame->ResetCube();
+		EnableCancelBtn(false);
+		break;
 		}
-		default:
-			if (id >= IDM_2 && id <= IDM_7) {
-				if (gl_frame->ChangeCubeSize(id - IDM_2 + 2)) {
-					CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, id, MF_BYCOMMAND);
-					EnableCancelBtn(gl_frame->CanCancelMove());
-				}
-			}
-			break;
-		};
+	case IDC_SCRAMBLE:
+		gl_frame->ScrambleCube();
+		EnableCancelBtn(false);
+		break;
+	case IDC_CANCEL:
+		if (gl_frame->CanCancelMove()) {
+			gl_frame->CancelMove();
+			if (!gl_frame->CanCancelMove())
+				EnableCancelBtn(false);
+		}
+		break;
+	case IDC_ABOUT:
+		DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT_DIALOG), m_hwnd, AboutDialogProc);
+		break;
+	case IDM_BLACK:
+	case IDM_WHITE:
+	{
+		gl_frame->SetCubeStyle(id == IDM_WHITE);
+		CheckMenuRadioItem(hSettingsMenu, IDM_BLACK, IDM_WHITE, id, MF_BYCOMMAND);
+		break;
 	}
+	case IDM_SHOWTIMER:
+	{
+		UINT flags = GetMenuState(hSettingsMenu, IDM_SHOWTIMER, MF_BYCOMMAND);
+		bool checked = (flags & MF_CHECKED) != 0;
+		CheckMenuItem(hSettingsMenu, IDM_SHOWTIMER, MF_BYCOMMAND | (checked ? MF_UNCHECKED : MF_CHECKED));
+		gl_frame->ShowTimer(!checked);
+		break;
+	}
+	default:
+		if (id >= IDM_2 && id <= IDM_7) {
+			if (gl_frame->ChangeCubeSize(id - IDM_2 + 2)) {
+				CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, id, MF_BYCOMMAND);
+				EnableCancelBtn(gl_frame->CanCancelMove());
+			}
+		}
+		break;
+	};
 	return 0;
 }
 
@@ -263,7 +258,7 @@ LRESULT MainWindow::OnSize(UINT msg, WPARAM wParam, LPARAM lParam)
 
 LRESULT MainWindow::OnDestroy(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	delete gl_frame;
+	gl_frame->Destroy();
 	ImageList_Destroy(hImgList);
 	ImageList_Destroy(hGrayedImgList);
 	DestroyMenu(hSettingsMenu);

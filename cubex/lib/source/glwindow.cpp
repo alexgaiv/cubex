@@ -228,7 +228,7 @@ HRESULT GLWindow::handleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_DESTROY:
 		OnDestroy();
-		if (m_rc) delete m_rc;
+		delete m_rc;
 		ReleaseDC(m_hwnd, m_hdc);
 		return 0;
 	}

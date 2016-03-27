@@ -2,6 +2,7 @@
 #include "resources.h"
 #include "transform.h"
 #include "text2d.h"
+#include <strsafe.h>
 #include <string>
 #include <ShlObj.h>
 #include <Shlwapi.h>
@@ -9,15 +10,20 @@
 #pragma comment(lib, "Shell32.lib")
 #pragma comment(lib, "Shlwapi.lib")
 
-GLFrame::GLFrame() : program(NULL), timeMsg(NULL), movesMsg(NULL)
+GLFrame::GLFrame()
 {
+	ctx = NULL;
+	viewer = NULL;
+	program = NULL;
+	scoreMsg = NULL;
+	showTimer = false;
+	whiteBorders = false;
+
+	ZeroMemory(cubes, sizeof(cubes));
+	ZeroMemory(&drag, sizeof(drag));
+
 	faceDrag = sceneDrag = false;
 	needRedraw = false;
-	ZeroMemory(&drag, sizeof(drag));
-}
-
-GLFrame::~GLFrame() {
-	SaveConfig();
 }
 
 bool GLFrame::ChangeCubeSize(int size)
@@ -25,14 +31,13 @@ bool GLFrame::ChangeCubeSize(int size)
 	if (size < 2 || size > 7 || ctx->cube->size == size)
 		return false;
 	
-	ctx->SuspendTimeCounter();
+	ctx->timer.Suspend();
 	ctx->qRotation = viewer->qRotation;
-
 	ctx = cubes[size - 2];
-	ctx->StartTimeCounter();
+	ctx->timer.Resume();
 	viewer->qRotation = ctx->qRotation;
 
-	if (ctx->fSolvedAnim) ConstructText();
+	if (showTimer) ConstructText();
 
 	faceDrag = sceneDrag = false;
 	needRedraw = false;
@@ -52,22 +57,25 @@ bool GLFrame::ChangeCubeSize(int size)
 void GLFrame::ResetCube()
 {
 	if (!resetAnim.IsComplete()) return;
-
-	if (ctx->fSolvedAnim)
+	if (ctx->IsSolved())
 		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
 	ctx->Reset();
 	resetAnim.Setup(viewer->qRotation, CubeContext::qResetView, 0.1f);
+	if (showTimer) ConstructText();
 }
 
 void GLFrame::ScrambleCube()
 {
-	if (ctx->fSolvedAnim && resetAnim.IsComplete())
+	if (ctx->IsSolved() && resetAnim.IsComplete())
 		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
 	ctx->Scramble();
+	if (showTimer) ConstructText();
 }
 
 void GLFrame::SetCubeStyle(bool whiteBorders)
 {
+	program->Use();
+	this->whiteBorders = whiteBorders;
 	CubeBlock::DrawWhiteBorders(m_rc, whiteBorders);
 	RedrawWindow();
 }
@@ -82,16 +90,18 @@ void GLFrame::CancelMove() {
 
 void GLFrame::SaveConfig()
 {
+	ctx->timer.Suspend();
+
 	WCHAR path[MAX_PATH] = L"";
 	SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path);
-	PathAppendW(path, L"\\Cubex");
+	PathAppendW(path, L"\\Cubex\\1.2.1");
 	CreateDirectoryW(path, NULL);
 	PathAppendW(path, L"\\save.dat");
 
 	ofstream file(path);
 	if (!file) return;
 
-	file << ctx->cube->size << ' ';
+	file << whiteBorders << ' ' << showTimer << ' ' << ctx->cube->size << ' ';
 	ctx->qRotation = viewer->qRotation;
 	for (int i = 0; i < 6; i++)
 		cubes[i]->Serialize(file);
@@ -102,13 +112,16 @@ void GLFrame::LoadConfig()
 {
 	WCHAR path[MAX_PATH] = L"";
 	SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path);
-	PathAppendW(path, L"\\Cubex\\save.dat");
+	PathAppendW(path, L"\\Cubex\\1.2.1\\save.dat");
 
 	ifstream file(path);
 	if (!file) {
 		ctx = cubes[1];
 		return;
 	}
+
+	file >> whiteBorders >> showTimer;
+	if (whiteBorders) CubeBlock::DrawWhiteBorders(m_rc, true);
 
 	int size = 0;
 	file >> size;
@@ -126,13 +139,9 @@ void GLFrame::LoadConfig()
 
 void GLFrame::ConstructText()
 {
-	if (GLEW_ARB_shader_objects) {
-		WCHAR buf[100] = L"";
-		ctx->GetMovesStr(buf, 100);
-		movesMsg->SetText(buf);
-		ctx->GetTimeStr(buf, 100);
-		timeMsg->SetText(buf);
-	}
+	WCHAR score[50] = L"";
+	ctx->GetScoreStr(score, 50);
+	scoreMsg->SetText(score);
 }
 
 void GLFrame::RenderScene()
@@ -141,21 +150,24 @@ void GLFrame::RenderScene()
 	m_rc->PushModelView();
 
 	viewer->ApplyTransform();
-	if (ctx->fSolvedAnim) {
+	if (ctx->IsSolved()) {
 		m_rc->MultModelView(Rotate(ctx->rotAngle, 1, 1, 1));
 	}
 
+	if (program) program->Use();
 	m_rc->PushModelView();
 		m_rc->MultModelView(Scale(1.37f,1.37f,1.37f));
 		ctx->cube->Render();
 	m_rc->PopModelView();
 
-	if (ctx->fSolvedAnim && !CubeBlock::fRenderPickMode)
+	if (!CubeBlock::fRenderPickMode)
 	{
-		if (GLEW_ARB_shader_objects) {
-			m_rc->GetCurProgram()->Uniform("FrontMaterial.diffuse", 0.07f, 0.31f, 0.76f);
-			movesMsg->Draw(50, 40);
-			timeMsg->Draw(50, 60);
+		if (showTimer || ctx->IsSolved()) {
+			if (ctx->timer.IsStarted()) ConstructText();
+
+			RECT r = { };
+			GetClientRect(m_hwnd, &r);
+			scoreMsg->Draw(r.right - 180, r.bottom - 80);
 		}
 	}
 
@@ -185,9 +197,6 @@ void GLFrame::OnCreate()
 	for (int i = 0; i < 6; i++)
 		cubes[i] = new CubeContext(m_rc, i + 2);
 
-	LoadConfig();
-	viewer->qRotation = ctx->qRotation;
-
 	if (GLEW_ARB_shader_objects)
 	{
 		char *source = 0;
@@ -207,11 +216,6 @@ void GLFrame::OnCreate()
 		program->Link();
 
 		if (program->IsLinked()) {
-			font = new Font2D("font.fnt");
-			timeMsg = new Text2D(m_rc, font);
-			movesMsg = new Text2D(m_rc, font);
-			if (ctx->fSolvedAnim) ConstructText();
-
 			program->Uniform("ColorMap", 0);
 			program->Uniform("NormalMap", 1);
 			program->Uniform("SpecularMap", 2);
@@ -220,15 +224,22 @@ void GLFrame::OnCreate()
 		}
 		else {
 			delete program;
+			program = NULL;
 			__GLEW_ARB_shader_objects = NULL;
 		}
-
 	}
-	
+
 	CubeBlock::InitStatic(m_rc);
+	LoadConfig();
+	viewer->qRotation = ctx->qRotation;
+
+	Font2D font("font.fnt");
+	font.SetColor(Color4f(0.07f, 0.31f, 0.76f));
+	scoreMsg = new Text2D(m_rc, font);
+	ConstructText();
 
 	SetTimer(m_hwnd, 1, 25, NULL);
-	ctx->StartTimeCounter();
+	ctx->timer.Resume();
 }
 
 void GLFrame::OnSize(int w, int h)
@@ -239,7 +250,7 @@ void GLFrame::OnSize(int w, int h)
 
 void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 {
-	if (ctx->fSolvedAnim) return;
+	if (ctx->IsSolved()) return;
 	if (button == MouseButton::RBUTTON) {
 		viewer->BeginRotate(x, y);
 	}
@@ -251,12 +262,17 @@ void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 			viewer->BeginRotate(x, y);
 			sceneDrag = true;
 		}
-		else if (!ctx->cube->IsAnim()) {
-			CubeBlock *b = ctx->cube->blocks[block.pos.x][block.pos.y][block.pos.z];
-			if (b->IsSideColored(block.side)) {
-				CalcRotDirections(block);
-				mousePos = Point2i(x, y);
-				faceDrag = true;
+		else if (!ctx->cube->IsAnim())
+		{
+			int s = ctx->cube->size;
+			if (block.pos.x < s && block.pos.y < s && block.pos.z < s)
+			{
+				CubeBlock *b = ctx->cube->blocks[block.pos.x][block.pos.y][block.pos.z];
+				if (b->IsSideColored(block.side)) {
+					CalcRotDirections(block);
+					mousePos = Point2i(x, y);
+					faceDrag = true;
+				}
 			}
 		}
 	}
@@ -264,7 +280,7 @@ void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 
 void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 {
-	if (ctx->fSolvedAnim) return;
+	if (ctx->IsSolved()) return;
 	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneDrag)
 	{
 		if (!resetAnim.IsComplete()) resetAnim = QSlerp();
@@ -291,15 +307,29 @@ void GLFrame::OnMouseUp(MouseButton button, int x, int y)
 
 void GLFrame::OnTimer()
 {
-	bool fResetAnim = !resetAnim.IsComplete();
-	if (fResetAnim) viewer->qRotation = resetAnim.Next();
+	bool solved = false;
 
-	bool redraw = false, solved = false;
+	if (!resetAnim.IsComplete()) {
+		viewer->qRotation = resetAnim.Next();
+		needRedraw = true;
+	}
+
+	bool redraw = false;
 	ctx->OnTimer(redraw, solved);
+	needRedraw |= redraw;
+
+	if (showTimer && !ctx->IsSolved() && !needRedraw) {
+		static time_t t = 0;
+		time_t cur = time(NULL);
+		if (cur - t >= 1) {
+			needRedraw = true;
+			t = cur;
+		}
+	}
 
 	if (solved) OnCubeSolved();
 
-	if (needRedraw || redraw || fResetAnim) {
+	if (needRedraw) {
 		RedrawWindow();
 		needRedraw = false;
 	}
@@ -307,17 +337,15 @@ void GLFrame::OnTimer()
 
 void GLFrame::OnDestroy()
 {
+	SaveConfig();
+	KillTimer(m_hwnd, 1);
+	CubeBlock::FreeStatic();
+
 	for (int i = 0; i < 6; i++)
 		delete cubes[i];
 	delete viewer;
-	KillTimer(m_hwnd, 1);
-	CubeBlock::FreeStatic();
-	if (GLEW_ARB_shader_objects) {
-		delete font;
-		delete timeMsg;
-		delete movesMsg;
-		delete program;
-	}
+	delete program;
+	delete scoreMsg;
 }
 
 void GLFrame::OnCubeSolved()

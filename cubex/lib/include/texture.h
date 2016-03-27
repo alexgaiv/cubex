@@ -4,22 +4,20 @@
 #include "common.h"
 #include "datatypes.h"
 #include "glcontext.h"
+#include "sharedptr.h"
 
 #define TEX_GENERATE_ID GLuint(-1)
 
 class BaseTexture
 {
+private:
+	struct Shared;
+	my_shared_ptr<Shared> ptr;
 public:
 	BaseTexture(GLenum target, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_GENERATE_ID);
-	BaseTexture(const BaseTexture &t);
-	~BaseTexture();
 
-	BaseTexture &operator=(const BaseTexture &t);
-
-	void Bind(GLRenderingContext *rc);
-	void Delete() { glDeleteTextures(1, &id); }
-
-	GLuint GetId() const { return id; }
+	void Bind();
+	GLuint GetId() const { return ptr->id; }
 	GLenum GetTarget() const { return target; }
 	GLenum GetTextureUnit() const { return textureUnit; }
 	void SetTextureUnit(GLenum unit) { textureUnit = unit; }
@@ -30,22 +28,23 @@ public:
 
 	void BuildMipmaps();
 protected:
-	GLuint id;
 	GLenum target, textureUnit;
 	int width, height;
 	int internalFormat, format;
 
-	void _bind() {
-		glActiveTexture(textureUnit);
-		glBindTexture(target, id);
-	}
-
 	bool loadFromTGA(const char *name, BYTE *&data);
 	void texImage2D(GLenum target, BYTE *imageData);
 private:
-	mutable int *refs;
-	bool needDelete;
-	void clone(const BaseTexture &t);
+	struct Shared
+	{
+		bool needDelete;
+		GLuint id;
+		Shared() : needDelete(false), id(0) { }
+		~Shared() {
+			if (needDelete) glDeleteTextures(1, &id);
+		}
+	};
+
 	void read(HANDLE hFile, LPVOID lpBuffer, DWORD nNumBytes);
 };
 
@@ -54,9 +53,6 @@ class Texture2D : public BaseTexture
 public:
 	Texture2D(GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_GENERATE_ID);
 	Texture2D(const char *name, GLenum textureUnit = GL_TEXTURE0, GLuint id = TEX_GENERATE_ID);
-	Texture2D(const Texture2D &t);
-
-	Texture2D &operator=(const Texture2D &t);
 
 	int GetWidth() const { return width; }
 	int GetHeight() const { return height; }
@@ -74,9 +70,6 @@ class CubeTexture : public BaseTexture
 public:
 	CubeTexture(GLenum textureUnit = GL_TEXTURE0);
 	CubeTexture(const char **sides, GLenum textureUnit = GL_TEXTURE0);
-	CubeTexture(const CubeTexture &t);
-
-	CubeTexture &operator=(const CubeTexture &t);
 
 	bool IsLoaded() const { return loaded; }
 	bool LoadFromTGA(const char **sides);

@@ -18,7 +18,6 @@ class GLFrame : public GLWindow
 {
 public:
 	GLFrame();
-	~GLFrame();
 
 	int GetCubeSize() const { return ctx->cube->size; }
 	bool CanCancelMove() { return ctx->CanCancelMove(); }
@@ -27,20 +26,22 @@ public:
 	void ScrambleCube();
 	void CancelMove();
 	void SetCubeStyle(bool whiteBorders);
+	bool GetCubeStyle() const { return whiteBorders; }
+	void ShowTimer(bool show) { showTimer = show; RedrawWindow(); }
+	bool IsTimerVisible() const { return showTimer; }
 private:
+	CubeContext *ctx;
+	CubeContext *cubes[6];
 	Viewer3D *viewer;
 	ProgramObject *program;
-	CubeContext *cubes[6];
-	CubeContext *ctx;
-
+	Text2D *scoreMsg;
+	
 	QSlerp resetAnim;
 	Point2i mousePos;
 	bool faceDrag, sceneDrag;
 	bool needRedraw;
-
-	Font2D *font;
-	Text2D *timeMsg;
-	Text2D *movesMsg;
+	bool showTimer;
+	bool whiteBorders;
 
 	struct {
 		Axis face[2];

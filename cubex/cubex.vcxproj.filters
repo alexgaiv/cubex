@@ -66,14 +66,14 @@
     <ClCompile Include="lib\source\texture.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
-    <ClCompile Include="text2d.cpp">
-      <Filter>Файлы исходного кода</Filter>
-    </ClCompile>
     <ClCompile Include="lib\source\glcontext.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
     <ClCompile Include="cubecontext.cpp">
       <Filter>Файлы исходного кода</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\text2d.cpp">
+      <Filter>lib\source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -128,14 +128,17 @@
     <ClInclude Include="lib\include\texture.h">
       <Filter>lib\include</Filter>
     </ClInclude>
-    <ClInclude Include="text2d.h">
-      <Filter>Заголовочные файлы</Filter>
-    </ClInclude>
     <ClInclude Include="lib\include\glcontext.h">
       <Filter>lib\include</Filter>
     </ClInclude>
     <ClInclude Include="cubecontext.h">
       <Filter>Заголовочные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\sharedptr.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\text2d.h">
+      <Filter>lib\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

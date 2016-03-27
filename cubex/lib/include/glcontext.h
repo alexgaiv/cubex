@@ -1,16 +1,27 @@
 #ifndef _GL_CONTEXT_H_
 #define _GL_CONTEXT_H_
 
-#include <Windows.h>
+#include "common.h"
+#include "datatypes.h"
+#include "shader.h"
 #include <stack>
 #include <list>
 #include <vector>
-#include "datatypes.h"
-#include "shader.h"
 
 using namespace std;
 
+class GLRenderingContext;
+class _PO_Shared;
 class ProgramObject;
+
+class GLRC_Module
+{
+private:
+	friend class GLRenderingContext;
+	virtual const char *Name() = 0;
+	virtual void Initialize(GLRenderingContext *rc) = 0;
+	virtual void Destroy() = 0;
+};
 
 enum GLRenderingContextFlags
 {
@@ -42,7 +53,7 @@ public:
 
 	void MakeCurrent() { wglMakeCurrent(_hdc, hrc); }
 
-	ProgramObject *GetCurProgram();
+	ProgramObject *GetCurProgram() { return curProgram; }
 
 	void SetModelView(const Matrix44f &mat);
 	void SetProjection(const Matrix44f &mat);
@@ -55,23 +66,31 @@ public:
 	void PopModelView()   { SetModelView(mvStack.top()); mvStack.pop(); }
 	void PushProjection() { projStack.push(projection); }
 	void PopProjection()  { SetProjection(projStack.top()); projStack.pop(); }
+
+	void AddModule(GLRC_Module *module);
+	GLRC_Module *GetModule(const char *name);
 private:
 	friend class ProgramObject;
-	friend class Mesh;
+	friend class _PO_Shared;
 	friend class BaseTexture;
 
 	HDC _hdc;
-	list<ProgramObject *> shaders;
+	vector<GLRC_Module *> modules;
+	list<_PO_Shared *> shaders;
 	Matrix44f modelview, projection;
 	stack<Matrix44f> mvStack, projStack;
 
-	GLuint curProgram;
+	ProgramObject *curProgram;
 	GLenum curTextureUnit;
 
-	void AttachProgram(ProgramObject *prog) {
+	Matrix44f mvpMatrix, normalMatrix;
+	bool mvpComputed;
+	bool normComputed;
+
+	void AttachProgram(_PO_Shared *prog) {
 		shaders.push_back(prog);
 	}
-	void DetachProgram(ProgramObject *prog) {
+	void DetachProgram(_PO_Shared *prog) {
 		shaders.remove(prog);
 	}
 	

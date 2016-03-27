@@ -13,6 +13,16 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR lpCmdLine, int nCmdShow)
 
 	MainWindow wnd;
 	wnd.Show(nCmdShow);
-	wnd.MainLoop();
+
+	HACCEL hAccel = LoadAccelerators(NULL, "AccelTable");
+
+	MSG msg;
+	while(GetMessage(&msg, NULL, 0, 0))
+	{
+		if (!TranslateAccelerator(wnd, hAccel, &msg)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
 	return 0;
 }

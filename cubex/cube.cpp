@@ -1,6 +1,7 @@
 #include "cube.h"
 #include "transform.h"
 #include <time.h>
+#include <algorithm>
 
 #define FORALLBLOCKS(x, y, z) \
 	for (int x = 0; x < size; x++) \
@@ -224,7 +225,7 @@ bool Cube::AnimationStep()
 void Cube::Render() const
 {
 	rc->PushModelView();
-		rc->MultModelView(curFace.mRot.data);
+		rc->MultModelView(curFace.mRot);
 		int x, y, z;
 		for (int a = 0; a < size; a++)
 			for (int b = 0; b < size; b++)
@@ -347,19 +348,19 @@ void Cube::OrientateColors(CubeBlock *cb, int x, int y, int z)
 	BlockColor &c = cb->clr;
 	if (curFace.normal == AXIS_X) {
 		if (x != 0 && x != size - 1 && cb->numSides == 2)
-			Swap(c.colorIndices[0], c.colorIndices[1]);
+			std::swap(c.colorIndices[0], c.colorIndices[1]);
 		else if (cb->numSides == 3)
-			Swap(c.colorIndices[1], c.colorIndices[2]);
+			std::swap(c.colorIndices[1], c.colorIndices[2]);
 	}
 	else if (curFace.normal == AXIS_Y) {
 		if (cb->numSides == 3)
-			Swap(c.colorIndices[0], c.colorIndices[2]);
+			std::swap(c.colorIndices[0], c.colorIndices[2]);
 		else if (cb->numSides == 2)
-			Swap(c.colorIndices[0], c.colorIndices[1]);
+			std::swap(c.colorIndices[0], c.colorIndices[1]);
 	}
 	else {
 		if (cb->numSides == 3 || z != 0 && z != size - 1 && cb->numSides == 2)
-			Swap(c.colorIndices[0], c.colorIndices[1]);
+			std::swap(c.colorIndices[0], c.colorIndices[1]);
 	}
 }
 

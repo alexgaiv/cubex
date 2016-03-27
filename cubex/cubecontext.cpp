@@ -8,17 +8,22 @@ Quaternion CubeContext::qResetView =
 CubeContext::CubeContext(GLRenderingContext *m_rc, int cubeSize)
 {
 	cube = new Cube(m_rc, cubeSize);
-	solveTime = solveTimeLast = 0;
-	fSolvedAnim = false;
-	rotAngle = 0.0f;
-	wasScrambled = false;
-	numMoves = numActualMoves = 0;
-	isFaceRotating = isScrambling = false;
 	qRotation = qResetView;
+	reset();
 }
 
 CubeContext::~CubeContext() {
 	delete cube;
+}
+
+void CubeContext::reset()
+{
+	timer.Reset();
+	rotAngle = 0.0f;
+	isSolved = false;
+	numMoves = numActualMoves = 0;
+	wasScrambled = false;
+	isFaceRotating = false;
 }
 
 void CubeContext::Serialize(ofstream &os)
@@ -27,18 +32,15 @@ void CubeContext::Serialize(ofstream &os)
 		qRotation.y << ' ' <<
 		qRotation.z << ' ' <<
 		qRotation.w << ' ' <<
-		fSolvedAnim << ' ' <<
-		rotAngle << ' ' <<
-		solveTime << ' ' <<
-		solveTimeLast << ' ' <<
-		wasScrambled << ' ' <<
+		isSolved << ' ' <<
 		numMoves << ' ' <<
 		numActualMoves << ' ' <<
-		isFaceRotating << ' ' <<
-		isScrambling << ' ';
+		wasScrambled << ' ' <<
+		isFaceRotating << ' ';
 
-	history.Serialize(os);
 	cube->Serialize(os);
+	timer.Serialize(os);
+	history.Serialize(os);
 }
 
 void CubeContext::Deserialize(ifstream &is)
@@ -47,68 +49,35 @@ void CubeContext::Deserialize(ifstream &is)
 		qRotation.y >>
 		qRotation.z >>
 		qRotation.w >>
-		fSolvedAnim >>
-		rotAngle >>
-		solveTime >>
-		solveTimeLast >>
-		wasScrambled >>
+		isSolved >>
 		numMoves >>
 		numActualMoves >>
-		isFaceRotating >>
-		isScrambling;
+		wasScrambled >>
+		isFaceRotating;
 
-	history.Deserialize(is);
 	cube->Deserialize(is);
+	timer.Deserialize(is);
+	history.Deserialize(is);
 }
 
-void CubeContext::StartTimeCounter()
+void CubeContext::GetScoreStr(WCHAR *buf, int bufLen)
 {
-	if (!fSolvedAnim)
-		solveTimeLast = time(NULL);
+	WCHAR format[50] = { };
+	LoadStringW(NULL, IDS_SCORE, format, 50);
+
+	int t = timer.GetTime();
+	StringCchPrintfW(buf, bufLen, format, numMoves, t / 60, t % 60);
 }
 
-void CubeContext::SuspendTimeCounter()
-{
-	if (!fSolvedAnim)
-		solveTime += time(NULL) - solveTimeLast;
-}
-
-void CubeContext::GetTimeStr(WCHAR *buf, int bufLen)
-{
-	WCHAR time_str[30] = { };
-	LoadStringW(NULL, IDS_TIME, time_str, 30);
-
-	int mins = (int)solveTime / 60;
-	int secs = (int)(mins ? solveTime % mins : solveTime);
-
-	StringCchPrintfW(buf, bufLen, time_str, mins, secs);
-}
-
-void CubeContext::GetMovesStr(WCHAR *buf, int bufLen)
-{
-	WCHAR moves_str[30] = { };
-	LoadStringW(NULL, IDS_MOVES, moves_str, 30);
-	StringCchPrintfW(buf, bufLen, moves_str, numMoves);
-}
-
-void CubeContext::Reset()
-{
-	solveTime = 0;
-	solveTimeLast = time(NULL);
-	fSolvedAnim = false;
-	wasScrambled = false;
-	numMoves = numActualMoves = 0;
-	isScrambling = false;
+void CubeContext::Reset() {
+	reset();
 	cube->Reset();
 	history.Clear();
 }
 
-void CubeContext::Scramble()
-{
-	fSolvedAnim = false;
+void CubeContext::Scramble() {
+	reset();
 	wasScrambled = true;
-	numMoves = numActualMoves = 0;
-	isScrambling = true;
 	cube->Scramble(cube->size < 7 ? 15 : 20);
 	history.Clear();
 }
@@ -124,42 +93,34 @@ void CubeContext::CancelMove()
 		}
 	}
 }
-	
 
-void CubeContext::OnTimer(bool &needRedraw, bool &isSolved)
+void CubeContext::OnTimer(bool &needRedraw, bool &solved)
 {
-	needRedraw = isSolved = false;
+	needRedraw = solved = false;
 
-	if (fSolvedAnim) {
+	if (isSolved) {
 		rotAngle += 3.0f;
 		if (rotAngle > 360.0f) rotAngle -= 360.0f;
 		needRedraw = true;
-		return;
 	}
-
-	bool fCubeAnim = cube->AnimationStep();
-
-	if (isFaceRotating && !fCubeAnim) {
-		if (CheckSolved())
-		{
-			solveTime += time(NULL) - solveTimeLast;
-			fSolvedAnim = true;
-			rotAngle = 0.0f;
-			isSolved = true;
+	else {
+		bool fCubeAnim = cube->AnimationStep();
+		if (isFaceRotating && !fCubeAnim) {
+			if (checkSolved()) {
+				timer.Stop();
+				isSolved = true;
+				solved = true;
+			}
+			isFaceRotating = false;
 		}
-		isFaceRotating = false;
+		needRedraw = fCubeAnim;
 	}
-	if (isScrambling && !fCubeAnim) {
-		solveTime = 0;
-		solveTimeLast = time(NULL);
-		isScrambling = false;
-	}
-
-	needRedraw = fCubeAnim;
 }
 
 void CubeContext::BeginRotateFace(const MoveDesc &m)
 {
+	if (!timer.IsStarted()) timer.Start();
+
 	cube->BeginRotateFace(m.normal, m.index, m.clockWise);
 	history.Push(m);
 	isFaceRotating = true;
@@ -167,7 +128,7 @@ void CubeContext::BeginRotateFace(const MoveDesc &m)
 	numActualMoves++;
 }
 
-bool CubeContext::CheckSolved()
+bool CubeContext::checkSolved()
 {
 	if (cube->IsSolved()) {
 		bool ret = wasScrambled || numActualMoves >= cube->GOD_NUMBER;
