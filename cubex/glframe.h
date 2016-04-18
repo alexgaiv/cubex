@@ -5,7 +5,7 @@
 #include "resources.h"
 #include "glwindow.h"
 #include "shader.h"
-#include "viewer3d.h"
+#include "trackball.h"
 #include "qslerp.h"
 #include "text2d.h"
 #include "cube.h"
@@ -32,7 +32,7 @@ public:
 private:
 	CubeContext *ctx;
 	CubeContext *cubes[6];
-	Viewer3D *viewer;
+	TrackballCamera *camera;
 	ProgramObject *program;
 	Text2D *scoreMsg;
 	

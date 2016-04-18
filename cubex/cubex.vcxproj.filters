@@ -57,9 +57,6 @@
     <ClCompile Include="lib\source\vertexbuffer.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
-    <ClCompile Include="lib\source\viewer3d.cpp">
-      <Filter>lib\source</Filter>
-    </ClCompile>
     <ClCompile Include="lib\source\mesh.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
@@ -73,6 +70,9 @@
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
     <ClCompile Include="lib\source\text2d.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\trackball.cpp">
       <Filter>lib\source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -119,9 +119,6 @@
     <ClInclude Include="lib\include\vertexbuffer.h">
       <Filter>lib\include</Filter>
     </ClInclude>
-    <ClInclude Include="lib\include\viewer3d.h">
-      <Filter>lib\include</Filter>
-    </ClInclude>
     <ClInclude Include="lib\include\mesh.h">
       <Filter>lib\include</Filter>
     </ClInclude>
@@ -138,6 +135,9 @@
       <Filter>lib\include</Filter>
     </ClInclude>
     <ClInclude Include="lib\include\text2d.h">
+      <Filter>lib\include</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\include\trackball.h">
       <Filter>lib\include</Filter>
     </ClInclude>
   </ItemGroup>

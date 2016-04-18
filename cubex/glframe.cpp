@@ -13,7 +13,7 @@
 GLFrame::GLFrame()
 {
 	ctx = NULL;
-	viewer = NULL;
+	camera = NULL;
 	program = NULL;
 	scoreMsg = NULL;
 	showTimer = false;
@@ -32,10 +32,10 @@ bool GLFrame::ChangeCubeSize(int size)
 		return false;
 	
 	ctx->timer.Suspend();
-	ctx->qRotation = viewer->qRotation;
+	ctx->qRotation = camera->qRotation;
 	ctx = cubes[size - 2];
 	ctx->timer.Resume();
-	viewer->qRotation = ctx->qRotation;
+	camera->qRotation = ctx->qRotation;
 
 	if (showTimer) ConstructText();
 
@@ -47,7 +47,7 @@ bool GLFrame::ChangeCubeSize(int size)
 
 	if (size >= 2 && size <= 7) {
 		float scale[6] = { 1.1f, 1.0f, 0.86f, 0.66f, 0.56f, 0.48f };
-		viewer->SetScale(scale[size - 2]);
+		camera->SetScale(scale[size - 2]);
 	}
 
 	Redraw();
@@ -58,16 +58,16 @@ void GLFrame::ResetCube()
 {
 	if (!resetAnim.IsComplete()) return;
 	if (ctx->IsSolved())
-		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
+		camera->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
 	ctx->Reset();
-	resetAnim.Setup(viewer->qRotation, CubeContext::qResetView, 0.1f);
+	resetAnim.Setup(camera->qRotation, CubeContext::qResetView, 0.1f);
 	if (showTimer) ConstructText();
 }
 
 void GLFrame::ScrambleCube()
 {
 	if (ctx->IsSolved() && resetAnim.IsComplete())
-		viewer->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
+		camera->qRotation *= Quaternion(Vector3f(1.0f, 1.0f, 1.0f), ctx->rotAngle);
 	ctx->Scramble();
 	if (showTimer) ConstructText();
 }
@@ -81,7 +81,7 @@ void GLFrame::SetCubeStyle(bool whiteBorders)
 }
 
 void GLFrame::SetPerspective(int w, int h) {
-	viewer->SetPerspective(30.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
+	camera->SetPerspective(30.0f, 1.0f, 400.0f, Point3f(0.0f, 0.0f, -270.0f), w, h);
 }
 
 void GLFrame::CancelMove() {
@@ -102,7 +102,7 @@ void GLFrame::SaveConfig()
 	if (!file) return;
 
 	file << whiteBorders << ' ' << showTimer << ' ' << ctx->cube->size << ' ';
-	ctx->qRotation = viewer->qRotation;
+	ctx->qRotation = camera->qRotation;
 	for (int i = 0; i < 6; i++)
 		cubes[i]->Serialize(file);
 	file.close();
@@ -128,7 +128,7 @@ void GLFrame::LoadConfig()
 	if (size >= 2 && size <= 7) {
 		ctx = cubes[size - 2];
 		float scale[6] = { 1.1f, 1.0f, 0.86f, 0.66f, 0.56f, 0.48f };
-		viewer->SetScale(scale[size - 2]);
+		camera->SetScale(scale[size - 2]);
 	}
 	else ctx = cubes[1];
 
@@ -149,7 +149,7 @@ void GLFrame::RenderScene()
 	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	m_rc->PushModelView();
 
-	viewer->ApplyTransform();
+	camera->ApplyTransform();
 	if (ctx->IsSolved()) {
 		m_rc->MultModelView(Rotate(ctx->rotAngle, 1, 1, 1));
 	}
@@ -191,8 +191,8 @@ void GLFrame::OnCreate()
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
 
-	viewer = new Viewer3D(m_rc);
-	viewer->SetConstRotationSpeed(2.0f);
+	camera = new TrackballCamera(m_rc);
+	camera->SetConstRotationSpeed(2.0f);
 
 	for (int i = 0; i < 6; i++)
 		cubes[i] = new CubeContext(m_rc, i + 2);
@@ -231,7 +231,7 @@ void GLFrame::OnCreate()
 
 	CubeBlock::InitStatic(m_rc);
 	LoadConfig();
-	viewer->qRotation = ctx->qRotation;
+	camera->qRotation = ctx->qRotation;
 
 	Font2D font("font.fnt");
 	font.SetColor(Color4f(0.07f, 0.31f, 0.76f));
@@ -252,14 +252,14 @@ void GLFrame::OnMouseDown(MouseButton button, int x, int y)
 {
 	if (ctx->IsSolved()) return;
 	if (button == MouseButton::RBUTTON) {
-		viewer->BeginRotate(x, y);
+		camera->BeginRotate(x, y);
 	}
 	else if (button == MouseButton::LBUTTON)
 	{
 		BlockDesc block;
 		ZeroMemory(&drag, sizeof(drag));
 		if (!GetBlockUnderMouse(x, y, block)) {
-			viewer->BeginRotate(x, y);
+			camera->BeginRotate(x, y);
 			sceneDrag = true;
 		}
 		else if (!ctx->cube->IsAnim())
@@ -284,7 +284,7 @@ void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 	if (keysPressed & KeyModifiers::KM_RBUTTON || sceneDrag)
 	{
 		if (!resetAnim.IsComplete()) resetAnim = QSlerp();
-		viewer->Rotate(x, y);
+		camera->Rotate(x, y);
 		if (!ctx->cube->IsAnim()) Redraw();
 		else needRedraw = true;
 	}
@@ -310,7 +310,7 @@ void GLFrame::OnTimer()
 	bool solved = false;
 
 	if (!resetAnim.IsComplete()) {
-		viewer->qRotation = resetAnim.Next();
+		camera->qRotation = resetAnim.Next();
 		needRedraw = true;
 	}
 
@@ -343,7 +343,7 @@ void GLFrame::OnDestroy()
 
 	for (int i = 0; i < 6; i++)
 		delete cubes[i];
-	delete viewer;
+	delete camera;
 	delete program;
 	delete scoreMsg;
 }
@@ -418,7 +418,7 @@ void GLFrame::CalcRotDirections(const BlockDesc &b)
 
 	GetNeighbors(b, n1, n2);
 
-	Matrix44f modelview = viewer->GetViewMatrix();
+	Matrix44f modelview = camera->GetViewMatrix();
 	Matrix44f projection = m_rc->GetProjection();
 	int viewport[4];
 	glGetIntegerv(GL_VIEWPORT, viewport);

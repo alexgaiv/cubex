@@ -148,7 +148,7 @@
     <ClCompile Include="lib\source\shader.cpp" />
     <ClCompile Include="lib\source\transform.cpp" />
     <ClCompile Include="lib\source\vertexbuffer.cpp" />
-    <ClCompile Include="lib\source\viewer3d.cpp" />
+    <ClCompile Include="lib\source\trackball.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mainwindow.cpp" />
     <ClInclude Include="cubecontext.h" />
@@ -170,7 +170,7 @@
     <ClInclude Include="lib\include\texture.h" />
     <ClInclude Include="lib\include\transform.h" />
     <ClInclude Include="lib\include\vertexbuffer.h" />
-    <ClInclude Include="lib\include\viewer3d.h" />
+    <ClInclude Include="lib\include\trackball.h" />
     <ClInclude Include="mainwindow.h" />
     <ClInclude Include="resources.h" />
   </ItemGroup>
