@@ -139,9 +139,9 @@ LRESULT MainWindow::OnCreate(UINT msg, WPARAM wParam, LPARAM lParam)
 	GetClientRect(m_hwnd, &wndRect);
 	GetClientRect(hRebar, &barRect);
 
-	gl_frame->CreateParam("Cubex", 0, barRect.bottom, wndRect.right,
+	gl_frame->Create("Cubex", 0, barRect.bottom, wndRect.right,
 		wndRect.bottom - barRect.bottom, WS_VISIBLE|WS_CHILD, 0, m_hwnd);
-	SetFocus(gl_frame->m_hwnd);
+	SetFocus(gl_frame->Hwnd());
 
 	EnableCancelBtn(gl_frame->CanCancelMove());
 	CheckMenuRadioItem(hSettingsMenu, IDM_2, IDM_7, IDM_2 + gl_frame->GetCubeSize() - 2, MF_BYCOMMAND);
@@ -251,7 +251,7 @@ LRESULT MainWindow::OnSize(UINT msg, WPARAM wParam, LPARAM lParam)
 		SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOZORDER);
 
 	GetClientRect(hRebar, &barRect);
-	SetWindowPos(gl_frame->m_hwnd, HWND_TOP, 0, 0, w, h - barRect.bottom,
+	SetWindowPos(gl_frame->Hwnd(), HWND_TOP, 0, 0, w, h - barRect.bottom,
 		SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOOWNERZORDER|SWP_NOZORDER);
 	return 0;
 }

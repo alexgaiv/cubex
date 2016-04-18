@@ -5,7 +5,7 @@
 #include "vertexbuffer.h"
 #include "mesh.h"
 
-class Actor
+class Model
 {
 public:
 	Vector3f location;
@@ -13,7 +13,7 @@ public:
 	float scale;
 	Matrix44f transform;
 
-	Actor(GLRenderingContext *rc) : rc(rc), scale(1.0f) { }
+	Model(GLRenderingContext *rc) : rc(rc), scale(1.0f) { }
 
 	void ApplyTransform() {
 		rotation.ToMatrix(transform);
@@ -31,7 +31,7 @@ public:
 	int colorIndices[3];
 };
 
-class CubeBlock : public Actor
+class CubeBlock : public Model
 {
 public:
 	static bool fRenderPickMode;

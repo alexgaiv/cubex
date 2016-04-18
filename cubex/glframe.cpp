@@ -50,7 +50,7 @@ bool GLFrame::ChangeCubeSize(int size)
 		viewer->SetScale(scale[size - 2]);
 	}
 
-	RedrawWindow();
+	Redraw();
 	return true;
 }
 
@@ -77,7 +77,7 @@ void GLFrame::SetCubeStyle(bool whiteBorders)
 	program->Use();
 	this->whiteBorders = whiteBorders;
 	CubeBlock::DrawWhiteBorders(m_rc, whiteBorders);
-	RedrawWindow();
+	Redraw();
 }
 
 void GLFrame::SetPerspective(int w, int h) {
@@ -285,7 +285,7 @@ void GLFrame::OnMouseMove(UINT keysPressed, int x, int y)
 	{
 		if (!resetAnim.IsComplete()) resetAnim = QSlerp();
 		viewer->Rotate(x, y);
-		if (!ctx->cube->IsAnim()) RedrawWindow();
+		if (!ctx->cube->IsAnim()) Redraw();
 		else needRedraw = true;
 	}
 	else if (keysPressed & KeyModifiers::KM_LBUTTON && faceDrag) {
@@ -330,7 +330,7 @@ void GLFrame::OnTimer()
 	if (solved) OnCubeSolved();
 
 	if (needRedraw) {
-		RedrawWindow();
+		Redraw();
 		needRedraw = false;
 	}
 }

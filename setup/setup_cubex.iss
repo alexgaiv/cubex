@@ -1,5 +1,5 @@
 #define   Name       "Cubex"
-#define   Version    "1.2.0"
+#define   Version    "1.2.1"
 #define   Publisher  "Alexander Gaivanuk"
 #define   ExeName    "Cubex.exe"
 #define   URL        "https://github.com/alexgaiv/"

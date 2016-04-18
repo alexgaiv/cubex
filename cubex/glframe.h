@@ -27,7 +27,7 @@ public:
 	void CancelMove();
 	void SetCubeStyle(bool whiteBorders);
 	bool GetCubeStyle() const { return whiteBorders; }
-	void ShowTimer(bool show) { showTimer = show; RedrawWindow(); }
+	void ShowTimer(bool show) { showTimer = show; Redraw(); }
 	bool IsTimerVisible() const { return showTimer; }
 private:
 	CubeContext *ctx;
