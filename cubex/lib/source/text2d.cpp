@@ -298,7 +298,6 @@ void Text2D::SetText(const wchar_t *text)
 void Text2D::drawFixed(int x, int y)
 {
 	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 

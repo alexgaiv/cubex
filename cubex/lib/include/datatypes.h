@@ -65,6 +65,9 @@ union Vector3
 	struct {
 		T x, y, z;
 	};
+	struct {
+		T r, g, b;
+	};
 
 	explicit Vector3(T init = T(0)) { x = y = z = init; }
 	Vector3(T x, T y, T z) {
@@ -111,6 +114,9 @@ union Vector4
 	T data[4];
 	struct {
 		T x, y, z, w;
+	};
+	struct {
+		T r, g, b, a;
 	};
 
 	Vector4() { x = y = z = T(0); w = T(1); }
@@ -234,85 +240,24 @@ union Matrix44
 	Matrix44 &operator*=(const Matrix44 &m);
 };
 
-template<class T> union Color4;
-
-template<class T>
-union Color3
-{
-	T data[3];
-	struct {
-		T r, g, b;
-	};
-
-	explicit Color3(T init = T(0)) { r = g = b = init; }
-	Color3(T r, T g, T b, T a = T(1)) {
-		this->r = r; this->g = g; this->b = b;
-	}
-	
-	template<class T2> operator Color3<T2>() {
-		return Color3<T2>(T2(r), T2(g), T2(b));
-	}
-	template<class T2> operator Color4<T2>() {
-		return Color4<T2>(T2(r), T2(g), T2(b));
-	}
-
-	bool operator==(const Color3 &c) const;
-	bool operator!=(const Color3 &c) const;
-
-	Color3 operator*(T scale) const;
-	Color3 operator/(T scale) const;
-};
-
-template<class T>
-union Color4
-{
-	T data[4];
-	struct {
-		T r, g, b, a;
-	};
-
-	Color4() { r = g = b = T(0); a = T(1); }
-	explicit Color4(T init) { r = g = b = a = init; }
-	Color4(T r, T g, T b, T a = T(1)) {
-		this->r = r; this->g = g; this->b = b; this->a = a;
-	}
-	
-	template<class T2> operator Color3<T2>() {
-		return Color3<T2>(T2(r), T2(g), T2(b));
-	}
-	template<class T2> operator Color4<T2>() {
-		return Color4<T2>(T2(r), T2(g), T2(b), T2(a));
-	}
-
-	bool operator==(const Color4 &c) const;
-	bool operator!=(const Color4 &c) const;
-
-	Color4 operator*(T scale) const;
-	Color4 operator/(T scale) const;
-};
-
 typedef Vector2<int>     Vector2i,  Point2i;
 typedef Vector3<int>     Vector3i,  Point3i;
 typedef Vector4<int>     Vector4i,  Point4i;
 
 typedef Vector2<float>   Vector2f,  Point2f;
-typedef Vector3<float>   Vector3f,  Point3f;
-typedef Vector4<float>   Vector4f,  Point4f;
+typedef Vector3<float>   Vector3f,  Point3f, Color3f;
+typedef Vector4<float>   Vector4f,  Point4f, Color4f;
 typedef Matrix33<float>  Matrix33f;
 typedef Matrix44<float>  Matrix44f;
-typedef Color3<float>    Color3f;
-typedef Color4<float>    Color4f;
 
 typedef Vector2<double>  Vector2d,  Point2d;
-typedef Vector3<double>  Vector3d,  Point3d;
-typedef Vector4<double>  Vector4d,  Point4d;
+typedef Vector3<double>  Vector3d,  Point3d, Color3d;
+typedef Vector4<double>  Vector4d,  Point4d, Color4d;
 typedef Matrix33<double> Matrix33d;
 typedef Matrix44<double> Matrix44d;
-typedef Color3<double>   Color3d;
-typedef Color4<double>   Color4d;
 
-typedef Color3<unsigned char> Color3b;
-typedef Color4<unsigned char> Color4b;
+typedef Vector3<unsigned char> Color3b;
+typedef Vector4<unsigned char> Color4b;
 
 template<class T>
 T Dot(Vector3<T> v1, Vector3<T> v2) {

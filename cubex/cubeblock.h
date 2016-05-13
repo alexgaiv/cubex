@@ -5,33 +5,13 @@
 #include "vertexbuffer.h"
 #include "mesh.h"
 
-class Model
-{
-public:
-	Vector3f location;
-	Quaternion rotation;
-	float scale;
-	Matrix44f transform;
-
-	Model(GLRenderingContext *rc) : rc(rc), scale(1.0f) { }
-
-	void ApplyTransform() {
-		rotation.ToMatrix(transform);
-		transform.translate = location;
-		if (scale != 1.0f) transform.Scale(scale);
-		rc->MultModelView(transform);
-	}
-protected:
-	GLRenderingContext *rc;
-};
-
 class BlockColor
 {
 public:
 	int colorIndices[3];
 };
 
-class CubeBlock : public Model
+class CubeBlock
 {
 public:
 	static bool fRenderPickMode;
@@ -40,6 +20,12 @@ public:
 
 	static void DrawWhiteBorders(GLRenderingContext *rc, bool whiteBorders);
 	
+	void ApplyTransform() {
+		transform.translate = location;
+		rc->MultModelView(transform);
+	}
+	
+	Vector3f location;
 	UINT pickId;
 	int numSides;
 	BlockColor clr;
@@ -57,6 +43,9 @@ private:
 	static Color3f borderDiffuse, borderAmbient;
 	static Mesh *face, *border, *border_reduced, *face_pickMode;
 	static Matrix44f face_transform[6];
+
+	GLRenderingContext *rc;
+	Matrix44f transform;
 
 	void RenderFixed();
 

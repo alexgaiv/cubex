@@ -94,7 +94,9 @@ void GLFrame::SaveConfig()
 
 	WCHAR path[MAX_PATH] = L"";
 	SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, path);
-	PathAppendW(path, L"\\Cubex\\1.2.1");
+	PathAppendW(path, L"\\Cubex");
+	CreateDirectoryW(path, NULL);
+	PathAppendW(path, L"\\1.2.1");
 	CreateDirectoryW(path, NULL);
 	PathAppendW(path, L"\\save.dat");
 
@@ -190,6 +192,7 @@ void GLFrame::OnCreate()
 	glEnable(GL_COLOR_MATERIAL);
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 	glClearColor(0.82f, 0.85f, 0.96f, 1.0f);
+	//glClearColor(1,1,1,1);
 
 	camera = new TrackballCamera(m_rc);
 	camera->SetConstRotationSpeed(2.0f);

@@ -39,7 +39,7 @@ GLRenderingContextParams GLWindow::GetRCParams()
 {
 	GLRenderingContextParams params = { };
 	params.glrcFlags = GLRC_COMPATIBILITY_PROFILE|GLRC_MSAA;
-	params.msaaNumberOfSamples = 4;
+	params.msaaNumberOfSamples = 8;
 	return params;
 }
 

@@ -65,7 +65,6 @@ public:
 	void SetText(const wchar_t *text);
 	void Draw(int x, int y);
 	
-
 	Text2D &operator=(const Text2D &t);
 private:
 	GLRenderingContext *rc;

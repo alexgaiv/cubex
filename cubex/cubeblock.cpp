@@ -25,8 +25,8 @@ Mesh *CubeBlock::border_reduced = NULL;
 Mesh *CubeBlock::face_pickMode = NULL;
 Matrix44f CubeBlock::face_transform[6];
 
-CubeBlock::CubeBlock(GLRenderingContext *rc, UINT pickId) : Model(rc),
-	pickId(pickId), numSides(0)
+CubeBlock::CubeBlock(GLRenderingContext *rc, UINT pickId) :
+	rc(rc), pickId(pickId), numSides(0)
 {
 	memset(&clr, 0, sizeof(clr));
 	memset(coloredSides, 0, sizeof(coloredSides));

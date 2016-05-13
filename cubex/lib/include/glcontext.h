@@ -81,7 +81,6 @@ private:
 	stack<Matrix44f> mvStack, projStack;
 
 	ProgramObject *curProgram;
-	GLenum curTextureUnit;
 
 	Matrix44f mvpMatrix, normalMatrix;
 	bool mvpComputed;
